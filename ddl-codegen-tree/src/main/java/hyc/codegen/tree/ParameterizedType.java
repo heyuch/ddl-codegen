@@ -35,7 +35,7 @@ public final class ParameterizedType implements ParameterizedTypeTree {
 
     @Override
     public Kind getKind() {
-        return Kind.TYPE_PARAMETER;
+        return Kind.PARAMETERIZED_TYPE;
     }
 
     @Override

@@ -32,6 +32,8 @@ public final class Method implements MethodTree {
 
     private VariableTree receiverParameter;
 
+    private List<ExpressionTree> throwsList = new ArrayList<>();
+
     private BlockTree body;
 
     private Tree defaultValue;
@@ -142,7 +144,14 @@ public final class Method implements MethodTree {
 
     @Override
     public List<? extends ExpressionTree> getThrows() {
-        return new ArrayList<>();
+        return new ArrayList<>(throwsList);
+    }
+
+    /**
+     * 设置 throws 子句类型列表。
+     */
+    public void setThrowsList(List<? extends ExpressionTree> throwsList) {
+        this.throwsList = new ArrayList<>(throwsList);
     }
 
     @Override

@@ -28,6 +28,9 @@ public final class Variable implements VariableTree {
 
     private ExpressionTree initExpr;
 
+    /** 是否为可变参数（仅方法参数有意义，JDK 11 无 Modifier.VARARGS，由转换器从 javac toString 检测） */
+    private boolean varargs;
+
     public static Builder builder() {
         return new Builder();
     }
@@ -37,6 +40,20 @@ public final class Variable implements VariableTree {
      */
     public DocComment getJavadoc() {
         return javadoc;
+    }
+
+    /**
+     * 返回是否为可变参数。
+     */
+    public boolean isVarargs() {
+        return varargs;
+    }
+
+    /**
+     * 设置是否为可变参数。
+     */
+    public void setVarargs(boolean varargs) {
+        this.varargs = varargs;
     }
 
     /**

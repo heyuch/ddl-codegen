@@ -4,42 +4,194 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+/**
+ * round-trip 保真断言测试。
+ * 判定标准：
+ * 1. 语义零丢失——原文件与打印结果去掉注释与全部空白后一致（允许 javac toString 的
+ * 纯空白/单参 lambda 括号差异）；
+ * 2. 幂等——对打印结果再次 parse→print 必须字节一致；
+ * 3. Demo.java 必须字节全等（javadoc/枚举等全要素 round-trip）。
+ * 已知限制（JDK 11 公共 API 无 Tree.getComment）：声明前/语句前的行注释与块注释不保留，
+ * 比较时对两侧统一剥离注释。
+ */
 public class RoundTripSmokeTest {
 
-    private void roundTrip(File file) throws Exception {
-        JavaParser parser = new JavaParser();
-        List<CompileUnit> units = parser.parse(file);
+    private static final Pattern LINE_COMMENT = Pattern.compile("//[^\\n]*");
+    private static final Pattern BLOCK_COMMENT = Pattern.compile("(?s)/\\*.*?\\*/");
+    private static final Pattern SINGLE_PARAM_LAMBDA = Pattern.compile("\\(([A-Za-z_$][A-Za-z0-9_$]*)\\)->");
+
+    @Test
+    public void demoRoundTripIsByteExact() throws Exception {
+        File file = new File("src/test/java/hyc/codegen/tree/Demo.java");
+        assertEquals(read(file), print(file), "Demo.java round-trip 应字节全等");
+    }
+
+    @Test
+    public void javaCodegenRoundTripKeepsSemantics() throws Exception {
+        File file = new File("src/main/java/hyc/codegen/tree/JavaCodegen.java");
+        assertSemanticStable(file);
+    }
+
+    @Test
+    public void codePrinterRoundTripKeepsSemantics() throws Exception {
+        File file = new File("src/main/java/hyc/codegen/tree/utils/CodePrinter.java");
+        assertSemanticStable(file);
+    }
+
+    private void assertSemanticStable(File file) throws Exception {
+        String printed = print(file);
+        // 语义零丢失：剥离注释与空白后应与原文一致
+        assertEquals(semantic(read(file)), semantic(printed),
+                file.getName() + " round-trip 存在语义丢失（非空白/注释差异）");
+        // 幂等：二次 round-trip 字节一致
+        assertEquals(printed, print(file), file.getName() + " round-trip 不幂等");
+    }
+
+    private static String print(File file) throws Exception {
+        List<CompileUnit> units = new JavaParser().parse(file);
         StringBuilder sb = new StringBuilder();
         for (CompileUnit unit : units) {
             sb.append(JavaCodegen.generateCode(unit));
         }
-        String original = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-
-        String[] o = original.split("\n", -1);
-        String[] n = sb.toString().split("\n", -1);
-        int diff = 0;
-        for (int i = 0; i < Math.max(o.length, n.length); i++) {
-            String ol = i < o.length ? o[i] : "<EOF>";
-            String nl = i < n.length ? n[i] : "<EOF>";
-            if (!ol.equals(nl)) {
-                diff++;
-                if (diff <= 10) {
-                    System.out.println("L" + (i + 1) + " O: " + ol);
-                    System.out.println("L" + (i + 1) + " N: " + nl);
-                }
-            }
-        }
-        System.out.println(file.getName() + ": total lines " + o.length + " -> " + n.length + ", diff lines " + diff);
+        return sb.toString();
     }
 
-    @Test
-    public void smoke() throws Exception {
-        roundTrip(new File("src/main/java/hyc/codegen/tree/JavaCodegen.java"));
-        roundTrip(new File("src/main/java/hyc/codegen/tree/utils/CodePrinter.java"));
-        roundTrip(new File("src/test/java/hyc/codegen/tree/Demo.java"));
+    private static String read(File file) throws Exception {
+        return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+    }
+
+    /** 剥离注释与全部空白，归一化 javac toString 的 token 差异：单参 lambda 括号、字符串内 \' 转义。 */
+    private static String semantic(String code) {
+        String s = BLOCK_COMMENT.matcher(LINE_COMMENT.matcher(code).replaceAll("")).replaceAll("");
+        s = normalizeStringEscapes(s);
+        s = s.replaceAll("\\s+", "");
+        s = SINGLE_PARAM_LAMBDA.matcher(s).replaceAll("$1->");
+        return s;
+    }
+
+    /**
+     * javac 的 toString 会对称地过度转义：双引号字符串内的单引号 \\'、字符字面量内的双引号 '\\"'。
+     * 归一化为裸字符使两侧可比；必需的转义（字符串内 \\"、字符字面量内 \\'）保持原样。
+     * 按连续反斜杠串处理，避免 \\\\" 等序列破坏引号状态机。
+     */
+    private static String normalizeStringEscapes(String s) {
+        StringBuilder sb = new StringBuilder(s.length());
+        boolean inString = false;
+        boolean inChar = false;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '\\') {
+                int j = i;
+                while (j < s.length() && s.charAt(j) == '\\') {
+                    j++;
+                }
+                int n = j - i;
+                int pairs = n / 2;
+                for (int k = 0; k < pairs; k++) {
+                    sb.append("\\\\");
+                }
+                if ((n % 2) == 1) {
+                    if (j < s.length()) {
+                        char next = s.charAt(j);
+                        if (inString && next == '\'') {
+                            sb.append('\'');      // 字符串内过度转义 \\' → '
+                        } else if (inChar && next == '"') {
+                            sb.append('"');       // 字符字面量内过度转义 \\" → "
+                        } else {
+                            sb.append('\\').append(next);
+                        }
+                        i = j;
+                    } else {
+                        sb.append('\\');
+                        i = j - 1;
+                    }
+                } else {
+                    i = j - 1;
+                }
+                continue;
+            }
+            if (inString) {
+                if (c == '"') {
+                    inString = false;
+                }
+            } else if (inChar) {
+                if (c == '\'') {
+                    inChar = false;
+                }
+            } else {
+                // 数字字面量进制归一化：javac 的 toString 会把十六进制/八进制转十进制
+                // （LiteralTree.getValue() 已丢失原进制）。仅在标识符边界处识别，避免误伤 a0x20。
+                if (c >= '0' && c <= '9') {
+                    boolean boundary = i == 0 || !isIdentifierChar(s.charAt(i - 1));
+                    if (boundary && c == '0' && i + 1 < s.length()
+                            && (s.charAt(i + 1) == 'x' || s.charAt(i + 1) == 'X')) {
+                        int j = i + 2;
+                        long v = 0;
+                        boolean any = false;
+                        while (j < s.length() && isHexDigit(s.charAt(j))) {
+                            v = v * 16 + hexValue(s.charAt(j));
+                            any = true;
+                            j++;
+                        }
+                        if (any) {
+                            if (j < s.length() && (s.charAt(j) == 'l' || s.charAt(j) == 'L')) {
+                                sb.append(v).append('L');
+                                i = j;
+                            } else {
+                                sb.append(v);
+                                i = j - 1;
+                            }
+                            continue;
+                        }
+                    }
+                    if (boundary && c == '0' && i + 1 < s.length() && s.charAt(i + 1) >= '0'
+                            && s.charAt(i + 1) <= '7') {
+                        int j = i + 1;
+                        long v = 0;
+                        while (j < s.length() && s.charAt(j) >= '0' && s.charAt(j) <= '7') {
+                            v = v * 8 + (s.charAt(j) - '0');
+                            j++;
+                        }
+                        if (j < s.length() && (s.charAt(j) == 'l' || s.charAt(j) == 'L')) {
+                            sb.append(v).append('L');
+                            i = j;
+                        } else {
+                            sb.append(v);
+                            i = j - 1;
+                        }
+                        continue;
+                    }
+                }
+                if (c == '"') {
+                    inString = true;
+                } else if (c == '\'') {
+                    inChar = true;
+                }
+            }
+            sb.append(c);
+        }
+        return sb.toString();
+    }
+
+    private static boolean isIdentifierChar(char c) {
+        return Character.isLetterOrDigit(c) || c == '_' || c == '$';
+    }
+
+    private static boolean isHexDigit(char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    }
+
+    private static long hexValue(char c) {
+        if (c >= '0' && c <= '9') {
+            return c - '0';
+        }
+        return (c >= 'a' && c <= 'f') ? (c - 'a' + 10) : (c - 'A' + 10);
     }
 
 }

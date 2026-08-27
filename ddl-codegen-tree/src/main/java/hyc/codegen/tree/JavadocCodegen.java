@@ -53,11 +53,11 @@ public final class JavadocCodegen extends DocTreeScanner<Boolean, CodePrinter> {
 
         List<? extends DocTree> first = node.getFirstSentence();
         if (first != null && !first.isEmpty()) {
-            p.print(" * ");
+            StringWriter sw = new StringWriter();
             for (DocTree d : first) {
-                d.accept(this, p);
+                d.accept(this, new CodePrinter(sw));
             }
-            p.println();
+            printPrefixedLines(sw.toString(), p);
         }
 
         List<? extends DocTree> body = node.getBody();
@@ -66,14 +66,7 @@ public final class JavadocCodegen extends DocTreeScanner<Boolean, CodePrinter> {
             for (DocTree d : body) {
                 d.accept(this, new CodePrinter(sw));
             }
-            String s = sw.toString();
-            if (!s.isEmpty()) {
-                String[] lines = s.split(System.lineSeparator());
-                for (String line : lines) {
-                    String trimmed = removeRedundantSpace(line);
-                    p.println(" * ", trimmed);
-                }
-            }
+            printPrefixedLines(sw.toString(), p);
         }
 
         List<? extends DocTree> tags = node.getBlockTags();
@@ -88,6 +81,24 @@ public final class JavadocCodegen extends DocTreeScanner<Boolean, CodePrinter> {
 
         p.println(" */");
         return true;
+    }
+
+    /**
+     * 逐行输出 javadoc 文本：javac 的文本节点内嵌续行（\n 后仅剩一个空格，* 前缀已被剥除），
+     * 统一在此分行并重加 " * " 前缀，保证续行格式还原。
+     */
+    private static void printPrefixedLines(String text, CodePrinter p) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        String[] lines = text.split("\n", -1);
+        int end = lines.length;
+        if (end > 1 && lines[end - 1].isEmpty()) {
+            end--;
+        }
+        for (int i = 0; i < end; i++) {
+            p.println(" * ", removeRedundantSpace(lines[i]));
+        }
     }
 
     private static String removeRedundantSpace(String s) {

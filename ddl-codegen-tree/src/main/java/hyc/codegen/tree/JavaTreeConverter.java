@@ -3,6 +3,7 @@ package hyc.codegen.tree;
 import java.util.List;
 import javax.lang.model.element.Name;
 
+import com.sun.source.tree.ArrayTypeTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.MethodTree;
@@ -103,13 +104,23 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
         for (VariableTree p : node.getParameters()) {
             Variable pp = (Variable)p.accept(this, TreePath.getPath(path, p));
             pp.setVariableKind(VariableKind.PARAMETER);
+            pp.setVarargs(isVarargsParam(p));
             m.addParameter(pp);
         }
         m.setReceiverParameter(node.getReceiverParameter());
+        m.setThrowsList(node.getThrows());
         m.setBody(node.getBody());
         m.setDefaultValue(node.getDefaultValue());
 
         return m;
+    }
+
+    /**
+     * JDK 11 无 Modifier.VARARGS（JDK 21+ 才有）：javac 对可变参数的类型与普通数组同为
+     * ArrayTypeTree，只能靠 toString 中的 "..." 区分（javac 打印忠实于源码）。
+     */
+    private static boolean isVarargsParam(VariableTree param) {
+        return param.getType() instanceof ArrayTypeTree && param.toString().contains("...");
     }
 
 }
