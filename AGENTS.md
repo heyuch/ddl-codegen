@@ -138,4 +138,3 @@ mvn versions:display-plugin-updates
 - 复用旧代码：质量不达标直接优化，不机械照搬；迁移即改进
 - 本项目同时是学习材料：结构清晰、命名优雅、注释解释 WHY 而非 WHAT
 - 静态检查是硬门槛：spotless/checkstyle/error-prone/checkerframework 报错按提示修复（规则考察见 `STATIC-RULES-REVIEW.md`）
-

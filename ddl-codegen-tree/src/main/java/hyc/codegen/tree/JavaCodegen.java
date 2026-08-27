@@ -34,6 +34,10 @@ import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreeScanner;
 import hyc.codegen.tree.utils.CodePrinter;
 
+// 扇出抑制依据（元素驱动而非逻辑混杂，见 STATIC-RULES-REVIEW.md §6）：
+// 本类是 TreeScanner 分发器，每个节点类型对应一个 visit 方法，引用类型数 ≈ 节点类型数；
+// 已抽取 import 管理（ImportManager）后残余扇出仍 39，实证为结构性不可降；单方法引用类型 ≤3。
+@SuppressWarnings("ClassFanOutComplexity")
 public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
     public static String generateCode(Tree node) {

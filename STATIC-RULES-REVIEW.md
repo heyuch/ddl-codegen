@@ -67,7 +67,7 @@
 | M0.1 | `DesignForExtension` | 286 处（全模型/工具类公共方法） | 合理 | final 化消除（仅 Identifier 因被继承保留）；实证：该规则推动的是"final vs javadoc"设计决策，非负担 |
 | M0.1 | `NPathComplexity` | Class.getImports NPath 240（阈值 200） | 合理 | 拆出 ImportCollector 消除，单一职责同时改善 |
 | M0.1 | `VisibilityModifier` | 全部模型类 public 可变字段 | 合理（预期工作） | 全字段私有化 + getter/setter，与风格目标一致 |
-| M0.1 | `ClassFanOutComplexity` | JavaCodegen 41 / JavadocCodegen 25（阈值 20） | **待用户决策** | visitor 分发天然引用大量节点类型；ImportManager 拆分后预计仍 >20（worker 复测中） |
+| M0.1 | `ClassFanOutComplexity` | JavaCodegen 41→39 / JavadocCodegen 25（阈值 20） | **已决策：针对性 @SuppressWarnings**（用户拍板） | 阈值保留 20 继续抓逻辑混杂；分发器类抑制并带实证注释（§6 判别方法 + 本节） |
 | M0.1 | 其余度量类（MethodLength/MethodCount/Cyclomatic/NPath 等） | 未触发 | 合理 | 阈值宽松，实测确认 |
 | M0.1 | `VariableDeclarationUsageDistance` | 未触发 | 合理（用户已确认） | — |
 | M0.1 | spotless 配置 | Demo.java 夹具被排除格式化 | 合理（构建配置） | 夹具字节稳定性由 round-trip 断言依赖，排除属合理工程决策，用户可否决 |
@@ -82,3 +82,21 @@
 - 静态检查是硬门槛：报错按提示改代码，直至 `JAVA_HOME=/opt/homebrew/opt/openjdk@11 mvn validate` + `mvn test` 全绿
 - 不自行改 checkstyle.xml、不加 suppression、不加 `-Dxxx.skip`
 - 唯一例外：规则本身有 bug 或与迁移代码完全冲突 → 记录规则名 + 报错原文到 §3，用合规代码结构规避（加 final、补 javadoc 等），确实无解再提交用户决策
+
+**针对性 @SuppressWarnings 使用准则（用户 2026-08 拍板）**：
+- 允许用于"元素驱动"类（见 §6 判别方法），如 TreeScanner/DocTreeScanner 分发器
+- 必须是类级、针对具体规则名（`@SuppressWarnings("ClassFanOutComplexity")`）
+- 必须带 WHY 注释（含实证依据，如抽取实验数据）
+- 必须记录到 §3
+- 禁止用全局提阈值/加 suppression 文件绕过
+
+## 6. 判别方法：逻辑混杂 vs 元素繁多
+
+高扇出/高复杂度有两种成因，处理方式完全不同：
+
+1. **抽取实验（最权威）**：把能识别的独立关注点抽成类，看扇出降幅。大幅下降 → 之前是逻辑混杂（混杂的部分本身就是可抽取的关注点）；几乎不降 → 残余为元素驱动。
+   本项目实证：ImportManager 抽取后 JavaCodegen 扇出 41→39，几乎不降 → 残余结构性。
+2. **单方法扇出（分散度）**：统计每个方法引用的去重类型数。分发器形状 = 方法数 ≈ 节点类型数、单方法引用 ≤3 类型；逻辑混杂 = 存在单个方法引用 5-10+ 类型（一个方法干多件事）。
+3. **类型分类比例**：引用类型分两类——分发对象类型（visitor 的节点/领域类型）vs 基础设施类型（IO/集合/框架）。分发对象占比高（如 JavaCodegen 39 中 30+ 为节点/模型/扫描器）→ 元素驱动；跨多个无关领域散布 → 逻辑混杂。
+
+判定落点：阈值保留抓逻辑混杂；元素驱动类走针对性 @SuppressWarnings。
