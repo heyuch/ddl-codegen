@@ -41,7 +41,7 @@ public class JavaCodegenTest {
                 new Import(Types.STRING),
                 new Import("java.util.ArrayList"),
                 new Import("javax.validation.constraints.NotEmpty"));
-        Assertions.assertEquals(JavaCodegen.ImportSorter.sort(expectedImports), JavaCodegen.ImportSorter.sort(imports));
+        Assertions.assertEquals(ImportManager.sort(expectedImports), ImportManager.sort(imports));
     }
 
     private String codegen(Tree tree) {

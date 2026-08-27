@@ -1,21 +1,14 @@
 package hyc.codegen.tree;
 
-import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeKind;
 
@@ -64,7 +57,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
             p.println();
         }
 
-        printImports(node.getImports(), node.getPackage(), p);
+        ImportManager.print(node.getImports(), node.getPackage(), p, this::visitImport);
         foreachWith(node.getTypeDecls(), d -> d.accept(this, p), () -> p.println());
 
         return true;
@@ -83,41 +76,6 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         return true;
     }
 
-    private void printImports(List<? extends ImportTree> imports, @Nullable PackageTree pkg, CodePrinter p) {
-        if (imports == null || imports.isEmpty()) {
-            return;
-        }
-
-        List<? extends ImportTree> imps = imports;
-        // 过滤掉不需要显式引入的 package
-        imps = filterImplicitImports(imps, pkg);
-        // 过滤掉重复的 package
-        imps = filterDuplicateImports(imps);
-
-        // 对 package 分组
-        List<List<? extends ImportTree>> groups = groupImports(imps, Arrays.asList("java"));
-
-        for (List<? extends ImportTree> group : groups) {
-            if (group.isEmpty()) {
-                continue;
-            }
-
-            List<? extends ImportTree> sorted = ImportSorter.sort(group);
-            boolean imported = false;
-
-            for (ImportTree imp : sorted) {
-                if (visitImport(imp, p)) {
-                    imported = true;
-                }
-            }
-
-            if (imported) {
-                p.println();
-            }
-        }
-
-    }
-
     private <T> void foreachWith(Collection<T> items, Consumer<T> fn, Runnable separator) {
         if (items == null || items.isEmpty()) {
             return;
@@ -132,112 +90,6 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
                 separator.run();
             }
         }
-    }
-
-    private static List<? extends ImportTree> filterImplicitImports(List<? extends ImportTree> imports,
-            @Nullable PackageTree pkg) {
-        if (imports == null || imports.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        List<ImportTree> result = new ArrayList<>();
-
-        for (ImportTree imp : imports) {
-            if (!isImplicitImport(imp, pkg)) {
-                result.add(imp);
-            }
-        }
-
-        return result;
-    }
-
-    private static boolean isImplicitImport(ImportTree imp, @Nullable PackageTree pkg) {
-        if (imp == null) {
-            return true;
-        }
-
-        Tree qid = imp.getQualifiedIdentifier();
-        if (qid == null) {
-            return true;
-        }
-        String qname = qid.toString();
-
-        // 过滤的 java.lang 包
-        if (qname.startsWith("java.lang")) {
-            return true;
-        }
-
-        // 过滤掉当前包的 import
-        if (pkg == null) {
-            return false;
-        }
-        ExpressionTree pt = pkg.getPackageName();
-        if (pt == null) {
-            return false;
-        }
-        String currentPkg = pt.toString();
-
-        String[] parts = qname.split("\\.");
-        StringJoiner j = new StringJoiner(".");
-        for (int i = 0; i < parts.length - 1; i++) {
-            j.add(parts[i]);
-        }
-        String importPkg = j.toString();
-
-        return currentPkg.equals(importPkg);
-    }
-
-    private static List<? extends ImportTree> filterDuplicateImports(List<? extends ImportTree> imports) {
-        if (imports == null || imports.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        Map<String, ImportTree> map = new HashMap<>();
-
-        for (ImportTree imp : imports) {
-            Tree qid = imp.getQualifiedIdentifier();
-            if (qid != null) {
-                String qname = qid.toString();
-                map.putIfAbsent(qname, imp);
-            }
-        }
-
-        return new ArrayList<>(map.values());
-    }
-
-    private List<List<? extends ImportTree>> groupImports(List<? extends ImportTree> imports, List<String> prefixes) {
-        if (imports == null || imports.isEmpty()) {
-            return Arrays.asList(new ArrayList<>());
-        }
-
-        Map<String, ImportTree> map = new HashMap<>();
-        for (ImportTree imp : imports) {
-            map.putIfAbsent(imp.toString(), imp);
-        }
-
-        List<List<? extends ImportTree>> groups = new ArrayList<>();
-        List<? extends ImportTree> remains = new ArrayList<>(map.values());
-
-        for (String prefix : prefixes) {
-            List<ImportTree> group = new ArrayList<>();
-            for (ImportTree imp : new ArrayList<>(remains)) {
-                Tree qid = imp.getQualifiedIdentifier();
-                String s = qid.toString();
-                if (s.startsWith(prefix)) {
-                    group.add(imp);
-                    remains.remove(imp);
-                }
-            }
-            if (!group.isEmpty()) {
-                groups.add(group);
-            }
-        }
-
-        if (!remains.isEmpty()) {
-            groups.add(new ArrayList<>(remains));
-        }
-
-        return groups;
     }
 
     @Override
@@ -735,36 +587,6 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         }
 
         return line.substring(removal);
-    }
-
-    static class ImportSorter implements Comparator<ImportTree>, Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        public static List<? extends ImportTree> sort(List<? extends ImportTree> imports) {
-            if (imports == null || imports.isEmpty()) {
-                return imports;
-            }
-
-            List<ImportTree> sorted = new ArrayList<>(imports);
-            sorted.sort(new ImportSorter());
-
-            return sorted;
-        }
-
-        @Override
-        public int compare(ImportTree o1, ImportTree o2) {
-            String s1 = o1.toString();
-            if (s1 == null) {
-                return 1;
-            }
-            String s2 = o2.toString();
-            if (s2 == null) {
-                return -1;
-            }
-            return s1.compareTo(s2);
-        }
-
     }
 
 }
