@@ -43,7 +43,8 @@
 - [ ] 0.7.5 命名审查：`U`/`Types` 等无意义类名改名；类组织审查（模型/转换/打印分层清晰）
 - [ ] 0.7.6 拆分 JavaCodegen 的 import 管理为独立类（ImportManager），职责单一
 - [ ] 0.7.7 移除死代码/重复逻辑
-- [ ] 0.7.8 `mvn validate`（spotless/checkstyle）全绿
+- [ ] 0.7.8 重写 CodePrinter：收敛为 write/newline/line/rawLine 四件套（行首缩进只在 write 一处处理、内嵌换行逐行对齐、去除 print0/println0/align/printSpace 重复与 SEP hack），行为由 round-trip 测试字节级锁定
+- [ ] 0.7.9 `mvn validate`（spotless/checkstyle）全绿
 
 ### M0.8 golden 测试转正
 - [ ] 0.8.1 round-trip golden 测试集：复杂构造文件（varargs/lambda/三元/内部类/泛型/注解参数/throws）
