@@ -40,19 +40,20 @@
 | JavaNCSS | 方法 100 / 类 1500 / 文件 2000 | 宽 |
 | FileLength | 2000 行 | 宽 |
 | LineLength | 120 | 宽 |
-| VariableDeclarationUsageDistance | allowedDistance=3 | **待实证（可能是度量类中最易误报的）** |
+| VariableDeclarationUsageDistance | allowedDistance=3 | 用户已确认保留：声明应靠近使用，可读性规则合理 |
 
 **迁移前实测基准**（tree 库最大文件 JavaCodegen.java，770 行）：37 个方法、未超任何度量阈值。
-初步结论：阈值普遍宽松，**度量规则大概率不是摩擦点**；预判摩擦点应是 DesignForExtension（javadoc 负担）与 VisibilityModifier（public 字段），均非度量类。
+**预判修正（用户反馈）**：DesignForExtension 的 javadoc 负担对 AI 写作可忽略（不是摩擦点）；VDUD 保留。
+剩余待实证项：VisibilityModifier 强制 public 字段私有化——是结构性重构工作量（43 个模型类），但符合既定风格目标，属"预期工作"而非"不合理规则"。
 
 ## 2. 规则预判（待实证，按风险排序）
 
 | 规则 | 预判风险 | 依据 | 实证状态 |
 |---|---|---|---|
-| `DesignForExtension` | **高** | 无配置：任何 public 非 final 类的可重写方法须带 javadoc。tree 库 43 个模型类数百公共方法，纯机械补 javadoc 成本高；且"应可被继承"的默认假设对模型/生成器类不一定成立（加 `final` 可能是更合理的选择） | 待 M0a/M0b |
+| `DesignForExtension` | 低（已降级） | javadoc 成本对 AI 写作可忽略；仅存"加 final 还是补 javadoc"的设计取向问题，非摩擦 | 用户已确认 |
 | `VisibilityModifier` | 中（可能利好） | packageAllowed + allowPublicFinalFields + allowPublicImmutableFields：**public 非 final 可变字段必违规**。tree 库现有大量 public 可变字段 → 强制 getter/setter 重构——恰好与既定风格目标一致，可能"合理但加重迁移负担" | 待 M0a |
 | `VariableDeclarationUsageDistance` | 中 | allowedDistance=3、ignoreFinal=false：声明与首次使用距离 ≤3 行。生成器/工具代码"先收集后使用"的写法可能误报 | 待实证 |
-| `VariableDeclarationUsageDistance` | 中 | 唯一可能过度约束的度量类规则：声明与首次使用距离 ≤3 行，"先收集后使用"的代码可能误报 | 待实证 |
+| `VariableDeclarationUsageDistance` | 低（已确认） | 用户判定合理：声明应靠近使用，可读性规则，保留 | 用户已确认 |
 | `MethodCount` / `MethodLength` / `ExecutableStatementCount` | 低（已降级） | 阈值宽（100/200/60），实测 JavaCodegen 770 行 37 方法未触发 | 实证基准已记录 |
 | `HiddenField` | 低 | 仅 VARIABLE_DEF（参数遮蔽已豁免），setter 惯用法不受影响，配置合理 | 待实证 |
 | `FileLength`(2000) / `LineLength`(120) | 低 | 当前最大源文件 770 行；120 列宽松 | 待实证 |
