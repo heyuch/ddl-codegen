@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public final class StringName implements Name {
 
-    String name;
+    private String name;
 
     public StringName(String name) {
         this.name = name;

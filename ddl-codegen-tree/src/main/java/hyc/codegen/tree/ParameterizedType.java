@@ -10,9 +10,9 @@ import com.sun.source.tree.TreeVisitor;
 
 public final class ParameterizedType implements ParameterizedTypeTree {
 
-    TypeReference type;
+    private TypeReference type;
 
-    List<Tree> typeArguments;
+    private List<Tree> typeArguments;
 
     public ParameterizedType(TypeReference type, Tree... typeArguments) {
         this(type, Arrays.asList(typeArguments));

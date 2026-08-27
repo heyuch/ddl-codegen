@@ -18,23 +18,93 @@ import com.sun.source.tree.VariableTree;
 
 public final class Method implements MethodTree {
 
-    DocCommentTree javadoc;
+    private DocCommentTree javadoc;
 
-    ModifiersTree modifiers;
+    private ModifiersTree modifiers;
 
-    Name name;
+    private Name name;
 
-    Tree returnType;
+    private Tree returnType;
 
-    List<TypeParameterTree> typeParameters = new ArrayList<>();
+    private List<TypeParameterTree> typeParameters = new ArrayList<>();
 
-    List<VariableTree> parameters = new ArrayList<>();
+    private List<VariableTree> parameters = new ArrayList<>();
 
-    VariableTree receiverParameter;
+    private VariableTree receiverParameter;
 
-    BlockTree body;
+    private BlockTree body;
 
-    Tree defaultValue;
+    private Tree defaultValue;
+
+    /**
+     * 返回方法 javadoc 注释。
+     */
+    public DocCommentTree getJavadoc() {
+        return javadoc;
+    }
+
+    /**
+     * 设置方法 javadoc 注释。
+     */
+    public void setJavadoc(DocCommentTree javadoc) {
+        this.javadoc = javadoc;
+    }
+
+    /**
+     * 设置方法修饰符。
+     */
+    public void setModifiers(ModifiersTree modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    /**
+     * 设置方法名。
+     */
+    public void setName(Name name) {
+        this.name = name;
+    }
+
+    /**
+     * 设置返回类型。
+     */
+    public void setReturnType(Tree returnType) {
+        this.returnType = returnType;
+    }
+
+    /**
+     * 设置类型参数。
+     */
+    public void setTypeParameters(List<? extends TypeParameterTree> typeParameters) {
+        this.typeParameters = new ArrayList<>(typeParameters);
+    }
+
+    /**
+     * 添加参数。
+     */
+    public void addParameter(VariableTree parameter) {
+        this.parameters.add(parameter);
+    }
+
+    /**
+     * 设置接收者参数。
+     */
+    public void setReceiverParameter(VariableTree receiverParameter) {
+        this.receiverParameter = receiverParameter;
+    }
+
+    /**
+     * 设置方法体。
+     */
+    public void setBody(BlockTree body) {
+        this.body = body;
+    }
+
+    /**
+     * 设置注解类型元素的默认值。
+     */
+    public void setDefaultValue(Tree defaultValue) {
+        this.defaultValue = defaultValue;
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -57,7 +127,7 @@ public final class Method implements MethodTree {
 
     @Override
     public List<? extends TypeParameterTree> getTypeParameters() {
-        return List.of();
+        return new ArrayList<>(typeParameters);
     }
 
     @Override
@@ -156,14 +226,9 @@ public final class Method implements MethodTree {
         public Builder modifiers(Modifier... modifiers) {
             Modifiers mods = Modifiers.of(modifiers);
             if (m.modifiers instanceof Modifiers) {
-                mods.annotations.addAll(((Modifiers)m.modifiers).annotations);
+                mods.addAnnotations(((Modifiers)m.modifiers).getAnnotations());
             }
             m.modifiers = mods;
-            return this;
-        }
-
-        public Builder mods(Modifiers modifiers) {
-            m.modifiers = modifiers;
             return this;
         }
 
@@ -198,13 +263,13 @@ public final class Method implements MethodTree {
         }
 
         public Builder parameter(Variable parameter) {
-            parameter.kind = VariableKind.PARAMETER;
+            parameter.setVariableKind(VariableKind.PARAMETER);
             m.parameters.add(parameter);
             return this;
         }
 
         public Builder parameters(List<Variable> parameters) {
-            parameters.forEach(p -> p.kind = VariableKind.PARAMETER);
+            parameters.forEach(p -> p.setVariableKind(VariableKind.PARAMETER));
             m.parameters = new ArrayList<>(parameters);
             return this;
         }

@@ -9,9 +9,9 @@ import lombok.EqualsAndHashCode;
 public final class TypeReference extends Identifier {
 
     @Nullable
-    Package pkg;
+    private Package pkg;
 
-    String name;
+    private String name;
 
     public TypeReference(String qname) {
         super(qname);
@@ -43,6 +43,14 @@ public final class TypeReference extends Identifier {
         return new StringName(name);
     }
 
+    /**
+     * 返回所属包，简单名类型时为 {@code null}。
+     */
+    @Nullable
+    public Package getPkg() {
+        return pkg;
+    }
+
     public Import getImport() {
         return new Import(this);
     }
@@ -55,8 +63,8 @@ public final class TypeReference extends Identifier {
     public String getQualifiedName() {
         StringBuilder sb = new StringBuilder();
 
-        if (pkg != null && pkg.path != null && !pkg.path.isEmpty()) {
-            sb.append(pkg.path)
+        if (pkg != null && pkg.getPath() != null && !pkg.getPath().isEmpty()) {
+            sb.append(pkg.getPath())
                     .append(".");
         }
         sb.append(name);
@@ -69,7 +77,7 @@ public final class TypeReference extends Identifier {
         if (pkg == null) {
             return null;
         }
-        return pkg.path;
+        return pkg.getPath();
     }
 
 }

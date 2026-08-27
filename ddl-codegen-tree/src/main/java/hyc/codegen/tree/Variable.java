@@ -14,22 +14,85 @@ import com.sun.source.tree.VariableTree;
 
 public final class Variable implements VariableTree {
 
-    DocComment javadoc;
+    private DocComment javadoc;
 
-    VariableKind kind;
+    private VariableKind kind;
 
-    ModifiersTree modifiers;
+    private ModifiersTree modifiers;
 
-    Name name;
+    private Name name;
 
-    ExpressionTree nameExpr;
+    private ExpressionTree nameExpr;
 
-    Tree type;
+    private Tree type;
 
-    ExpressionTree initExpr;
+    private ExpressionTree initExpr;
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * 返回变量 javadoc 注释。
+     */
+    public DocComment getJavadoc() {
+        return javadoc;
+    }
+
+    /**
+     * 设置变量 javadoc 注释。
+     */
+    public void setJavadoc(DocComment javadoc) {
+        this.javadoc = javadoc;
+    }
+
+    /**
+     * 返回变量种类（字段/参数/枚举常量）。
+     */
+    public VariableKind getVariableKind() {
+        return kind;
+    }
+
+    /**
+     * 设置变量种类。
+     */
+    public void setVariableKind(VariableKind kind) {
+        this.kind = kind;
+    }
+
+    /**
+     * 设置修饰符。
+     */
+    public void setModifiers(ModifiersTree modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    /**
+     * 设置变量名。
+     */
+    public void setName(Name name) {
+        this.name = name;
+    }
+
+    /**
+     * 设置接收者名称表达式。
+     */
+    public void setNameExpr(ExpressionTree nameExpr) {
+        this.nameExpr = nameExpr;
+    }
+
+    /**
+     * 设置变量类型。
+     */
+    public void setType(Tree type) {
+        this.type = type;
+    }
+
+    /**
+     * 设置初始化表达式。
+     */
+    public void setInitExpr(ExpressionTree initExpr) {
+        this.initExpr = initExpr;
     }
 
     @Override
@@ -40,7 +103,7 @@ public final class Variable implements VariableTree {
 
         if (kind == VariableKind.PARAMETER) {
             if (modifiers instanceof Modifiers) {
-                ((Modifiers)modifiers).annotationInline = true;
+                ((Modifiers)modifiers).setAnnotationInline(true);
             }
         }
 
@@ -147,14 +210,9 @@ public final class Variable implements VariableTree {
         public Builder modifiers(Modifier... modifiers) {
             Modifiers mods = Modifiers.of(modifiers);
             if (v.modifiers instanceof Modifiers) {
-                mods.annotations.addAll(((Modifiers)v.modifiers).annotations);
+                mods.addAnnotations(((Modifiers)v.modifiers).getAnnotations());
             }
             v.modifiers = mods;
-            return this;
-        }
-
-        public Builder mods(Modifiers modifiers) {
-            v.modifiers = modifiers;
             return this;
         }
 

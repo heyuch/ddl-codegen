@@ -6,7 +6,7 @@ import com.sun.source.doctree.TextTree;
 
 public final class DocCode implements LiteralTree {
 
-    String code;
+    private String code;
 
     public DocCode(String code) {
         this.code = code;

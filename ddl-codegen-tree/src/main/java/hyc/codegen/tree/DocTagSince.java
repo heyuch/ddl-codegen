@@ -10,7 +10,7 @@ import com.sun.source.doctree.SinceTree;
 
 public final class DocTagSince implements SinceTree {
 
-    String since;
+    private String since;
 
     public DocTagSince(String since) {
         this.since = since;

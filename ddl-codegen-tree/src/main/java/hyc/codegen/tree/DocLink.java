@@ -11,8 +11,8 @@ import com.sun.source.doctree.ReferenceTree;
 
 public final class DocLink implements LinkTree {
 
-    ReferenceTree ref;
-    List<? extends DocTree> labels;
+    private ReferenceTree ref;
+    private List<? extends DocTree> labels;
 
     public DocLink(String ref) {
         this(new DocReference(ref), new ArrayList<>());

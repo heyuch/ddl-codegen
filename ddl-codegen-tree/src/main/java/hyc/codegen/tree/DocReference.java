@@ -5,7 +5,7 @@ import com.sun.source.doctree.ReferenceTree;
 
 public final class DocReference implements ReferenceTree {
 
-    String signature;
+    private String signature;
 
     public DocReference(String signature) {
         this.signature = signature;

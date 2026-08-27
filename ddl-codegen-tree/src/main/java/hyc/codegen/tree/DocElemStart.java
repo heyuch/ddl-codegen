@@ -10,9 +10,9 @@ import com.sun.source.doctree.StartElementTree;
 
 public final class DocElemStart implements StartElementTree {
 
-    String name;
-    boolean selfClosing;
-    List<? extends DocTree> attrs;
+    private String name;
+    private boolean selfClosing;
+    private List<? extends DocTree> attrs;
 
     public DocElemStart(String name) {
         this(name, false, new ArrayList<>());

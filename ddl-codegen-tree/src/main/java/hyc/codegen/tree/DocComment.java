@@ -9,14 +9,35 @@ import com.sun.source.doctree.DocTreeVisitor;
 
 public final class DocComment implements DocCommentTree {
 
-    List<DocTree> summary = new ArrayList<>();
+    private List<DocTree> summary = new ArrayList<>();
 
-    List<DocTree> body = new ArrayList<>();
+    private List<DocTree> body = new ArrayList<>();
 
-    List<DocTree> tags = new ArrayList<>();
+    private List<DocTree> tags = new ArrayList<>();
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * 设置首句摘要。
+     */
+    public void setSummary(List<? extends DocTree> summary) {
+        this.summary = new ArrayList<>(summary);
+    }
+
+    /**
+     * 设置正文。
+     */
+    public void setBody(List<? extends DocTree> body) {
+        this.body = new ArrayList<>(body);
+    }
+
+    /**
+     * 设置块标签。
+     */
+    public void setTags(List<? extends DocTree> tags) {
+        this.tags = new ArrayList<>(tags);
     }
 
     @Override

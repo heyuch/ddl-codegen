@@ -11,9 +11,9 @@ import com.sun.source.doctree.ParamTree;
 
 public final class DocTagParam implements ParamTree {
 
-    String name;
-    List<? extends DocTree> descs;
-    boolean typeParameter;
+    private String name;
+    private List<? extends DocTree> descs;
+    private boolean typeParameter;
 
     public DocTagParam(String name, String descs) {
         this(name, Arrays.asList(new DocText(descs)), false);

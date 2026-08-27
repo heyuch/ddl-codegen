@@ -10,7 +10,7 @@ import com.sun.source.doctree.DocTreeVisitor;
 
 public final class DocTagDeprecated implements DeprecatedTree {
 
-    List<? extends DocTree> body;
+    private List<? extends DocTree> body;
 
     public DocTagDeprecated(String desc) {
         this(Arrays.asList(new DocText(desc)));

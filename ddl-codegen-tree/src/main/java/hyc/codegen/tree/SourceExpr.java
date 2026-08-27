@@ -11,9 +11,9 @@ import com.sun.source.tree.TreeVisitor;
 
 public final class SourceExpr implements LiteralTree {
 
-    String code;
+    private String code;
 
-    List<Import> imports = new ArrayList<>();
+    private List<Import> imports = new ArrayList<>();
 
     public SourceExpr(String code) {
         if (code == null) {
@@ -50,6 +50,13 @@ public final class SourceExpr implements LiteralTree {
 
     @Override
     public Object getValue() {
+        return code;
+    }
+
+    /**
+     * 返回原始源码字符串。
+     */
+    public String getCode() {
         return code;
     }
 

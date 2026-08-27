@@ -12,9 +12,9 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public final class Package implements PackageTree {
 
-    List<AnnotationTree> annotations = new ArrayList<>();
+    private List<AnnotationTree> annotations = new ArrayList<>();
 
-    String path;
+    private String path;
 
     public Package(String path) {
         if (path == null) {
@@ -28,6 +28,13 @@ public final class Package implements PackageTree {
             throw new NullPointerException("path is null");
         }
         return new Package(path);
+    }
+
+    /**
+     * 返回包路径。
+     */
+    public String getPath() {
+        return path;
     }
 
     public Package subPackage(String path) {

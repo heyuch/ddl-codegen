@@ -11,11 +11,11 @@ import com.sun.source.doctree.DocTreeVisitor;
 
 public final class DocAttr implements AttributeTree {
 
-    String name;
+    private String name;
 
-    ValueKind valueKind;
+    private ValueKind valueKind;
 
-    List<? extends DocTree> value;
+    private List<? extends DocTree> value;
 
     public DocAttr(String name, String value) {
         this(name, new DocText(value));

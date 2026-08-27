@@ -10,7 +10,7 @@ import com.sun.source.doctree.ReturnTree;
 
 public final class DocTagReturn implements ReturnTree {
 
-    List<? extends DocTree> descs;
+    private List<? extends DocTree> descs;
 
     public DocTagReturn(String desc) {
         this(Arrays.asList(new DocText(desc)));

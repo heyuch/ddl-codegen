@@ -18,13 +18,13 @@ import com.sun.source.tree.TreeVisitor;
 
 public final class CompileUnit implements CompilationUnitTree {
 
-    PackageTree pkg;
+    private PackageTree pkg;
 
-    List<AnnotationTree> pkgAnnotations = new ArrayList<>();
+    private List<AnnotationTree> pkgAnnotations = new ArrayList<>();
 
-    List<ImportTree> imports = new ArrayList<>();
+    private List<ImportTree> imports = new ArrayList<>();
 
-    List<ClassTree> classes = new ArrayList<>();
+    private List<ClassTree> classes = new ArrayList<>();
 
     @Override
     public List<? extends AnnotationTree> getPackageAnnotations() {
@@ -42,8 +42,15 @@ public final class CompileUnit implements CompilationUnitTree {
         return pkg;
     }
 
-    public void setPackage(Package pkg) {
+    public void setPackage(PackageTree pkg) {
         this.pkg = pkg;
+    }
+
+    /**
+     * 添加 import 声明。
+     */
+    public void addImport(ImportTree imp) {
+        this.imports.add(imp);
     }
 
     @Override
@@ -99,7 +106,7 @@ public final class CompileUnit implements CompilationUnitTree {
 
     public void addClass(Class c) {
         if (pkg == null) {
-            pkg = c.pkg;
+            pkg = c.getPkg();
         }
 
         Class exist = getClass(c.getSimpleName());

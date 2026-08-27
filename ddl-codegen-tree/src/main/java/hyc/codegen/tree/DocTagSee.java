@@ -9,7 +9,7 @@ import com.sun.source.doctree.SeeTree;
 
 public final class DocTagSee implements SeeTree {
 
-    List<DocTree> refs;
+    private List<DocTree> refs;
 
     public DocTagSee(List<DocTree> refs) {
         this.refs = new ArrayList<>(refs);

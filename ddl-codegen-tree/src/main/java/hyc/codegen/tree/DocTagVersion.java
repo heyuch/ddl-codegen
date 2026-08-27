@@ -9,7 +9,7 @@ import com.sun.source.doctree.VersionTree;
 
 public final class DocTagVersion implements VersionTree {
 
-    String version;
+    private String version;
 
     public DocTagVersion(String version) {
         this.version = version;

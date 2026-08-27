@@ -8,9 +8,9 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public final class Import implements ImportTree {
 
-    TypeReference type;
+    private TypeReference type;
 
-    boolean isStatic;
+    private boolean isStatic;
 
     public Import(String qname) {
         this(new TypeReference(qname), false);

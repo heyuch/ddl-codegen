@@ -1,6 +1,5 @@
 package hyc.codegen.tree;
 
-import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -21,17 +20,17 @@ class JavadocTreeConverter extends DocTreeScanner<DocTree, Void> {
 
         List<? extends DocTree> summary = node.getFirstSentence();
         if (summary != null) {
-            c.summary = new ArrayList<>(summary);
+            c.setSummary(summary);
         }
 
         List<? extends DocTree> body = node.getBody();
         if (body != null) {
-            c.body = new ArrayList<>(body);
+            c.setBody(body);
         }
 
         List<? extends DocTree> tags = node.getBlockTags();
         if (tags != null) {
-            c.tags = new ArrayList<>(tags);
+            c.setTags(tags);
         }
 
         return c;

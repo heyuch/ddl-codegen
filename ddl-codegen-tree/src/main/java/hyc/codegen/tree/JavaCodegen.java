@@ -76,7 +76,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
             return false;
         }
         if (node instanceof Package) {
-            p.stmt("package ", ((Package)node).path);
+            p.stmt("package ", ((Package)node).getPath());
         } else {
             p.print(node);
         }
@@ -256,7 +256,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     @Override
     public Boolean visitClass(ClassTree node, CodePrinter p) {
         if (node instanceof Class) {
-            DocCommentTree javadoc = ((Class)node).javadoc;
+            DocCommentTree javadoc = ((Class)node).getJavadoc();
             if (javadoc != null) {
                 JavadocCodegen.generate(javadoc, p);
             }
@@ -390,7 +390,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
             return false;
         }
 
-        if (v instanceof Variable && ((Variable)v).kind == VariableKind.ENUM_CONSTANT) {
+        if (v instanceof Variable && ((Variable)v).getVariableKind() == VariableKind.ENUM_CONSTANT) {
             return true;
         }
 
@@ -413,7 +413,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
     public Boolean visitEnumConstants(VariableTree node, CodePrinter p) {
         if (node instanceof Variable) {
-            DocCommentTree javadoc = ((Variable)node).javadoc;
+            DocCommentTree javadoc = ((Variable)node).getJavadoc();
             if (javadoc != null) {
                 JavadocCodegen.generate(javadoc, p);
             }
@@ -442,7 +442,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
         boolean annotationInline = false;
         if (node instanceof Modifiers) {
-            annotationInline = ((Modifiers)node).annotationInline;
+            annotationInline = ((Modifiers)node).isAnnotationInline();
         }
 
         List<? extends AnnotationTree> annotations = node.getAnnotations();
@@ -492,7 +492,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     @Override
     public Boolean visitVariable(VariableTree node, CodePrinter p) {
         if (node instanceof Variable) {
-            DocCommentTree javadoc = ((Variable)node).javadoc;
+            DocCommentTree javadoc = ((Variable)node).getJavadoc();
             if (javadoc != null) {
                 JavadocCodegen.generate(javadoc, p);
             }
@@ -513,7 +513,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
         boolean enumConstant = false;
         if (node instanceof Variable) {
-            enumConstant = ((Variable)node).kind == VariableKind.ENUM_CONSTANT;
+            enumConstant = ((Variable)node).getVariableKind() == VariableKind.ENUM_CONSTANT;
         }
 
         ExpressionTree init = node.getInitializer();
@@ -530,7 +530,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     @Override
     public Boolean visitLiteral(LiteralTree node, CodePrinter p) {
         if (node instanceof SourceExpr) {
-            p.print(((SourceExpr)node).code);
+            p.print(((SourceExpr)node).getCode());
             return true;
         }
 
@@ -605,7 +605,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     public Boolean visitAnnotation(AnnotationTree node, CodePrinter p) {
         if (node instanceof Annotation) {
             Annotation a = (Annotation)node;
-            p.print("@", a.type.name);
+            p.print("@", ((TypeReference)a.getAnnotationType()).getName());
         } else {
             p.print("@", node.getAnnotationType());
         }
@@ -623,7 +623,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     @Override
     public Boolean visitMethod(MethodTree node, CodePrinter p) {
         if (node instanceof Method) {
-            DocCommentTree javadoc = ((Method)node).javadoc;
+            DocCommentTree javadoc = ((Method)node).getJavadoc();
             if (javadoc != null) {
                 JavadocCodegen.generate(javadoc, p);
             }
@@ -683,7 +683,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     }
 
     private Boolean visitSourceBlock(SourceBlock node, CodePrinter p) {
-        String code = node.code;
+        String code = node.getCode();
         if (code == null || code.isEmpty()) {
             return false;
         }

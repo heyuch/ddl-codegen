@@ -10,7 +10,7 @@ import com.sun.source.doctree.DocTreeVisitor;
 
 public final class DocTagAuthor implements AuthorTree {
 
-    String author;
+    private String author;
 
     public DocTagAuthor(String author) {
         this.author = author;

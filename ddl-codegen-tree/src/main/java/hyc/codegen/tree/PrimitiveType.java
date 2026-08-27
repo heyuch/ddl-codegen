@@ -7,7 +7,7 @@ import com.sun.source.tree.TreeVisitor;
 
 public final class PrimitiveType implements PrimitiveTypeTree {
 
-    TypeKind typeKind;
+    private TypeKind typeKind;
 
     public PrimitiveType(TypeKind typeKind) {
         this.typeKind = typeKind;

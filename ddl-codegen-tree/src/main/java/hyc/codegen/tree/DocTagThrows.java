@@ -11,9 +11,9 @@ import com.sun.source.doctree.ThrowsTree;
 
 public final class DocTagThrows implements ThrowsTree {
 
-    ReferenceTree name;
+    private ReferenceTree name;
 
-    List<? extends DocTree> descs;
+    private List<? extends DocTree> descs;
 
     public DocTagThrows(String name, String desc) {
         this(new DocReference(name), Arrays.asList(new DocText(desc)));

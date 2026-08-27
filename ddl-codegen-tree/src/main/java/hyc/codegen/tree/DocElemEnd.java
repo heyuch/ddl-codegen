@@ -7,7 +7,7 @@ import com.sun.source.doctree.EndElementTree;
 
 public final class DocElemEnd implements EndElementTree {
 
-    String name;
+    private String name;
 
     public DocElemEnd(String name) {
         this.name = name;

@@ -13,9 +13,9 @@ import com.sun.source.tree.TreeVisitor;
 
 public final class Annotation implements AnnotationTree {
 
-    TypeReference type;
+    private TypeReference type;
 
-    List<ExpressionTree> arguments;
+    private List<ExpressionTree> arguments;
 
     public Annotation(TypeReference type, List<? extends ExpressionTree> arguments) {
         this.type = type;

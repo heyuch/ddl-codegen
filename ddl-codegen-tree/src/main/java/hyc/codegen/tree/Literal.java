@@ -5,9 +5,9 @@ import com.sun.source.tree.TreeVisitor;
 
 public final class Literal implements LiteralTree {
 
-    Object value;
+    private Object value;
 
-    Kind kind;
+    private Kind kind;
 
     public Literal(Object value, Kind kind) {
         this.value = value;

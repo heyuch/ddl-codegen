@@ -19,27 +19,97 @@ import hyc.codegen.tree.utils.U;
 
 public final class Class implements ClassTree {
 
-    DocComment javadoc;
+    private DocComment javadoc;
 
-    Package pkg;
+    private Package pkg;
 
-    ModifiersTree modifiers;
+    private ModifiersTree modifiers;
 
-    Kind kind;
+    private Kind kind;
 
-    Name name;
+    private Name name;
 
-    List<TypeParameterTree> typeParameters = new ArrayList<>();
+    private List<TypeParameterTree> typeParameters = new ArrayList<>();
 
-    Tree extend;
+    private Tree extend;
 
-    List<Tree> impls = new ArrayList<>();
+    private List<Tree> impls = new ArrayList<>();
 
-    List<VariableTree> fields = new ArrayList<>();
+    private List<VariableTree> fields = new ArrayList<>();
 
-    List<MethodTree> methods = new ArrayList<>();
+    private List<MethodTree> methods = new ArrayList<>();
 
-    List<ClassTree> innerClasses = new ArrayList<>();
+    private List<ClassTree> innerClasses = new ArrayList<>();
+
+    /**
+     * 返回类 javadoc 注释。
+     */
+    public DocComment getJavadoc() {
+        return javadoc;
+    }
+
+    /**
+     * 设置类 javadoc 注释。
+     */
+    public void setJavadoc(DocComment javadoc) {
+        this.javadoc = javadoc;
+    }
+
+    /**
+     * 返回所属包。
+     */
+    public Package getPkg() {
+        return pkg;
+    }
+
+    /**
+     * 设置所属包。
+     */
+    public void setPkg(Package pkg) {
+        this.pkg = pkg;
+    }
+
+    /**
+     * 设置修饰符。
+     */
+    public void setModifiers(ModifiersTree modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    /**
+     * 设置类类型（CLASS/ENUM/INTERFACE）。
+     */
+    public void setKind(Kind kind) {
+        this.kind = kind;
+    }
+
+    /**
+     * 设置类名。
+     */
+    public void setName(Name name) {
+        this.name = name;
+    }
+
+    /**
+     * 设置类型参数。
+     */
+    public void setTypeParameters(List<? extends TypeParameterTree> typeParameters) {
+        this.typeParameters = new ArrayList<>(typeParameters);
+    }
+
+    /**
+     * 设置父类。
+     */
+    public void setExtendsClause(Tree extend) {
+        this.extend = extend;
+    }
+
+    /**
+     * 添加实现接口。
+     */
+    public void addImplements(Tree impl) {
+        this.impls.add(impl);
+    }
 
     @Override
     public ModifiersTree getModifiers() {
@@ -102,7 +172,7 @@ public final class Class implements ClassTree {
     }
 
     public TypeReference getTypeReference() {
-        return new TypeReference(pkg.path, name.toString());
+        return new TypeReference(pkg.getPath(), name.toString());
     }
 
     public void addAnnotation(AnnotationTree a) {
@@ -234,15 +304,10 @@ public final class Class implements ClassTree {
             Modifiers mods = Modifiers.of(modifiers);
             if (c.modifiers != null) {
                 if (c.modifiers instanceof Modifiers) {
-                    mods.annotations.addAll(((Modifiers)c.modifiers).annotations);
+                    mods.addAnnotations(((Modifiers)c.modifiers).getAnnotations());
                 }
             }
             c.modifiers = mods;
-            return this;
-        }
-
-        public Builder mods(Modifiers modifiers) {
-            c.modifiers = modifiers;
             return this;
         }
 
@@ -277,16 +342,16 @@ public final class Class implements ClassTree {
         }
 
         public Builder enumConstant(Variable f) {
-            if (f.kind == null) {
-                f.kind = VariableKind.ENUM_CONSTANT;
+            if (f.getVariableKind() == null) {
+                f.setVariableKind(VariableKind.ENUM_CONSTANT);
             }
             c.fields.add(f);
             return this;
         }
 
         public Builder field(Variable f) {
-            if (f.kind == null) {
-                f.kind = VariableKind.FIELD;
+            if (f.getVariableKind() == null) {
+                f.setVariableKind(VariableKind.FIELD);
             }
             c.addField(f);
             return this;

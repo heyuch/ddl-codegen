@@ -9,7 +9,7 @@ import com.sun.source.tree.TreeVisitor;
 
 public final class SourceBlock implements BlockTree {
 
-    String code;
+    private String code;
 
     public SourceBlock(String code) {
         this.code = code;
@@ -33,6 +33,13 @@ public final class SourceBlock implements BlockTree {
     @Override
     public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
         return visitor.visitBlock(this, data);
+    }
+
+    /**
+     * 返回方法体原始源码字符串。
+     */
+    public String getCode() {
+        return code;
     }
 
     public SourceBlock copy() {

@@ -7,7 +7,7 @@ import com.sun.source.doctree.IdentifierTree;
 
 public final class DocIdent implements IdentifierTree {
 
-    String name;
+    private String name;
 
     public DocIdent(String name) {
         this.name = name;

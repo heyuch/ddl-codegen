@@ -18,19 +18,19 @@ final class ImportCollector {
     static List<Import> collect(Class c) {
         List<Import> imports = new ArrayList<>();
 
-        if (c.modifiers instanceof Modifiers) {
-            imports.addAll(((Modifiers)c.modifiers).getImports());
+        if (c.getModifiers() instanceof Modifiers) {
+            imports.addAll(((Modifiers)c.getModifiers()).getImports());
         }
 
-        addTypeImports(imports, c.extend);
+        addTypeImports(imports, c.getExtendsClause());
 
-        for (Tree impl : c.impls) {
+        for (Tree impl : c.getImplementsClause()) {
             addTypeImports(imports, impl);
         }
 
-        c.fields.forEach(f -> addMemberImports(imports, f));
-        c.methods.forEach(m -> addMemberImports(imports, m));
-        c.innerClasses.forEach(cc -> addMemberImports(imports, cc));
+        for (Tree member : c.getMembers()) {
+            addMemberImports(imports, member);
+        }
 
         return imports;
     }

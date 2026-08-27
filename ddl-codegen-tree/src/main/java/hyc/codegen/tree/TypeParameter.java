@@ -11,11 +11,11 @@ import com.sun.source.tree.TypeParameterTree;
 
 public final class TypeParameter implements TypeParameterTree {
 
-    Name name;
+    private Name name;
 
-    List<Tree> bounds = new ArrayList<>();
+    private List<Tree> bounds = new ArrayList<>();
 
-    List<Annotation> annotations = new ArrayList<>();
+    private List<Annotation> annotations = new ArrayList<>();
 
     public static TypeParameter of(String name) {
         TypeParameter p = new TypeParameter();

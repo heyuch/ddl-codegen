@@ -29,12 +29,14 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
     public Tree visitCompilationUnit(CompilationUnitTree node, TreePath path) {
         CompileUnit u = new CompileUnit();
 
-        u.pkg = node.getPackage();
-        u.imports.addAll(node.getImports());
+        u.setPackage(node.getPackage());
+        for (com.sun.source.tree.ImportTree imp : node.getImports()) {
+            u.addImport(imp);
+        }
 
         for (Tree decl : node.getTypeDecls()) {
-            ClassTree c = (ClassTree)decl.accept(this, TreePath.getPath(path, decl));
-            u.classes.add(c);
+            Class c = (Class)decl.accept(this, TreePath.getPath(path, decl));
+            u.addClass(c);
         }
 
         return u;
@@ -44,13 +46,15 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
     public Tree visitClass(ClassTree node, TreePath path) {
         Class c = new Class();
 
-        c.javadoc = javadocConverter.convert(docs.getDocCommentTree(path));
-        c.modifiers = node.getModifiers();
-        c.kind = node.getKind();
-        c.name = node.getSimpleName();
-        c.typeParameters.addAll(node.getTypeParameters());
-        c.extend = node.getExtendsClause();
-        c.impls.addAll(node.getImplementsClause());
+        c.setJavadoc(javadocConverter.convert(docs.getDocCommentTree(path)));
+        c.setModifiers(node.getModifiers());
+        c.setKind(node.getKind());
+        c.setName(node.getSimpleName());
+        c.setTypeParameters(node.getTypeParameters());
+        c.setExtendsClause(node.getExtendsClause());
+        for (Tree impl : node.getImplementsClause()) {
+            c.addImplements(impl);
+        }
 
         List<? extends Tree> members = node.getMembers();
         for (Tree m : members) {
@@ -60,11 +64,11 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
                 Method method = (Method)mm;
                 Name name = method.getName();
                 if ("<init>".equals(name.toString())) {
-                    method.name = c.getSimpleName();
+                    method.setName(c.getSimpleName());
                 }
             } else if (mm instanceof Variable) {
                 Variable v = (Variable)mm;
-                v.kind = VariableKind.FIELD;
+                v.setVariableKind(VariableKind.FIELD);
             }
 
             c.addMember(mm);
@@ -77,12 +81,12 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
     public Tree visitVariable(VariableTree node, TreePath path) {
         Variable v = new Variable();
 
-        v.javadoc = javadocConverter.convert(docs.getDocCommentTree(path));
-        v.modifiers = node.getModifiers();
-        v.name = node.getName();
-        v.nameExpr = node.getNameExpression();
-        v.type = node.getType();
-        v.initExpr = node.getInitializer();
+        v.setJavadoc(javadocConverter.convert(docs.getDocCommentTree(path)));
+        v.setModifiers(node.getModifiers());
+        v.setName(node.getName());
+        v.setNameExpr(node.getNameExpression());
+        v.setType(node.getType());
+        v.setInitExpr(node.getInitializer());
 
         return v;
     }
@@ -91,19 +95,19 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
     public Tree visitMethod(MethodTree node, TreePath path) {
         Method m = new Method();
 
-        m.javadoc = javadocConverter.convert(docs.getDocCommentTree(path));
-        m.modifiers = node.getModifiers();
-        m.name = node.getName();
-        m.returnType = node.getReturnType();
-        m.typeParameters.addAll(node.getTypeParameters());
+        m.setJavadoc(javadocConverter.convert(docs.getDocCommentTree(path)));
+        m.setModifiers(node.getModifiers());
+        m.setName(node.getName());
+        m.setReturnType(node.getReturnType());
+        m.setTypeParameters(node.getTypeParameters());
         for (VariableTree p : node.getParameters()) {
             Variable pp = (Variable)p.accept(this, TreePath.getPath(path, p));
-            pp.kind = VariableKind.PARAMETER;
-            m.parameters.add(pp);
+            pp.setVariableKind(VariableKind.PARAMETER);
+            m.addParameter(pp);
         }
-        m.receiverParameter = node.getReceiverParameter();
-        m.body = node.getBody();
-        m.defaultValue = node.getDefaultValue();
+        m.setReceiverParameter(node.getReceiverParameter());
+        m.setBody(node.getBody());
+        m.setDefaultValue(node.getDefaultValue());
 
         return m;
     }

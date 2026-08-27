@@ -5,7 +5,7 @@ import com.sun.source.doctree.TextTree;
 
 public final class DocText implements TextTree {
 
-    String body;
+    private String body;
 
     public DocText(String body) {
         this.body = body;

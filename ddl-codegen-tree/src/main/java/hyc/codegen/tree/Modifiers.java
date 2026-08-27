@@ -14,11 +14,11 @@ import com.sun.source.tree.TreeVisitor;
 
 public final class Modifiers implements ModifiersTree {
 
-    Set<Modifier> modifiers;
+    private Set<Modifier> modifiers;
 
-    List<AnnotationTree> annotations = new ArrayList<>();
+    private List<AnnotationTree> annotations = new ArrayList<>();
 
-    boolean annotationInline;
+    private boolean annotationInline;
 
     public Modifiers() {
         this.modifiers = EnumSet.noneOf(Modifier.class);
@@ -31,6 +31,27 @@ public final class Modifiers implements ModifiersTree {
     public static Modifiers of(Modifier... modifiers) {
         List<Modifier> list = Arrays.asList(modifiers);
         return new Modifiers(new HashSet<>(list));
+    }
+
+    /**
+     * 返回注解是否内联打印（同一行）。
+     */
+    public boolean isAnnotationInline() {
+        return annotationInline;
+    }
+
+    /**
+     * 设置注解是否内联打印。
+     */
+    public void setAnnotationInline(boolean annotationInline) {
+        this.annotationInline = annotationInline;
+    }
+
+    public void addAnnotations(java.util.Collection<? extends AnnotationTree> annotations) {
+        if (annotations == null) {
+            return;
+        }
+        this.annotations.addAll(annotations);
     }
 
     public void addAnnotation(AnnotationTree a) {
