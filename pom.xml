@@ -9,6 +9,7 @@
 
     <modules>
         <module>ddl-codegen-tree</module>
+        <module>ddl-codegen-core</module>
     </modules>
 
     <properties>
