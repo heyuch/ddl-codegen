@@ -64,8 +64,14 @@
 
 | 阶段 | 规则 | 触发样例 | 判定 | 备注 |
 |---|---|---|---|---|
-| M0a（迁移） | —（待 worker 报告后填充） | | | |
-| | | | | |
+| M0.1 | `DesignForExtension` | 286 处（全模型/工具类公共方法） | 合理 | final 化消除（仅 Identifier 因被继承保留）；实证：该规则推动的是"final vs javadoc"设计决策，非负担 |
+| M0.1 | `NPathComplexity` | Class.getImports NPath 240（阈值 200） | 合理 | 拆出 ImportCollector 消除，单一职责同时改善 |
+| M0.1 | `VisibilityModifier` | 全部模型类 public 可变字段 | 合理（预期工作） | 全字段私有化 + getter/setter，与风格目标一致 |
+| M0.1 | `ClassFanOutComplexity` | JavaCodegen 41 / JavadocCodegen 25（阈值 20） | **待用户决策** | visitor 分发天然引用大量节点类型；ImportManager 拆分后预计仍 >20（worker 复测中） |
+| M0.1 | 其余度量类（MethodLength/MethodCount/Cyclomatic/NPath 等） | 未触发 | 合理 | 阈值宽松，实测确认 |
+| M0.1 | `VariableDeclarationUsageDistance` | 未触发 | 合理（用户已确认） | — |
+| M0.1 | spotless 配置 | Demo.java 夹具被排除格式化 | 合理（构建配置） | 夹具字节稳定性由 round-trip 断言依赖，排除属合理工程决策，用户可否决 |
+
 
 ## 4. 用户决策区（调整项待定）
 
