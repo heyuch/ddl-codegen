@@ -42,10 +42,6 @@ public final class SourceBlock implements BlockTree {
         return code;
     }
 
-    public SourceBlock copy() {
-        return new SourceBlock(code);
-    }
-
     @Override
     public String toString() {
         return code;

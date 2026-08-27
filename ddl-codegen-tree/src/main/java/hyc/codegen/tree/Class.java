@@ -15,7 +15,7 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.tree.TypeParameterTree;
 import com.sun.source.tree.VariableTree;
-import hyc.codegen.tree.utils.U;
+import hyc.codegen.tree.utils.Names;
 
 public final class Class implements ClassTree {
 
@@ -171,10 +171,6 @@ public final class Class implements ClassTree {
         return ImportCollector.collect(this);
     }
 
-    public TypeReference getTypeReference() {
-        return new TypeReference(pkg.getPath(), name.toString());
-    }
-
     public void addAnnotation(AnnotationTree a) {
         if (a == null) {
             return;
@@ -195,26 +191,12 @@ public final class Class implements ClassTree {
         fields.add(field);
     }
 
-    public void addProperty(VariableTree prop) {
-        addProperty(prop, null, null);
-    }
-
-    public void addProperty(VariableTree prop, @Nullable Consumer<Method> getterFn,
-            @Nullable Consumer<Method> setterFn) {
-        if (prop == null) {
-            return;
-        }
-        addField(prop);
-        addGetter(prop, getterFn);
-        addSetter(prop, setterFn);
-    }
-
     public void addGetter(VariableTree prop, @Nullable Consumer<Method> fn) {
         String propName = String.valueOf(prop.getName());
         Method getter = Method.builder()
                 .modifiers(Modifier.PUBLIC)
                 .returnType(prop.getType())
-                .name("get" + U.capitalize(propName))
+                .name("get" + Names.capitalize(propName))
                 .body("return " + propName + ";")
                 .build();
 
@@ -230,7 +212,7 @@ public final class Class implements ClassTree {
         Method setter = Method.builder()
                 .modifiers(Modifier.PUBLIC)
                 .returnType(Types.VOID)
-                .name("set" + U.capitalize(propName))
+                .name("set" + Names.capitalize(propName))
                 .parameter(Variable.builder()
                         .type(prop.getType())
                         .name(propName)
@@ -354,11 +336,6 @@ public final class Class implements ClassTree {
                 f.setVariableKind(VariableKind.FIELD);
             }
             c.addField(f);
-            return this;
-        }
-
-        public Builder property(VariableTree prop) {
-            c.addProperty(prop);
             return this;
         }
 
