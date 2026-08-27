@@ -80,7 +80,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         }
         if (!isHandled(tree)) {
             // 兜底：未显式建模的节点直接内联输出 javac 源码文本（toString 忠实于源码）
-            p.print(tree.toString());
+            p.write(tree.toString());
             return false;
         }
         return super.scan(tree, p);
@@ -99,11 +99,11 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     @Override
     public Boolean visitCompilationUnit(CompilationUnitTree node, CodePrinter p) {
         if (visitPackage(node.getPackage(), p)) {
-            p.println();
+            p.newline();
         }
 
         ImportManager.print(node.getImports(), node.getPackage(), p, this::visitImport);
-        foreachWith(node.getTypeDecls(), d -> scan(d, p), () -> p.println());
+        foreachWith(node.getTypeDecls(), d -> scan(d, p), () -> p.newline());
 
         return true;
     }
@@ -114,9 +114,9 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
             return false;
         }
         if (node instanceof Package) {
-            p.stmt("package ", ((Package)node).getPath());
+            p.line("package ", ((Package)node).getPath(), ";");
         } else {
-            p.print(node);
+            p.write(node);
         }
         return true;
     }
@@ -143,9 +143,9 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
             return false;
         }
         if (node instanceof Import) {
-            p.stmt(node);
+            p.line(node, ";");
         } else {
-            p.print(node);
+            p.write(node);
         }
         return true;
     }
@@ -161,8 +161,8 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
         printClassHead(node, p);
 
-        p.println(" {");
-        p.println();
+        p.line(" {");
+        p.newline();
         p.indent();
 
         printEnumConstants(node, p);
@@ -171,7 +171,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         printInnerClasses(node, p);
 
         p.undent();
-        p.println("}");
+        p.line("}");
 
         return true;
     }
@@ -184,32 +184,32 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
         Tree.Kind kind = node.getKind();
         if (kind == Tree.Kind.CLASS) {
-            p.print("class ");
+            p.write("class ");
         } else if (kind == Tree.Kind.ENUM) {
-            p.print("enum ");
+            p.write("enum ");
         } else if (kind == Tree.Kind.INTERFACE) {
-            p.print("interface ");
+            p.write("interface ");
         }
 
-        p.print(node.getSimpleName());
+        p.write(node.getSimpleName());
 
         List<? extends TypeParameterTree> typeParameters = node.getTypeParameters();
         if (!typeParameters.isEmpty()) {
-            p.print("<");
-            foreachWith(typeParameters, t -> scan(t, p), () -> p.print(", "));
-            p.print(">");
+            p.write("<");
+            foreachWith(typeParameters, t -> scan(t, p), () -> p.write(", "));
+            p.write(">");
         }
 
         Tree extend = node.getExtendsClause();
         if (extend != null) {
-            p.print(" extends ");
+            p.write(" extends ");
             scan(extend, p);
         }
 
         List<? extends Tree> impls = node.getImplementsClause();
         if (!impls.isEmpty()) {
-            p.print(" implements ");
-            foreachWith(impls, i -> scan(i, p), () -> p.print(", "));
+            p.write(" implements ");
+            foreachWith(impls, i -> scan(i, p), () -> p.write(", "));
         }
     }
 
@@ -225,12 +225,12 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
         for (VariableTree v : constants) {
             visitEnumConstants(v, p);
-            p.println(",");
-            p.println();
+            p.line(",");
+            p.newline();
         }
 
-        p.println(";");
-        p.println();
+        p.line(";");
+        p.newline();
     }
 
     private void printFields(ClassTree node, CodePrinter p) {
@@ -238,8 +238,8 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
         for (Tree field : fields) {
             scan(field, p);
-            p.println(";");
-            p.println();
+            p.line(";");
+            p.newline();
         }
     }
 
@@ -248,7 +248,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
         for (Tree method : methods) {
             scan(method, p);
-            p.println();
+            p.newline();
         }
     }
 
@@ -257,7 +257,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
         for (ClassTree c : classes) {
             scan(c, p);
-            p.println();
+            p.newline();
         }
     }
 
@@ -318,7 +318,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
         visitModifierAnnotations(node.getModifiers(), p);
 
-        p.print(node.getName());
+        p.write(node.getName());
 
         ExpressionTree init = node.getInitializer();
         if (init != null) {
@@ -326,7 +326,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
             if (code.startsWith("new") && code.contains("(")) {
                 code = code.substring(code.indexOf('('));
             }
-            p.print(code);
+            p.write(code);
         }
 
         return false;
@@ -347,9 +347,9 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
             for (AnnotationTree anno : annotations) {
                 scan(anno, p);
                 if (annotationInline) {
-                    p.print(" ");
+                    p.write(" ");
                 } else {
-                    p.println();
+                    p.newline();
                 }
             }
         }
@@ -368,8 +368,8 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         Set<Modifier> flags = node.getFlags();
         if (flags != null) {
             for (Modifier flag : flags) {
-                p.print(flag);
-                p.print(" ");
+                p.write(flag);
+                p.write(" ");
             }
         }
 
@@ -395,14 +395,14 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         if (type != null) {
             if (varargs && type instanceof ArrayTypeTree) {
                 scan(((ArrayTypeTree)type).getType(), p);
-                p.print("...");
+                p.write("...");
             } else {
                 scan(type, p);
-                p.print(" ");
+                p.write(" ");
             }
         }
 
-        p.print(node.getName());
+        p.write(node.getName());
 
         boolean enumConstant = false;
         if (node instanceof Variable) {
@@ -412,7 +412,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         ExpressionTree init = node.getInitializer();
         if (init != null) {
             if (!enumConstant) {
-                p.print(" = ");
+                p.write(" = ");
             }
             scan(init, p);
         }
@@ -423,7 +423,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     @Override
     public Boolean visitArrayType(ArrayTypeTree node, CodePrinter p) {
         scan(node.getType(), p);
-        p.print("[]");
+        p.write("[]");
         return false;
     }
 
@@ -444,7 +444,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     @Override
     public Boolean visitLiteral(LiteralTree node, CodePrinter p) {
         if (node instanceof SourceExpr) {
-            p.print(((SourceExpr)node).getCode());
+            p.write(((SourceExpr)node).getCode());
             return true;
         }
 
@@ -470,7 +470,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
                 value = String.valueOf(node.getValue());
         }
 
-        p.print(value);
+        p.write(value);
 
         return true;
     }
@@ -546,7 +546,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     public Boolean visitPrimitiveType(PrimitiveTypeTree node, CodePrinter p) {
         TypeKind kind = node.getPrimitiveTypeKind();
         String name = kind.name();
-        p.print(name.toLowerCase(Locale.ROOT));
+        p.write(name.toLowerCase(Locale.ROOT));
         return true;
     }
 
@@ -557,9 +557,9 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
         List<? extends Tree> args = node.getTypeArguments();
         if (!args.isEmpty()) {
-            p.print("<");
-            foreachWith(args, arg -> scan(arg, p), () -> p.print(", "));
-            p.print(">");
+            p.write("<");
+            foreachWith(args, arg -> scan(arg, p), () -> p.write(", "));
+            p.write(">");
         }
 
         return true;
@@ -567,7 +567,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
     @Override
     public Boolean visitTypeParameter(TypeParameterTree node, CodePrinter p) {
-        p.print(node.getName());
+        p.write(node.getName());
 
         // 支持 wildcard 和 bounds
         List<? extends Tree> bounds = node.getBounds();
@@ -580,7 +580,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
     @Override
     public Boolean visitIdentifier(IdentifierTree node, CodePrinter p) {
-        p.print(node.getName());
+        p.write(node.getName());
         return false;
     }
 
@@ -588,16 +588,16 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     public Boolean visitAnnotation(AnnotationTree node, CodePrinter p) {
         if (node instanceof Annotation) {
             Annotation a = (Annotation)node;
-            p.print("@", ((TypeReference)a.getAnnotationType()).getName());
+            p.write("@", ((TypeReference)a.getAnnotationType()).getName());
         } else {
-            p.print("@", node.getAnnotationType());
+            p.write("@", node.getAnnotationType());
         }
 
         List<? extends ExpressionTree> args = node.getArguments();
         if (args != null && !args.isEmpty()) {
-            p.print("(");
-            foreachWith(args, arg -> scan(arg, p), () -> p.print(", "));
-            p.print(")");
+            p.write("(");
+            foreachWith(args, arg -> scan(arg, p), () -> p.write(", "));
+            p.write(")");
         }
 
         return true;
@@ -622,18 +622,18 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         Tree returnType = node.getReturnType();
         if (returnType != null) {
             scan(returnType, p);
-            p.print(" ");
+            p.write(" ");
         }
-        p.print(node.getName());
+        p.write(node.getName());
 
         printParameters(node, p);
         printThrows(node, p);
 
         BlockTree body = node.getBody();
         if (body == null) {
-            p.println(";");
+            p.line(";");
         } else {
-            p.print(" ");
+            p.write(" ");
             scan(body, p);
         }
 
@@ -645,25 +645,25 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         if (typeParams == null || typeParams.isEmpty()) {
             return;
         }
-        p.print("<");
-        foreachWith(typeParams, t -> scan(t, p), () -> p.print(", "));
-        p.print("> ");
+        p.write("<");
+        foreachWith(typeParams, t -> scan(t, p), () -> p.write(", "));
+        p.write("> ");
     }
 
     private void printParameters(MethodTree node, CodePrinter p) {
-        p.print("(");
+        p.write("(");
         VariableTree receiver = node.getReceiverParameter();
         if (receiver != null) {
             scan(receiver, p);
             if (!node.getParameters().isEmpty()) {
-                p.print(", ");
+                p.write(", ");
             }
         }
         List<? extends VariableTree> parameters = node.getParameters();
         if (parameters != null && !parameters.isEmpty()) {
-            foreachWith(parameters, v -> scan(v, p), () -> p.print(", "));
+            foreachWith(parameters, v -> scan(v, p), () -> p.write(", "));
         }
-        p.print(")");
+        p.write(")");
     }
 
     private void printThrows(MethodTree node, CodePrinter p) {
@@ -671,17 +671,17 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         if (throwsList == null || throwsList.isEmpty()) {
             return;
         }
-        p.print(" throws ");
-        foreachWith(throwsList, t -> scan(t, p), () -> p.print(", "));
+        p.write(" throws ");
+        foreachWith(throwsList, t -> scan(t, p), () -> p.write(", "));
     }
 
     @Override
     public Boolean visitBlock(BlockTree node, CodePrinter p) {
         if (node.isStatic()) {
-            p.print("static ");
+            p.write("static ");
         }
 
-        p.println("{");
+        p.line("{");
         p.indent();
 
         if (node instanceof SourceBlock) {
@@ -693,7 +693,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         }
 
         p.undent();
-        p.println("}");
+        p.line("}");
 
         return true;
     }
@@ -727,21 +727,21 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         }
 
         int originIndents = leadingSpaces(lines[0]);
-        int shift = p.getIndents() - originIndents;
+        int shift = p.indentSpaces() - originIndents;
 
         for (int i = 0; i < end; i++) {
             String line = lines[i];
             if (line.isEmpty()) {
-                p.printlnRaw(line);
+                p.rawLine(line);
                 continue;
             }
             // javac 某些节点 toString 会带尾随空格（如 switch 的 case 行），统一清理
             line = trimTrailingSpaces(line);
             if (shift >= 0) {
-                p.printSpace(shift);
-                p.printlnRaw(line);
+                p.raw(" ".repeat(shift));
+                p.rawLine(line);
             } else {
-                p.printlnRaw(removeIndents(line, -shift));
+                p.rawLine(removeIndents(line, -shift));
             }
         }
     }

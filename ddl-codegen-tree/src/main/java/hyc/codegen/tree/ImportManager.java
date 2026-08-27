@@ -49,7 +49,7 @@ final class ImportManager {
             for (ImportTree imp : sort(group)) {
                 writer.accept(imp, out);
             }
-            out.println();
+            out.newline();
         }
     }
 

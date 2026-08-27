@@ -101,12 +101,20 @@ public class RoundTripSmokeTest {
                         char next = s.charAt(j);
                         if (inString && next == '\'') {
                             sb.append('\'');      // 字符串内过度转义 \\' → '
+                            i = j;
                         } else if (inChar && next == '"') {
                             sb.append('"');       // 字符字面量内过度转义 \\" → "
+                            i = j;
+                        } else if (next == 'u' && j + 4 < s.length()
+                                && isHexDigit(s.charAt(j + 1)) && isHexDigit(s.charAt(j + 2))
+                                && isHexDigit(s.charAt(j + 3)) && isHexDigit(s.charAt(j + 4))) {
+                            // javac 的 JCLiteral.toString() 把非 ASCII 转义为反斜杠u加四位十六进制序列，解码回裸字符
+                            sb.append((char)Integer.parseInt(s.substring(j + 1, j + 5), 16));
+                            i = j + 4;
                         } else {
                             sb.append('\\').append(next);
+                            i = j;
                         }
-                        i = j;
                     } else {
                         sb.append('\\');
                         i = j - 1;
