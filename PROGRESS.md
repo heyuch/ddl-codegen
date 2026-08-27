@@ -8,9 +8,10 @@
 |---|---|---|---|
 | M0.1 | 模块化 + tree 迁移 + 质量修正 | ✅ 收口 | validate+test 全绿（14/14） |
 | M0b | 保真层四修 + round-trip 断言测试 | ✅ 收口 | validate+test 全绿（16/16）；Demo 字节全等，复杂文件语义等价+幂等 |
-| M0.7 余项 | CodePrinter 重写 / U、Types 命名 / 死代码 / Expr·Block 助手 | 🔄 进行中 | |
-| M1 | core：模型/Druid/语句/注解/config/命名/类型/IO | ⬜ | |
-| M2 | 生成核心：SPI/基类/拦截器/两阶段 + **Expr·Block 助手集成** | ⬜ | |
+| M0.7 余项 | CodePrinter 重写 / U→Names / 死代码 / Expr·Block 助手 | ✅ 收口 | validate+test 全绿（21/21） |
+| M1a | core 模块：SchemaModel/Druid 解析/语句应用/注解体系 | 🔄 进行中 | |
+| M1b | config/命名/类型映射/文件 IO | ⬜ | |
+| M2 | 生成核心：SPI/基类/拦截器/两阶段 | ⬜ | |
 | M3 | 内置生成器 ×7 + golden | ⬜ | |
 | M4 | CLI/报告/--sync/文档/端到端验收 | ⬜ | |
 
