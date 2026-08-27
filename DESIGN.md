@@ -303,11 +303,14 @@ public interface ArtifactInterceptor {
    d. 小 bug：`Method.getTypeParameters()` 等 getter/字段不一致
 3. **生成助手**：`Expr`/`Block` 助手函数集（call/member/ternary/nullSafe/if/for，返回字符串）+
    **import 登记**（方法体字符串引用的类型由助手登记进 import 收集器）
-4. **风格重构**（用户明确要求统一）：
+4. **质量优化**（用户要求按开源项目标准，不达标的旧代码直接优化）：
    - 私有字段 + getter/setter；实现 `com.sun.source.tree` 接口的 getter 保留（契约）
    - builder 只保留 Class/Method/Variable 三个高频 builder，API 签名统一（type/name/annotation/modifiers 四件套一致），其余去散装 builder
    - 防御性拷贝统一（getter 返回集合统一 `new ArrayList<>(field)`）
    - 公共 API 全 javadoc
+   - 命名审查：`U`/`Types` 等无意义类名改名；类组织审查（模型/转换/打印分层清晰）
+   - 拆分 JavaCodegen 的 import 管理为独立类（ImportManager），职责单一
+   - 移除死代码/重复逻辑
 5. **测试**：round-trip golden 测试集（覆盖 varargs/lambda/三元/内部类/泛型/注解参数/throws 的复杂文件）；
    生成侧单元测试迁移转绿
 

@@ -35,12 +35,15 @@
 - [ ] 0.6.3 **import 登记**：助手引用的类型（TypeReference）登记进 import 收集器
 - [ ] 0.6.4 测试：用助手构建 `toEntity` 方法体（new + set + enum 三元转换 + return）
 
-### M0.7 风格重构（用户明确要求）
+### M0.7 质量优化（开源项目标准，用户要求）
 - [ ] 0.7.1 模型类全部私有字段 + getter/setter（接口 getter 保留）
 - [ ] 0.7.2 builder 统一：只留 Class/Method/Variable，API 签名一致（type/name/annotation/modifiers）
 - [ ] 0.7.3 防御性拷贝统一（集合 getter 一律 `new ArrayList<>(field)`）
 - [ ] 0.7.4 公共 API 全 javadoc
-- [ ] 0.7.5 `mvn validate`（spotless/checkstyle）全绿
+- [ ] 0.7.5 命名审查：`U`/`Types` 等无意义类名改名；类组织审查（模型/转换/打印分层清晰）
+- [ ] 0.7.6 拆分 JavaCodegen 的 import 管理为独立类（ImportManager），职责单一
+- [ ] 0.7.7 移除死代码/重复逻辑
+- [ ] 0.7.8 `mvn validate`（spotless/checkstyle）全绿
 
 ### M0.8 golden 测试转正
 - [ ] 0.8.1 round-trip golden 测试集：复杂构造文件（varargs/lambda/三元/内部类/泛型/注解参数/throws）

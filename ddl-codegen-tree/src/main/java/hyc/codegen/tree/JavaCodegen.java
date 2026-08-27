@@ -1,0 +1,770 @@
+package hyc.codegen.tree;
+
+import java.io.Serializable;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import javax.annotation.Nullable;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.type.TypeKind;
+
+import com.sun.source.doctree.DocCommentTree;
+import com.sun.source.tree.AnnotationTree;
+import com.sun.source.tree.BlockTree;
+import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.IdentifierTree;
+import com.sun.source.tree.ImportTree;
+import com.sun.source.tree.LiteralTree;
+import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.ModifiersTree;
+import com.sun.source.tree.NewClassTree;
+import com.sun.source.tree.PackageTree;
+import com.sun.source.tree.ParameterizedTypeTree;
+import com.sun.source.tree.PrimitiveTypeTree;
+import com.sun.source.tree.StatementTree;
+import com.sun.source.tree.Tree;
+import com.sun.source.tree.TypeParameterTree;
+import com.sun.source.tree.VariableTree;
+import com.sun.source.util.TreeScanner;
+import hyc.codegen.tree.utils.CodePrinter;
+
+public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
+
+    public static String generateCode(Tree node) {
+        StringWriter out = new StringWriter();
+        generate(node, out);
+        return out.toString();
+    }
+
+    public static void generate(Tree node, Writer out) {
+        generate(node, new CodePrinter(out));
+    }
+
+    public static void generate(Tree node, CodePrinter out) {
+        JavaCodegen g = new JavaCodegen();
+        g.scan(node, out);
+    }
+
+    @Override
+    public Boolean visitCompilationUnit(CompilationUnitTree node, CodePrinter p) {
+        if (visitPackage(node.getPackage(), p)) {
+            p.println();
+        }
+
+        printImports(node.getImports(), node.getPackage(), p);
+        foreachWith(node.getTypeDecls(), d -> d.accept(this, p), () -> p.println());
+
+        return true;
+    }
+
+    @Override
+    public Boolean visitPackage(PackageTree node, CodePrinter p) {
+        if (node == null) {
+            return false;
+        }
+        if (node instanceof Package) {
+            p.stmt("package ", ((Package)node).path);
+        } else {
+            p.print(node);
+        }
+        return true;
+    }
+
+    private void printImports(List<? extends ImportTree> imports, @Nullable PackageTree pkg, CodePrinter p) {
+        if (imports == null || imports.isEmpty()) {
+            return;
+        }
+
+        List<? extends ImportTree> imps = imports;
+        // 过滤掉不需要显式引入的 package
+        imps = filterImplicitImports(imps, pkg);
+        // 过滤掉重复的 package
+        imps = filterDuplicateImports(imps);
+
+        // 对 package 分组
+        List<List<? extends ImportTree>> groups = groupImports(imps, Arrays.asList("java"));
+
+        for (List<? extends ImportTree> group : groups) {
+            if (group.isEmpty()) {
+                continue;
+            }
+
+            List<? extends ImportTree> sorted = ImportSorter.sort(group);
+            boolean imported = false;
+
+            for (ImportTree imp : sorted) {
+                if (visitImport(imp, p)) {
+                    imported = true;
+                }
+            }
+
+            if (imported) {
+                p.println();
+            }
+        }
+
+    }
+
+    private <T> void foreachWith(Collection<T> items, Consumer<T> fn, Runnable separator) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+
+        List<T> list = new ArrayList<>(items);
+
+        for (int i = 0, size = list.size(); i < size; i++) {
+            T item = list.get(i);
+            fn.accept(item);
+            if (i < size - 1) {
+                separator.run();
+            }
+        }
+    }
+
+    private static List<? extends ImportTree> filterImplicitImports(List<? extends ImportTree> imports,
+            @Nullable PackageTree pkg) {
+        if (imports == null || imports.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<ImportTree> result = new ArrayList<>();
+
+        for (ImportTree imp : imports) {
+            if (!isImplicitImport(imp, pkg)) {
+                result.add(imp);
+            }
+        }
+
+        return result;
+    }
+
+    private static boolean isImplicitImport(ImportTree imp, @Nullable PackageTree pkg) {
+        if (imp == null) {
+            return true;
+        }
+
+        Tree qid = imp.getQualifiedIdentifier();
+        if (qid == null) {
+            return true;
+        }
+        String qname = qid.toString();
+
+        // 过滤的 java.lang 包
+        if (qname.startsWith("java.lang")) {
+            return true;
+        }
+
+        // 过滤掉当前包的 import
+        if (pkg == null) {
+            return false;
+        }
+        ExpressionTree pt = pkg.getPackageName();
+        if (pt == null) {
+            return false;
+        }
+        String currentPkg = pt.toString();
+
+        String[] parts = qname.split("\\.");
+        StringJoiner j = new StringJoiner(".");
+        for (int i = 0; i < parts.length - 1; i++) {
+            j.add(parts[i]);
+        }
+        String importPkg = j.toString();
+
+        return currentPkg.equals(importPkg);
+    }
+
+    private static List<? extends ImportTree> filterDuplicateImports(List<? extends ImportTree> imports) {
+        if (imports == null || imports.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Map<String, ImportTree> map = new HashMap<>();
+
+        for (ImportTree imp : imports) {
+            Tree qid = imp.getQualifiedIdentifier();
+            if (qid != null) {
+                String qname = qid.toString();
+                map.putIfAbsent(qname, imp);
+            }
+        }
+
+        return new ArrayList<>(map.values());
+    }
+
+    private List<List<? extends ImportTree>> groupImports(List<? extends ImportTree> imports, List<String> prefixes) {
+        if (imports == null || imports.isEmpty()) {
+            return Arrays.asList(new ArrayList<>());
+        }
+
+        Map<String, ImportTree> map = new HashMap<>();
+        for (ImportTree imp : imports) {
+            map.putIfAbsent(imp.toString(), imp);
+        }
+
+        List<List<? extends ImportTree>> groups = new ArrayList<>();
+        List<? extends ImportTree> remains = new ArrayList<>(map.values());
+
+        for (String prefix : prefixes) {
+            List<ImportTree> group = new ArrayList<>();
+            for (ImportTree imp : new ArrayList<>(remains)) {
+                Tree qid = imp.getQualifiedIdentifier();
+                String s = qid.toString();
+                if (s.startsWith(prefix)) {
+                    group.add(imp);
+                    remains.remove(imp);
+                }
+            }
+            if (!group.isEmpty()) {
+                groups.add(group);
+            }
+        }
+
+        if (!remains.isEmpty()) {
+            groups.add(new ArrayList<>(remains));
+        }
+
+        return groups;
+    }
+
+    @Override
+    public Boolean visitImport(ImportTree node, CodePrinter p) {
+        if (node == null) {
+            return false;
+        }
+        if (node instanceof Import) {
+            p.stmt(node);
+        } else {
+            p.print(node);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean visitClass(ClassTree node, CodePrinter p) {
+        if (node instanceof Class) {
+            DocCommentTree javadoc = ((Class)node).javadoc;
+            if (javadoc != null) {
+                JavadocCodegen.generate(javadoc, p);
+            }
+        }
+
+        printClassHead(node, p);
+
+        p.println(" {");
+        p.println();
+        p.indent();
+
+        printEnumConstants(node, p);
+        printFields(node, p);
+        printMethods(node, p);
+        printInnerClasses(node, p);
+
+        p.undent();
+        p.println("}");
+
+        return true;
+    }
+
+    private void printClassHead(ClassTree node, CodePrinter p) {
+        ModifiersTree modifiers = node.getModifiers();
+        if (modifiers != null) {
+            modifiers.accept(this, p);
+        }
+
+        Tree.Kind kind = node.getKind();
+        if (kind == Tree.Kind.CLASS) {
+            p.print("class ");
+        } else if (kind == Tree.Kind.ENUM) {
+            p.print("enum ");
+        } else if (kind == Tree.Kind.INTERFACE) {
+            p.print("interface ");
+        }
+
+        p.print(node.getSimpleName());
+
+        List<? extends TypeParameterTree> typeParameters = node.getTypeParameters();
+        if (!typeParameters.isEmpty()) {
+            p.print("<");
+            foreachWith(typeParameters, t -> t.accept(this, p), () -> p.print(", "));
+            p.print(">");
+        }
+
+        Tree extend = node.getExtendsClause();
+        if (extend != null) {
+            p.print(" extends ");
+            extend.accept(this, p);
+        }
+
+        List<? extends Tree> impls = node.getImplementsClause();
+        if (!impls.isEmpty()) {
+            p.print(" implements ");
+            foreachWith(impls, i -> i.accept(this, p), () -> p.print(", "));
+        }
+    }
+
+    private void printEnumConstants(ClassTree node, CodePrinter p) {
+        if (node.getKind() != Tree.Kind.ENUM) {
+            return;
+        }
+
+        List<VariableTree> constants = collectMembers(node, VariableTree.class, m -> isEnumConstant(node, m));
+        if (constants.isEmpty()) {
+            return;
+        }
+
+        for (VariableTree v : constants) {
+            visitEnumConstants(v, p);
+            p.println(",");
+            p.println();
+        }
+
+        p.println(";");
+        p.println();
+    }
+
+    private void printFields(ClassTree node, CodePrinter p) {
+        List<VariableTree> fields = collectMembers(node, VariableTree.class, m -> !isEnumConstant(node, m));
+
+        for (Tree field : fields) {
+            field.accept(this, p);
+            p.println(";");
+            p.println();
+        }
+    }
+
+    private void printMethods(ClassTree node, CodePrinter p) {
+        List<MethodTree> methods = collectMembers(node, MethodTree.class, null);
+
+        for (Tree method : methods) {
+            method.accept(this, p);
+            p.println();
+        }
+    }
+
+    private void printInnerClasses(ClassTree node, CodePrinter p) {
+        List<ClassTree> classes = collectMembers(node, ClassTree.class, null);
+
+        for (ClassTree c : classes) {
+            c.accept(this, p);
+            p.println();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> List<T> collectMembers(ClassTree node, java.lang.Class<T> expected, Predicate<T> filter) {
+        List<? extends Tree> members = node.getMembers();
+        List<T> result = new ArrayList<>();
+
+        for (Tree member : members) {
+            java.lang.Class<? extends Tree> c = member.getClass();
+            if (expected.isAssignableFrom(c)) {
+                if (filter != null) {
+                    if (filter.test((T)member)) {
+                        result.add((T)member);
+                    }
+                } else {
+                    result.add((T)member);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static boolean isEnumConstant(ClassTree c, VariableTree v) {
+        if (c.getKind() != Tree.Kind.ENUM) {
+            return false;
+        }
+
+        if (v instanceof Variable && ((Variable)v).kind == VariableKind.ENUM_CONSTANT) {
+            return true;
+        }
+
+        ModifiersTree mods = v.getModifiers();
+        if (mods == null) {
+            return false;
+        }
+        Set<Modifier> flags = mods.getFlags();
+        if (!flags.contains(Modifier.PUBLIC)
+                || !flags.contains(Modifier.STATIC)
+                || !flags.contains(Modifier.FINAL)) {
+            return false;
+        }
+
+        String className = String.valueOf(c.getSimpleName());
+        String vtype = String.valueOf(v.getType());
+
+        return vtype.equals(className);
+    }
+
+    public Boolean visitEnumConstants(VariableTree node, CodePrinter p) {
+        if (node instanceof Variable) {
+            DocCommentTree javadoc = ((Variable)node).javadoc;
+            if (javadoc != null) {
+                JavadocCodegen.generate(javadoc, p);
+            }
+        }
+
+        visitModifierAnnotations(node.getModifiers(), p);
+
+        p.print(node.getName());
+
+        ExpressionTree init = node.getInitializer();
+        if (init != null) {
+            String code = generateCode(init);
+            if (code.startsWith("new") && code.contains("(")) {
+                code = code.substring(code.indexOf('('));
+            }
+            p.print(code);
+        }
+
+        return false;
+    }
+
+    public Boolean visitModifierAnnotations(ModifiersTree node, CodePrinter p) {
+        if (node == null) {
+            return false;
+        }
+
+        boolean annotationInline = false;
+        if (node instanceof Modifiers) {
+            annotationInline = ((Modifiers)node).annotationInline;
+        }
+
+        List<? extends AnnotationTree> annotations = node.getAnnotations();
+        if (annotations != null && !annotations.isEmpty()) {
+            for (AnnotationTree anno : annotations) {
+                anno.accept(this, p);
+                if (annotationInline) {
+                    p.print(" ");
+                } else {
+                    p.println();
+                }
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public Boolean visitNewClass(NewClassTree node, CodePrinter p) {
+        p.print("new ", node.getIdentifier());
+        p.print("(");
+        List<? extends ExpressionTree> args = node.getArguments();
+        foreachWith(args, arg -> arg.accept(this, p), () -> p.print(", "));
+        p.print(")");
+        return true;
+    }
+
+    @Override
+    public Boolean visitModifiers(ModifiersTree node, CodePrinter p) {
+        if (node == null) {
+            return false;
+        }
+
+        visitModifierAnnotations(node, p);
+
+        Set<Modifier> flags = node.getFlags();
+        if (flags != null) {
+            for (Modifier flag : flags) {
+                p.print(flag);
+                p.print(" ");
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public Boolean visitVariable(VariableTree node, CodePrinter p) {
+        if (node instanceof Variable) {
+            DocCommentTree javadoc = ((Variable)node).javadoc;
+            if (javadoc != null) {
+                JavadocCodegen.generate(javadoc, p);
+            }
+        }
+
+        ModifiersTree modifiers = node.getModifiers();
+        if (modifiers != null) {
+            modifiers.accept(this, p);
+        }
+
+        Tree type = node.getType();
+        if (type != null) {
+            type.accept(this, p);
+            p.print(" ");
+        }
+
+        p.print(node.getName());
+
+        boolean enumConstant = false;
+        if (node instanceof Variable) {
+            enumConstant = ((Variable)node).kind == VariableKind.ENUM_CONSTANT;
+        }
+
+        ExpressionTree init = node.getInitializer();
+        if (init != null) {
+            if (!enumConstant) {
+                p.print(" = ");
+            }
+            init.accept(this, p);
+        }
+
+        return false;
+    }
+
+    @Override
+    public Boolean visitLiteral(LiteralTree node, CodePrinter p) {
+        if (node instanceof SourceExpr) {
+            p.print(((SourceExpr)node).code);
+            return true;
+        }
+
+        String value;
+        Tree.Kind kind = node.getKind();
+
+        switch (kind) {
+            case LONG_LITERAL:
+                value = String.format("%sL", node.getValue());
+                break;
+            case STRING_LITERAL:
+                value = String.format("\"%s\"", node.getValue());
+                break;
+            case CHAR_LITERAL:
+                value = String.format("'%s'", node.getValue());
+                break;
+            case FLOAT_LITERAL:
+                value = String.format("%sf", node.getValue());
+                break;
+            default:
+                value = String.valueOf(node.getValue());
+        }
+
+        p.print(value);
+
+        return true;
+    }
+
+    @Override
+    public Boolean visitPrimitiveType(PrimitiveTypeTree node, CodePrinter p) {
+        TypeKind kind = node.getPrimitiveTypeKind();
+        String name = kind.name();
+        p.print(name.toLowerCase(Locale.ROOT));
+        return true;
+    }
+
+    @Override
+    public Boolean visitParameterizedType(ParameterizedTypeTree node, CodePrinter p) {
+        Tree type = node.getType();
+        type.accept(this, p);
+
+        List<? extends Tree> args = node.getTypeArguments();
+        if (!args.isEmpty()) {
+            p.print("<");
+            foreachWith(args, arg -> arg.accept(this, p), () -> p.print(", "));
+            p.print(">");
+        }
+
+        return true;
+    }
+
+    @Override
+    public Boolean visitTypeParameter(TypeParameterTree node, CodePrinter p) {
+        p.print(node.getName());
+
+        // 支持 wildcard 和 bounds
+        List<? extends Tree> bounds = node.getBounds();
+        if (!bounds.isEmpty()) {
+            bounds.forEach(b -> b.accept(this, p));
+        }
+
+        return true;
+    }
+
+    @Override
+    public Boolean visitIdentifier(IdentifierTree node, CodePrinter p) {
+        p.print(node.getName());
+        return false;
+    }
+
+    @Override
+    public Boolean visitAnnotation(AnnotationTree node, CodePrinter p) {
+        if (node instanceof Annotation) {
+            Annotation a = (Annotation)node;
+            p.print("@", a.type.name);
+        } else {
+            p.print("@", node.getAnnotationType());
+        }
+
+        List<? extends ExpressionTree> args = node.getArguments();
+        if (args != null && !args.isEmpty()) {
+            p.print("(");
+            foreachWith(args, arg -> arg.accept(this, p), () -> p.print(", "));
+            p.print(")");
+        }
+
+        return true;
+    }
+
+    @Override
+    public Boolean visitMethod(MethodTree node, CodePrinter p) {
+        if (node instanceof Method) {
+            DocCommentTree javadoc = ((Method)node).javadoc;
+            if (javadoc != null) {
+                JavadocCodegen.generate(javadoc, p);
+            }
+        }
+
+        ModifiersTree modifiers = node.getModifiers();
+        if (modifiers != null) {
+            modifiers.accept(this, p);
+        }
+
+        Tree returnType = node.getReturnType();
+        if (returnType != null) {
+            returnType.accept(this, p);
+            p.print(" ");
+        }
+        p.print(node.getName());
+
+        p.print("(");
+        List<? extends VariableTree> parameters = node.getParameters();
+        if (parameters != null && !parameters.isEmpty()) {
+            foreachWith(parameters, v -> v.accept(this, p), () -> p.print(", "));
+        }
+        p.print(")");
+
+        BlockTree body = node.getBody();
+        if (body == null) {
+            p.println(";");
+        } else {
+            p.print(" ");
+            body.accept(this, p);
+        }
+
+        return true;
+    }
+
+    @Override
+    public Boolean visitBlock(BlockTree node, CodePrinter p) {
+        if (node.isStatic()) {
+            p.print("static ");
+        }
+
+        p.println("{");
+        p.indent();
+
+        if (node instanceof SourceBlock) {
+            visitSourceBlock((SourceBlock)node, p);
+        } else {
+            for (StatementTree stmt : node.getStatements()) {
+                p.println(stmt);
+            }
+        }
+
+        p.undent();
+        p.println("}");
+
+        return true;
+    }
+
+    private Boolean visitSourceBlock(SourceBlock node, CodePrinter p) {
+        String code = node.code;
+        if (code == null || code.isEmpty()) {
+            return false;
+        }
+
+        int originIndents = 0;
+        for (int i = 0; i < code.length(); i++) {
+            char c = code.charAt(i);
+            if (c != ' ') {
+                originIndents = i;
+                break;
+            }
+        }
+
+        int currentIndents = p.getIndents();
+
+        if (currentIndents > originIndents) {
+            int adds = currentIndents - originIndents;
+            String[] lines = code.split(System.lineSeparator());
+            for (String line : lines) {
+                p.printSpace(adds);
+                p.printlnRaw(line);
+            }
+        } else if (currentIndents < originIndents) {
+            int removal = originIndents - currentIndents;
+            String[] lines = code.split(System.lineSeparator());
+            for (String line : lines) {
+                String trimmed = removeIndents(line, removal);
+                p.printlnRaw(trimmed);
+            }
+        } else {
+            String[] lines = code.split(System.lineSeparator());
+            for (String line : lines) {
+                p.printlnRaw(line);
+            }
+        }
+
+        return true;
+    }
+
+    private String removeIndents(String line, int removal) {
+        if (line == null || line.isEmpty()) {
+            return line;
+        }
+
+        for (int i = 0; i < removal; i++) {
+            if (line.charAt(i) != ' ') {
+                return line.substring(i);
+            }
+        }
+
+        return line.substring(removal);
+    }
+
+    static class ImportSorter implements Comparator<ImportTree>, Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        public static List<? extends ImportTree> sort(List<? extends ImportTree> imports) {
+            if (imports == null || imports.isEmpty()) {
+                return imports;
+            }
+
+            List<ImportTree> sorted = new ArrayList<>(imports);
+            sorted.sort(new ImportSorter());
+
+            return sorted;
+        }
+
+        @Override
+        public int compare(ImportTree o1, ImportTree o2) {
+            String s1 = o1.toString();
+            if (s1 == null) {
+                return 1;
+            }
+            String s2 = o2.toString();
+            if (s2 == null) {
+                return -1;
+            }
+            return s1.compareTo(s2);
+        }
+
+    }
+
+}

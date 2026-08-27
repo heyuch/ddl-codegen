@@ -131,3 +131,11 @@ mvn versions:display-plugin-updates
 - Package-private fields are acceptable for internal classes
 - Keep classes focused: single responsibility principle
 - Limit method length; extract helper methods when needed
+
+## Quality Bar（开源项目标准）
+
+- 代码按开源项目标准编写：命名传达意图（不用 `U`/`Tmp` 这类无名工具类名）、类小而聚焦、包按职责组织、公共 API 最小化（不暴露无需暴露的）
+- 复用旧代码：质量不达标直接优化，不机械照搬；迁移即改进
+- 本项目同时是学习材料：结构清晰、命名优雅、注释解释 WHY 而非 WHAT
+- 静态检查是硬门槛：spotless/checkstyle/error-prone/checkerframework 报错按提示修复（规则考察见 `STATIC-RULES-REVIEW.md`）
+
