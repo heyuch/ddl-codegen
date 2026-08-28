@@ -12,6 +12,8 @@
 | M1a | core 模块：SchemaModel/Druid 解析/语句应用/注解体系 | ✅ 收口 | validate+test 全绿（27/27）；Druid 怪癖清单已记录 |
 | M1b | config/命名/类型映射/文件 IO | ✅ 收口 | validate+test 全绿（56/56）；修复：保留字含 SQL 保留字、方法名补 By、config 顺序保持 |
 | M2 | 生成核心：SPI/基类 reconcile/拦截器/两阶段/编排 | ✅ 收口 | validate+test 全绿（64/64）；生命周期测试通过（create→alter→drop→rename→用户代码保留）；修复 tree 三处 addAnnotation 丢失注解 bug + Modifiers 空集崩溃 + 转换器 modifiers 模型化 |
+| M3 | 内置生成器 ×8 + 端到端验收 | ✅ 收口 | validate+test 全绿（63/63）；EndToEndTest 覆盖 @type/@as/@ignore/索引/拦截器全链路 |
+| M4 | CLI/报告/README/收尾 | ✅ 收口 | CLI 冒烟验证：create/幂等/dry-run/alter/用户代码保留/drop 全部通过 |
 | M3 | 内置生成器 ×7 + golden | ⬜ | |
 | M4 | CLI/报告/--sync/文档/端到端验收 | ⬜ | |
 
@@ -23,4 +25,17 @@
 
 ## 阶段详情
 
-（每阶段完成后补：worker 摘要 / 我的复核结论 / 异常与处理）
+- **M0.1** 模块化 + tree 迁移：14/14 → M0b 保真层：16/16 → M0.7 质量（CodePrinter 四件套/Names/Expr·Block）：21/21
+- **M1a** SchemaModel/Druid/注解：27/27（Druid 怪癖清单见 worker 报告，已固化到代码注释）
+- **M1b** config/命名/类型/IO：56/56（保留字含 SQL 保留字、方法名补 By、config 顺序保持）
+- **M2** 生成核心（reconcile/拦截器/编排）：64/64（生命周期测试：create→alter→drop→rename→用户代码保留）
+- **M3** 内置生成器 ×8 + EndToEndTest：63/63（@type/@as/@ignore/索引拆分/拦截器全链路）
+- **M4** CLI + README：CLI 冒烟全通过（create/幂等/dry-run/alter/用户代码保留/drop）
+
+## 已知限制（留给后续）
+
+- `--sync` 未实现（需要文件归属标记才能对账磁盘，见 DESIGN §4）
+- enum 列失去 enum 类型后旧枚举文件不自动清理（shouldGenerate=false 只删当前类名文件）
+- merge 时删除成员不清理其 import（保守策略：不删可能被用户代码引用的 import）
+- ALTER COLUMN SET/DROP DEFAULT、FK/CHECK、分区、FULLTEXT/SPATIAL 索引 → warning 跳过（M1a 已记录）
+- 方法体引用类型的 import 由生成器显式登记（Expr 助手无状态，见 PROGRESS 决策）

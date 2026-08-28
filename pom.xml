@@ -10,6 +10,7 @@
     <modules>
         <module>ddl-codegen-tree</module>
         <module>ddl-codegen-core</module>
+        <module>ddl-codegen-cli</module>
     </modules>
 
     <properties>

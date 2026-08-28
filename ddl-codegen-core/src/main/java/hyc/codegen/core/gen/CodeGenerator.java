@@ -13,6 +13,7 @@ import hyc.codegen.core.interceptor.ArtifactInterceptor;
 import hyc.codegen.core.io.ChangeReport;
 import hyc.codegen.core.io.ChangeStatus;
 import hyc.codegen.core.io.FileWriter;
+import hyc.codegen.core.io.PathResolver;
 import hyc.codegen.core.model.Schema;
 import hyc.codegen.core.model.Table;
 import hyc.codegen.core.naming.NamingService;
@@ -83,8 +84,12 @@ public final class CodeGenerator {
             deleteArtifacts(root, rename.getFrom(), gctx);
         }
 
-        // CREATE/MODIFY/RENAME 目标：逐 artifact 生成
+        // CREATE/MODIFY/RENAME 目标：逐 artifact 生成（跳过已删除的表）
+        List<String> dropped = result.getDroppedTables();
         for (String tableName : result.getAffectedTables()) {
+            if (dropped.contains(tableName)) {
+                continue;
+            }
             Table table = schema.getTable(tableName);
             if (table == null) {
                 gctx.warning("受影响表不存在于模型中: " + tableName);
@@ -93,6 +98,9 @@ public final class CodeGenerator {
             generateTable(table, gctx);
         }
 
+        for (String warning : gctx.getWarnings()) {
+            report.addWarning(warning);
+        }
         return report;
     }
 
@@ -109,7 +117,7 @@ public final class CodeGenerator {
         }
     }
 
-    /** 删除一张表在所有启用 artifact 路径下的文件。 */
+    /** 删除一张表在所有启用 artifact 路径下的文件（Java 类走 package 路径，XML 走资源路径）。 */
     private void deleteArtifacts(Path root, String tableName, GenerationContext gctx) {
         for (String kind : gctx.getConfig().artifactKinds()) {
             ArtifactGenerator generator = generators.get(kind);
@@ -117,14 +125,23 @@ public final class CodeGenerator {
                 continue;
             }
             TableContext ctx = gctx.tableContext(syntheticTable(tableName), kind);
+            Path file;
+            if (ctx.getArtifactConfig().getPath() != null) {
+                String mapperName = gctx.getNaming().artifactClassName(tableName, "mybatisMapper");
+                file = PathResolver.xmlFile(root, ctx.getArtifactConfig().getModule(),
+                        ctx.getArtifactConfig().getPath(), mapperName + ".xml");
+            } else {
+                file = PathResolver.javaFile(root, ctx.getArtifactConfig().getModule(),
+                        ctx.getArtifactConfig().getPkg(), ctx.className());
+            }
             try {
-                if (FileWriter.deleteIfExists(ctx.javaFile(root))) {
+                if (FileWriter.deleteIfExists(file)) {
                     gctx.getReport()
-                            .add(ctx.javaFile(root), ChangeStatus.DELETED,
+                            .add(file, ChangeStatus.DELETED,
                                     kind + " " + ctx.className() + "（表 " + tableName + " 已删除/改名）");
                 }
             } catch (java.io.IOException e) {
-                throw new IllegalStateException("删除文件失败: " + ctx.javaFile(root), e);
+                throw new IllegalStateException("删除文件失败: " + file, e);
             }
         }
     }

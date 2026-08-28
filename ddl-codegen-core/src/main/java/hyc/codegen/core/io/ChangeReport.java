@@ -12,6 +12,8 @@ public final class ChangeReport {
 
     private final List<Entry> entries = new ArrayList<>();
 
+    private final List<String> warnings = new ArrayList<>();
+
     public void add(Path path, ChangeStatus status) {
         add(path, status, null);
     }
@@ -23,6 +25,16 @@ public final class ChangeReport {
     /** 变更条目（防御性拷贝）。 */
     public List<Entry> getEntries() {
         return new ArrayList<>(entries);
+    }
+
+    /** 记一条警告（不中断）。 */
+    public void addWarning(String message) {
+        warnings.add(message);
+    }
+
+    /** 本次执行的警告（防御性拷贝）。 */
+    public List<String> getWarnings() {
+        return new ArrayList<>(warnings);
     }
 
     /** 是否存在真实变更（排除 UNCHANGED）。 */

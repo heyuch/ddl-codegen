@@ -56,8 +56,10 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
 
         CompileUnit existingCu = parse(file);
         Class target;
+        CompileUnit cu;
         if (existingCu == null) {
             target = fresh;
+            cu = new CompileUnit();
         } else {
             Class existingClass = existingCu.getClass(className);
             if (existingClass == null) {
@@ -67,11 +69,14 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
                 reconcile(existingClass, fresh);
                 target = existingClass;
             }
+            // 复用原 CU：保留用户 import；包与类以 config 为准（addClass 会替换同名类）
+            existingCu.setPackage(hyc.codegen.tree.Package.of(ctx.packageName()));
+            target.setPkg(hyc.codegen.tree.Package.of(ctx.packageName()));
+            cu = existingCu;
         }
 
         gctx.applyInterceptors(target, ctx);
 
-        CompileUnit cu = new CompileUnit();
         cu.addClass(target);
         for (hyc.codegen.tree.Import imp : extraImports(ctx, gctx)) {
             cu.addImport(imp);

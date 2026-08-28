@@ -11,8 +11,19 @@ import java.util.Arrays;
  */
 public final class FileWriter {
 
+    private static boolean dryRun;
+
     private FileWriter() {
         throw new AssertionError("no instances");
+    }
+
+    /** 开启/关闭 dry-run（计算状态但不落盘，CLI --dry-run 使用）。 */
+    public static void setDryRun(boolean dryRun) {
+        FileWriter.dryRun = dryRun;
+    }
+
+    public static boolean isDryRun() {
+        return dryRun;
     }
 
     /**
@@ -33,6 +44,9 @@ public final class FileWriter {
             }
         }
 
+        if (dryRun) {
+            return existed ? ChangeStatus.UPDATED : ChangeStatus.CREATED;
+        }
         Path parent = file.getParent();
         if (parent != null) {
             Files.createDirectories(parent);
