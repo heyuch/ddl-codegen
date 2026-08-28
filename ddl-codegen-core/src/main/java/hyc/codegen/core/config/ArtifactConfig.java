@@ -94,6 +94,12 @@ public final class ArtifactConfig {
         return new LinkedHashMap<>(options);
     }
 
+    /** 取一个额外选项；未配置返回 null。 */
+    @Nullable
+    public String getOption(String key) {
+        return options.get(key);
+    }
+
     public void putOption(String key, String value) {
         options.put(key, value);
     }

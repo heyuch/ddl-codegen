@@ -1,0 +1,159 @@
+package hyc.codegen.core.gen;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import javax.lang.model.element.Modifier;
+
+import hyc.codegen.core.config.ArtifactConfig;
+import hyc.codegen.core.config.DdlConfig;
+import hyc.codegen.core.ddl.ApplyResult;
+import hyc.codegen.core.ddl.DdlParser;
+import hyc.codegen.core.ddl.DruidDdlParser;
+import hyc.codegen.core.ddl.StatementApplier;
+import hyc.codegen.core.io.ChangeReport;
+import hyc.codegen.core.model.Column;
+import hyc.codegen.core.model.Schema;
+import hyc.codegen.tree.Class;
+import hyc.codegen.tree.TypeReference;
+import hyc.codegen.tree.Variable;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * 成员级 reconcile 生命周期测试：create → alter（增/删/改类型）→ 用户代码保留 → drop。
+ */
+class ReconcileLifecycleTest {
+
+    @TempDir
+    Path temp;
+
+    /** 测试生成器：把每列生成为一个 private 字段（类型走 TypeMapper）。 */
+    static final class TestGenerator extends AbstractJavaArtifactGenerator {
+
+        @Override
+        public String kind() {
+            return "test";
+        }
+
+        @Override
+        protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
+            for (Column column : ctx.columns()) {
+                builder.field(Variable.builder()
+                        .modifiers(Modifier.PRIVATE)
+                        .type(new TypeReference(ctx.typeOf(column)))
+                        .name(ctx.fieldName(column))
+                        .build());
+            }
+        }
+
+    }
+
+    private DdlConfig config() {
+        DdlConfig config = new DdlConfig();
+        config.setRoot(temp);
+        ArtifactConfig artifact = new ArtifactConfig("test");
+        artifact.setModule("");
+        artifact.setPkg("com.test");
+        config.addArtifact(artifact);
+        return config;
+    }
+
+    private ChangeReport generate(DdlConfig config, Schema schema, String ddl) {
+        DdlParser parser = new DruidDdlParser();
+        ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
+        CodeGenerator generator = new CodeGenerator(Collections.singletonList(new TestGenerator()),
+                Collections.emptyList());
+        return generator.generate(config, schema, result, Collections.emptyList());
+    }
+
+    private String content() throws Exception {
+        return new String(Files.readAllBytes(temp.resolve("com/test/User.java")), StandardCharsets.UTF_8);
+    }
+
+    private boolean fileExists() {
+        return Files.isRegularFile(temp.resolve("com/test/User.java"));
+    }
+
+    @Test
+    void createThenAlterThenDrop() throws Exception {
+        DdlConfig config = config();
+
+        // create
+        Schema schema = new Schema();
+        String create = "create table user (id bigint primary key, name varchar(50) not null comment '用户名')";
+        generate(config, schema, create);
+        assertTrue(fileExists());
+        String created = content();
+        assertTrue(created.contains("private Long id"));
+        assertTrue(created.contains("private String name"));
+        assertTrue(created.contains("@Generated"));
+        assertTrue(created.contains("class User"));
+
+        // alter add column
+        String alter = "alter table user add column email varchar(100) comment '邮箱'";
+        generate(config, schema, alter);
+        String afterAdd = content();
+        assertTrue(afterAdd.contains("private String email"));
+        assertTrue(created.contains("private String name"));
+
+        // 幂等：同样输入重跑 → 无变化
+        String rerun = content();
+
+        // alter drop column
+        String dropColumn = "alter table user drop column name";
+        generate(config, schema, dropColumn);
+        String afterDrop = content();
+        assertFalse(afterDrop.contains("private String name"));
+        assertTrue(afterDrop.contains("private String email"));
+
+        // 类型变化：email varchar → bigint
+        String changeType = "alter table user modify column email bigint";
+        generate(config, schema, changeType);
+        String afterType = content();
+        assertTrue(afterType.contains("private Long email"));
+        assertFalse(afterType.contains("private String email"));
+
+        // drop table
+        String dropTable = "drop table user";
+        generate(config, schema, dropTable);
+        assertFalse(fileExists());
+    }
+
+    @Test
+    void userWrittenMembersArePreserved() throws Exception {
+        DdlConfig config = config();
+        Schema schema = new Schema();
+        generate(config, schema, "create table user (id bigint primary key)");
+
+        // 用户手写一个方法（模拟用户编辑）
+        Path file = temp.resolve("com/test/User.java");
+        String userMethod = "\n    /** 用户手写方法 */\n    public String hello() {\n        return \"hi\";\n    }\n";
+        String edited = content().replace("}", userMethod + "}");
+        Files.write(file, edited.getBytes(StandardCharsets.UTF_8));
+
+        // alter 增加列 → 用户方法必须保留
+        generate(config, schema, "alter table user add column name varchar(50)");
+        String after = content();
+        assertTrue(after.contains("public String hello()"));
+        assertTrue(after.contains("return \"hi\";"));
+        assertTrue(after.contains("private String name"));
+    }
+
+    @Test
+    void renameTableMovesFiles() throws Exception {
+        DdlConfig config = config();
+        Schema schema = new Schema();
+        generate(config, schema, "create table user (id bigint primary key)");
+        assertTrue(fileExists());
+
+        generate(config, schema, "alter table user rename to account");
+        assertFalse(fileExists());
+        assertTrue(Files.isRegularFile(temp.resolve("com/test/Account.java")));
+    }
+
+}

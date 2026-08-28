@@ -1,12 +1,15 @@
 package hyc.codegen.tree;
 
+import java.util.HashSet;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.lang.model.element.Name;
 
 import com.sun.source.tree.ArrayTypeTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.DocTrees;
@@ -18,6 +21,16 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
     final JavadocTreeConverter javadocConverter = new JavadocTreeConverter();
 
     DocTrees docs;
+
+    /** 把 javac 的 ModifiersTree 统一转为可变模型（保留注解与修饰符；已是模型则原样返回）。 */
+    private static Modifiers toModelModifiers(@Nullable ModifiersTree node) {
+        if (node == null || node instanceof Modifiers) {
+            return (Modifiers)node;
+        }
+        Modifiers mods = new Modifiers(new HashSet<>(node.getFlags()));
+        mods.addAnnotations(node.getAnnotations());
+        return mods;
+    }
 
     CompileUnit convert(CompilationUnitTree unit, DocTrees docs) {
         this.docs = docs;
@@ -48,7 +61,7 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
         Class c = new Class();
 
         c.setJavadoc(javadocConverter.convert(docs.getDocCommentTree(path)));
-        c.setModifiers(node.getModifiers());
+        c.setModifiers(toModelModifiers(node.getModifiers()));
         c.setKind(node.getKind());
         c.setName(node.getSimpleName());
         c.setTypeParameters(node.getTypeParameters());
@@ -83,7 +96,7 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
         Variable v = new Variable();
 
         v.setJavadoc(javadocConverter.convert(docs.getDocCommentTree(path)));
-        v.setModifiers(node.getModifiers());
+        v.setModifiers(toModelModifiers(node.getModifiers()));
         v.setName(node.getName());
         v.setNameExpr(node.getNameExpression());
         v.setType(node.getType());
@@ -97,7 +110,7 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
         Method m = new Method();
 
         m.setJavadoc(javadocConverter.convert(docs.getDocCommentTree(path)));
-        m.setModifiers(node.getModifiers());
+        m.setModifiers(toModelModifiers(node.getModifiers()));
         m.setName(node.getName());
         m.setReturnType(node.getReturnType());
         m.setTypeParameters(node.getTypeParameters());

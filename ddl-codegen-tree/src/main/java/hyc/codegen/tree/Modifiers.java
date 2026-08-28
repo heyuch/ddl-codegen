@@ -25,7 +25,7 @@ public final class Modifiers implements ModifiersTree {
     }
 
     public Modifiers(Set<Modifier> modifiers) {
-        this.modifiers = EnumSet.copyOf(modifiers);
+        this.modifiers = modifiers.isEmpty() ? EnumSet.noneOf(Modifier.class) : EnumSet.copyOf(modifiers);
     }
 
     public static Modifiers of(Modifier... modifiers) {
@@ -59,6 +59,14 @@ public final class Modifiers implements ModifiersTree {
             return;
         }
         annotations.add(a);
+    }
+
+    /** 按注解类型名移除注解（类型名含包名或简单名均可）；存在返回 true。 */
+    public boolean removeAnnotation(String typeName) {
+        return annotations.removeIf(a -> {
+            String name = String.valueOf(a.getAnnotationType());
+            return name.equals(typeName) || name.endsWith("." + typeName);
+        });
     }
 
     @Override

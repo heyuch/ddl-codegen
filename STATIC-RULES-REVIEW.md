@@ -71,6 +71,7 @@
 | M0.1 | 其余度量类（MethodLength/MethodCount/Cyclomatic/NPath 等） | 未触发 | 合理 | 阈值宽松，实测确认 |
 | M0.1 | `VariableDeclarationUsageDistance` | 未触发 | 合理（用户已确认） | — |
 | M0.1 | spotless 配置 | Demo.java 夹具被排除格式化 | 合理（构建配置） | 夹具字节稳定性由 round-trip 断言依赖，排除属合理工程决策，用户可否决 |
+| M2 | `ClassMemberImpliedModifier` vs `RedundantModifier` | 嵌套 enum：加 static 被后者报"多余"，不加被前者报"应显式"——**两条规则在嵌套 enum 上互相矛盾** | 规则矛盾 | 规避：顶层 enum（ChangeStatus），同时被 FileWriter/ChangeReport 共用；记录待用户决策（候选：ClassMemberImpliedModifier 加 exclude，或接受矛盾改代码风格） |
 
 
 ## 4. 用户决策区（调整项待定）

@@ -147,6 +147,24 @@ public final class Class implements ClassTree {
         return members;
     }
 
+    /** 字段列表（防御性拷贝；存储元素均为 {@link Variable} 模型实例）。 */
+    public List<Variable> getFields() {
+        List<Variable> result = new ArrayList<>();
+        for (VariableTree field : fields) {
+            result.add((Variable)field);
+        }
+        return result;
+    }
+
+    /** 方法列表（防御性拷贝；存储元素均为 {@link Method} 模型实例）。 */
+    public List<Method> getMethods() {
+        List<Method> result = new ArrayList<>();
+        for (MethodTree method : methods) {
+            result.add((Method)method);
+        }
+        return result;
+    }
+
     public void addMember(Tree member) {
         if (member instanceof VariableTree) {
             fields.add((VariableTree)member);
@@ -176,10 +194,17 @@ public final class Class implements ClassTree {
             return;
         }
 
-        if (modifiers instanceof Modifiers) {
+        if (modifiers == null) {
+            Modifiers mod = new Modifiers();
+            mod.addAnnotation(a);
+            modifiers = mod;
+        } else if (modifiers instanceof Modifiers) {
             ((Modifiers)modifiers).addAnnotation(a);
         } else {
-            Modifiers mod = new Modifiers();
+            // 非模型 ModifiersTree（如解析出的 javac 节点）：复制现有注解与修饰符到模型容器，避免丢失
+            Modifiers mod = new Modifiers(modifiers.getFlags());
+            mod.addAnnotations(new ArrayList<>(modifiers.getAnnotations()));
+            mod.addAnnotation(a);
             modifiers = mod;
         }
     }
@@ -189,6 +214,11 @@ public final class Class implements ClassTree {
             return;
         }
         fields.add(field);
+    }
+
+    /** 移除指定字段（按实例相等）；存在返回 true。 */
+    public boolean removeField(VariableTree field) {
+        return fields.remove(field);
     }
 
     public void addGetter(VariableTree prop, @Nullable Consumer<Method> fn) {
@@ -232,6 +262,11 @@ public final class Class implements ClassTree {
             return;
         }
         this.methods.add(method);
+    }
+
+    /** 移除指定方法（按实例相等）；存在返回 true。 */
+    public boolean removeMethod(MethodTree method) {
+        return methods.remove(method);
     }
 
     public static Builder builder() {

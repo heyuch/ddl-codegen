@@ -182,10 +182,17 @@ public final class Variable implements VariableTree {
             return;
         }
 
-        if (modifiers instanceof Modifiers) {
+        if (modifiers == null) {
+            Modifiers mod = new Modifiers();
+            mod.addAnnotation(a);
+            this.modifiers = mod;
+        } else if (modifiers instanceof Modifiers) {
             ((Modifiers)modifiers).addAnnotation(a);
         } else {
-            Modifiers mod = new Modifiers();
+            // 非模型 ModifiersTree（如解析出的 javac 节点）：复制现有注解与修饰符到模型容器，避免丢失
+            Modifiers mod = new Modifiers(modifiers.getFlags());
+            mod.addAnnotations(new ArrayList<>(modifiers.getAnnotations()));
+            mod.addAnnotation(a);
             this.modifiers = mod;
         }
     }

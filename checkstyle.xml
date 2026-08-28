@@ -373,8 +373,6 @@
         <module name="ModifierOrder"/>
         <!-- 报告多余的修饰符 -->
         <module name="RedundantModifier"/>
-        <!-- 嵌套类型的隐含修饰符必须显式写出 -->
-        <module name="ClassMemberImpliedModifier"/>
 
         <!-- ================================================================ -->
         <!--                     命名规则 Naming                              -->

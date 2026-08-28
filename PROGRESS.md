@@ -10,8 +10,8 @@
 | M0b | 保真层四修 + round-trip 断言测试 | ✅ 收口 | validate+test 全绿（16/16）；Demo 字节全等，复杂文件语义等价+幂等 |
 | M0.7 余项 | CodePrinter 重写 / U→Names / 死代码 / Expr·Block 助手 | ✅ 收口 | validate+test 全绿（21/21） |
 | M1a | core 模块：SchemaModel/Druid 解析/语句应用/注解体系 | ✅ 收口 | validate+test 全绿（27/27）；Druid 怪癖清单已记录 |
-| M1b | config/命名/类型映射/文件 IO | 🔄 进行中 | |
-| M2 | 生成核心：SPI/基类/拦截器/两阶段 | ⬜ | |
+| M1b | config/命名/类型映射/文件 IO | ✅ 收口 | validate+test 全绿（56/56）；修复：保留字含 SQL 保留字、方法名补 By、config 顺序保持 |
+| M2 | 生成核心：SPI/基类 reconcile/拦截器/两阶段/编排 | ✅ 收口 | validate+test 全绿（64/64）；生命周期测试通过（create→alter→drop→rename→用户代码保留）；修复 tree 三处 addAnnotation 丢失注解 bug + Modifiers 空集崩溃 + 转换器 modifiers 模型化 |
 | M3 | 内置生成器 ×7 + golden | ⬜ | |
 | M4 | CLI/报告/--sync/文档/端到端验收 | ⬜ | |
 
