@@ -30,13 +30,17 @@ public final class TableContext {
 
     private final TypeMapper types;
 
+    @Nullable
+    private final String enumPackage;
+
     TableContext(Table table, String artifactKind, ArtifactConfig artifactConfig,
-            NamingService naming, TypeMapper types) {
+            NamingService naming, TypeMapper types, @Nullable String enumPackage) {
         this.table = table;
         this.artifactKind = artifactKind;
         this.artifactConfig = artifactConfig;
         this.naming = naming;
         this.types = types;
+        this.enumPackage = enumPackage;
     }
 
     public Table getTable() {
@@ -51,8 +55,12 @@ public final class TableContext {
         return artifactConfig;
     }
 
-    /** 类名（基类名 + 该 artifact 配置的后缀）。 */
+    /** 类名（基类名 + 该 artifact 配置的后缀；表注释 {@code @as} 可整体覆盖基类名）。 */
     public String className() {
+        Object as = table.getMeta().get("as");
+        if (as != null) {
+            return as + artifactConfig.getSuffix();
+        }
         return naming.artifactClassName(table.getName(), artifactKind);
     }
 
@@ -76,9 +84,24 @@ public final class TableContext {
         return naming.columnFieldName(column.getName());
     }
 
-    /** 列 → Java 类型（按 artifact 解析，含 @type 覆盖）。 */
+    /**
+     * 列 → Java 类型（按 artifact 解析）：实体链（entity/repository/repositoryImpl/converter）的
+     * enum 列返回枚举类全限定名（含 {@code @as} 覆盖）；其余视图走 {@link TypeMapper}（enum→String 等）。
+     */
     public String typeOf(Column column) {
+        if (!column.getEnumValues().isEmpty() && isEntityView(artifactKind)) {
+            String name = enumClassName(column);
+            return enumPackage == null ? name : enumPackage + "." + name;
+        }
         return types.resolveType(table.getName(), column, artifactKind);
+    }
+
+    /** 实体链视图（enum 列用枚举类）。 */
+    private static boolean isEntityView(String artifactKind) {
+        return "entity".equals(artifactKind)
+                || "repository".equals(artifactKind)
+                || "repositoryImpl".equals(artifactKind)
+                || "converter".equals(artifactKind);
     }
 
     /** 列 → MyBatis jdbcType。 */
@@ -91,8 +114,12 @@ public final class TableContext {
         return naming.indexMethodName(index);
     }
 
-    /** enum 列 → 枚举类名（按命名策略）。 */
+    /** enum 列 → 枚举类名（列注释 {@code @as} 优先，否则按命名策略）。 */
     public String enumClassName(Column column) {
+        Object as = column.getMeta().get("as");
+        if (as != null) {
+            return as.toString();
+        }
         return naming.enumClassName(table.getName(), column.getName());
     }
 

@@ -182,7 +182,9 @@ public final class Method implements MethodTree {
         }
 
         if (returnType instanceof TypeReference) {
-            imports.add(((TypeReference)returnType).getImport());
+            if (((TypeReference)returnType).getPkg() != null) {
+                imports.add(((TypeReference)returnType).getImport());
+            }
         } else if (returnType instanceof ParameterizedType) {
             imports.addAll(((ParameterizedType)returnType).getImports());
         }

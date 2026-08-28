@@ -161,7 +161,9 @@ public final class Variable implements VariableTree {
         List<Import> imports = new ArrayList<>();
 
         if (type instanceof TypeReference) {
-            imports.add(((TypeReference)type).getImport());
+            if (((TypeReference)type).getPkg() != null) {
+                imports.add(((TypeReference)type).getImport());
+            }
         } else if (type instanceof ParameterizedType) {
             imports.addAll(((ParameterizedType)type).getImports());
         }

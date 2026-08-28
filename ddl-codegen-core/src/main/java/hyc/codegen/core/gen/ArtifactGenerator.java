@@ -12,4 +12,7 @@ public interface ArtifactGenerator {
     /** artifact 类型名，对应 config {@code artifacts.<kind>}。 */
     String kind();
 
+    /** 生成/更新该表该 artifact 的文件（Java 类走 {@link AbstractJavaArtifactGenerator}，XML 等走自有实现）。 */
+    void generate(TableContext ctx, GenerationContext gctx);
+
 }

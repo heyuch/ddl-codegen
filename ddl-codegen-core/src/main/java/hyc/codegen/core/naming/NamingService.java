@@ -2,6 +2,7 @@ package hyc.codegen.core.naming;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -83,12 +84,17 @@ public final class NamingService {
 
     /** 索引 → 查询方法名：前缀 + By + 列 camelCase 以 And 连接（name,gender → findByNameAndGender）。 */
     public String indexMethodName(Index index) {
+        return indexMethodName(index.getColumns());
+    }
+
+    /** 列序列 → 查询方法名（最左前缀拆分时使用）。 */
+    public String indexMethodName(List<String> columns) {
         StringBuilder sb = new StringBuilder(config.getMethodPrefix()).append("By");
-        for (int i = 0; i < index.getColumns().size(); i++) {
+        for (int i = 0; i < columns.size(); i++) {
             if (i > 0) {
                 sb.append("And");
             }
-            sb.append(upperFirst(toCamelCase(index.getColumns().get(i))));
+            sb.append(upperFirst(toCamelCase(columns.get(i))));
         }
         return sb.toString();
     }

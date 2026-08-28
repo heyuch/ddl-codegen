@@ -38,24 +38,14 @@ class TypeMapperTest {
     }
 
     @Test
-    void entityEnumColumnMapsToEnumClass() {
+    void entityEnumColumnAlsoStringInTypeMapper() {
+        // enum 类解析已移到 TableContext（含 @as 与 enum 包名）；TypeMapper 对 enum 列一律 String
         Column c = Column.builder()
                 .name("gender")
                 .sqlType("enum")
                 .enumValues(Arrays.asList("male", "female"))
                 .build();
-        assertEquals("Gender", mapper.resolveType("user", c, "entity"));
-    }
-
-    @Test
-    void entityEnumColumnTableColumnStyle() {
-        config.setEnumStyle("tableColumn");
-        Column c = Column.builder()
-                .name("gender")
-                .sqlType("enum")
-                .enumValues(Arrays.asList("male", "female"))
-                .build();
-        assertEquals("UserGender", mapper.resolveType("user", c, "entity"));
+        assertEquals("java.lang.String", mapper.resolveType("user", c, "entity"));
     }
 
     @Test

@@ -324,7 +324,11 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         if (init != null) {
             String code = generateCode(init);
             if (code.startsWith("new") && code.contains("(")) {
+                // new Foo(x) → (x)
                 code = code.substring(code.indexOf('('));
+            } else if (!code.startsWith("(")) {
+                // 裸值（如字符串字面量）→ (value)
+                code = "(" + code + ")";
             }
             p.write(code);
         }

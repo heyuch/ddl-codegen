@@ -158,6 +158,10 @@ public final class PropertiesConfigLoader implements ConfigLoader {
                 config.addCustomAnnotationHandler(handler);
             }
         }
+        String nullable = props.getProperty("annotations.nullable");
+        if (nullable != null && !nullable.trim().isEmpty()) {
+            config.setNullableAnnotation(nullable.trim());
+        }
     }
 
     private static boolean boolValue(Properties props, String key, boolean defaultValue) {

@@ -102,23 +102,25 @@ public final class TypeMapper {
 
     /**
      * 列 → Java 类型（全限定名或原样返回的简单名）。
+     * <p>
+     * 解析顺序：{@code @type}（entity）> enum 列 → String（POJO 固定视图，enum 类由 TableContext 解析）>
+     * SQL→Java 基础类型 > 自定义处理器钩子。
      *
-     * @param tableName    所属表名（enum 类命名需要）
+     * @param tableName    所属表名
      * @param column       目标列
-     * @param artifactKind artifact 类型（entity 用枚举类，其余用 String 视图）
+     * @param artifactKind artifact 类型
      */
     public String resolveType(String tableName, Column column, String artifactKind) {
-        // 1. @type 注解（内置，最高优先：复用已有类型，不生成、不校验存在）
-        Object type = column.getMeta().get("type");
-        if (type != null) {
-            return type.toString();
+        // 1. @type 注解（仅 entity 视图：复用已有类型，不生成、不校验存在；POJO 保持固定基础类型）
+        if ("entity".equals(artifactKind)) {
+            Object type = column.getMeta().get("type");
+            if (type != null) {
+                return type.toString();
+            }
         }
 
-        // 2. enum 列：entity → 枚举类；pojo 等 → String（POJO 固定基础类型视图）
+        // 2. enum 列：POJO 等视图固定 String（entity 视图的枚举类由 TableContext#typeOf 解析）
         if (!column.getEnumValues().isEmpty()) {
-            if (isEnumArtifact(artifactKind)) {
-                return naming.enumClassName(tableName, column.getName());
-            }
             return "java.lang.String";
         }
 
@@ -130,11 +132,6 @@ public final class TypeMapper {
             javaType = handler.resolveType(column, javaType);
         }
         return javaType;
-    }
-
-    /** 哪些 artifact 用枚举类视图（当前仅 entity；其余一律 String，POJO 固定映射不进 config）。 */
-    private static boolean isEnumArtifact(String artifactKind) {
-        return "entity".equals(artifactKind);
     }
 
     /**

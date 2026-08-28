@@ -50,7 +50,9 @@ public final class ParameterizedType implements ParameterizedTypeTree {
 
         for (Tree arg : typeArguments) {
             if (arg instanceof TypeReference) {
-                imports.add(((TypeReference)arg).getImport());
+                if (((TypeReference)arg).getPkg() != null) {
+                    imports.add(((TypeReference)arg).getImport());
+                }
             } else if (arg instanceof ParameterizedType) {
                 imports.addAll(((ParameterizedType)arg).getImports());
             } else if (arg instanceof TypeParameter) {

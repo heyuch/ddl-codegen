@@ -105,11 +105,7 @@ public final class CodeGenerator {
                 continue;
             }
             TableContext ctx = gctx.tableContext(table, kind);
-            if (generator instanceof AbstractJavaArtifactGenerator) {
-                ((AbstractJavaArtifactGenerator)generator).generate(ctx, gctx);
-            } else {
-                gctx.warning("生成器未继承 AbstractJavaArtifactGenerator，暂不支持: " + kind);
-            }
+            generator.generate(ctx, gctx);
         }
     }
 

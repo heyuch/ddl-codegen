@@ -78,7 +78,9 @@ public final class TypeParameter implements TypeParameterTree {
 
         for (Tree bound : bounds) {
             if (bound instanceof TypeReference) {
-                imports.add(((TypeReference)bound).getImport());
+                if (((TypeReference)bound).getPkg() != null) {
+                    imports.add(((TypeReference)bound).getImport());
+                }
             }
         }
 

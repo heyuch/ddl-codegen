@@ -2,12 +2,15 @@ package hyc.codegen.core.gen;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import javax.lang.model.element.Modifier;
 
 import com.sun.source.tree.VariableTree;
 import hyc.codegen.core.io.ChangeStatus;
 import hyc.codegen.core.io.FileWriter;
+import hyc.codegen.core.io.PathResolver;
 import hyc.codegen.tree.Class;
 import hyc.codegen.tree.CompileUnit;
 import hyc.codegen.tree.JavaCodegen;
@@ -48,7 +51,8 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
     protected void generateClass(TableContext ctx, GenerationContext gctx, String className,
             java.util.function.Consumer<Class.Builder> builderFn) {
         Class fresh = buildFresh(ctx, gctx, className, builderFn);
-        File file = ctx.javaFile(gctx.getProjectRoot()).toFile();
+        File file = PathResolver.javaFile(gctx.getProjectRoot(),
+                ctx.getArtifactConfig().getModule(), ctx.packageName(), className).toFile();
 
         CompileUnit existingCu = parse(file);
         Class target;
@@ -69,8 +73,18 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
 
         CompileUnit cu = new CompileUnit();
         cu.addClass(target);
+        for (hyc.codegen.tree.Import imp : extraImports(ctx, gctx)) {
+            cu.addImport(imp);
+        }
         String code = JavaCodegen.generateCode(cu);
-        writeFile(ctx, gctx, code);
+        writeFile(file.toPath(), ctx, gctx, code, className);
+    }
+
+    /**
+     * 额外 import（方法体字符串引用的类型不会自动收集，由子类在此显式登记，见 PROGRESS.md 决策）。
+     */
+    protected List<hyc.codegen.tree.Import> extraImports(TableContext ctx, GenerationContext gctx) {
+        return java.util.Collections.emptyList();
     }
 
     /** artifact 类型名（对应 config {@code artifacts.<kind>}）。 */
@@ -90,7 +104,8 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
             java.util.function.Consumer<Class.Builder> builderFn) {
         Class.Builder builder = Class.builder()
                 .name(className)
-                .pkg(ctx.packageName());
+                .pkg(ctx.packageName())
+                .modifiers(Modifier.PUBLIC);
         builderFn.accept(builder);
         Class fresh = builder.build();
         markGenerated(fresh);
@@ -192,7 +207,7 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
         return String.valueOf(field.getType());
     }
 
-    /** 方法签名：返回类型 + 参数类型序列。 */
+    /** 方法签名：返回类型 + 参数类型序列 + 方法体（空白归一化，体变更也能触发替换）。 */
     private String signature(Method method) {
         StringBuilder sb = new StringBuilder();
         if (method.getReturnType() != null) {
@@ -203,6 +218,10 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
             sb.append(p.getType()).append(',');
         }
         sb.append(')');
+        if (method.getBody() != null) {
+            sb.append(':')
+                    .append(method.getBody().toString().replaceAll("\\s+", " "));
+        }
         return sb.toString();
     }
 
@@ -230,19 +249,17 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
         }
     }
 
-    private void writeFile(TableContext ctx, GenerationContext gctx, String code) {
+    private void writeFile(Path file, TableContext ctx, GenerationContext gctx, String code, String className) {
         try {
-            ChangeStatus status = FileWriter.writeIfChanged(ctx.javaFile(gctx.getProjectRoot()), code);
-            gctx.getReport()
-                    .add(ctx.javaFile(gctx.getProjectRoot()), status,
-                            ctx.getArtifactKind() + " " + ctx.className());
+            ChangeStatus status = FileWriter.writeIfChanged(file, code);
+            gctx.getReport().add(file, status, ctx.getArtifactKind() + " " + className);
         } catch (IOException e) {
-            throw new IllegalStateException("写文件失败: " + ctx.javaFile(gctx.getProjectRoot()), e);
+            throw new IllegalStateException("写文件失败: " + file, e);
         }
     }
 
     /** 不再需要该文件时删除（drop 的删除由 CodeGenerator 处理，此处处理 shouldGenerate=false 的清理）。 */
-    private void deleteIfExists(TableContext ctx, GenerationContext gctx) {
+    protected void deleteIfExists(TableContext ctx, GenerationContext gctx) {
         try {
             if (FileWriter.deleteIfExists(ctx.javaFile(gctx.getProjectRoot()))) {
                 gctx.getReport()

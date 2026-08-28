@@ -37,7 +37,10 @@ final class ImportCollector {
 
     private static void addTypeImports(List<Import> imports, Tree type) {
         if (type instanceof TypeReference) {
-            imports.add(((TypeReference)type).getImport());
+            TypeReference tr = (TypeReference)type;
+            if (tr.getPkg() != null) {
+                imports.add(tr.getImport());
+            }
         } else if (type instanceof ParameterizedType) {
             imports.addAll(((ParameterizedType)type).getImports());
         }

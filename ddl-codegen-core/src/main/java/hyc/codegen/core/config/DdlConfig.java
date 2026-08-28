@@ -33,6 +33,17 @@ public final class DdlConfig {
     // ---- 自定义注解处理器（annotations.custom）----
     private final List<String> customAnnotationHandlers = new ArrayList<>();
 
+    /** {@code @Nullable} 注解全限定名（默认 javax.annotation.Nullable，config {@code annotations.nullable} 可配）。 */
+    private String nullableAnnotation = "javax.annotation.Nullable";
+
+    public String getNullableAnnotation() {
+        return nullableAnnotation;
+    }
+
+    public void setNullableAnnotation(String nullableAnnotation) {
+        this.nullableAnnotation = nullableAnnotation;
+    }
+
     public Path getRoot() {
         return root;
     }

@@ -81,11 +81,32 @@ public final class GenerationContext {
         return report;
     }
 
+    /** 某 artifact 类的全限定名（包 + 类名；未启用报错）。 */
+    public String artifactFqn(String tableName, String artifactKind) {
+        ArtifactConfig artifactConfig = config.artifact(artifactKind)
+                .orElseThrow(() -> new IllegalStateException("未启用 artifact: " + artifactKind));
+        return artifactConfig.getPkg() + "." + naming.artifactClassName(tableName, artifactKind);
+    }
+
+    /** PO 类型全限定名：pojo 启用 → pojo 类；否则回退 entity（DESIGN：mapper 直连 entity）。 */
+    public String poType(String tableName) {
+        String kind = config.artifact("pojo").isPresent() ? "pojo" : "entity";
+        return artifactFqn(tableName, kind);
+    }
+
+    /** Entity 类型全限定名。 */
+    public String entityType(String tableName) {
+        return artifactFqn(tableName, "entity");
+    }
+
     /** 按 artifact 配置创建表上下文。 */
     public TableContext tableContext(Table table, String artifactKind) {
         ArtifactConfig artifactConfig = config.artifact(artifactKind)
                 .orElseThrow(() -> new IllegalStateException("未启用 artifact: " + artifactKind));
-        return new TableContext(table, artifactKind, artifactConfig, naming, typeMapper);
+        String enumPackage = config.artifact("enum")
+                .map(a -> a.getPkg())
+                .orElse(null);
+        return new TableContext(table, artifactKind, artifactConfig, naming, typeMapper, enumPackage);
     }
 
     /** 某 artifact 配置的拦截器链（按 use 顺序解析；未注册的名字记 warning 跳过）。 */
