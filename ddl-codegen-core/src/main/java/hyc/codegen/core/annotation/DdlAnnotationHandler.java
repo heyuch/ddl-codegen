@@ -2,6 +2,7 @@ package hyc.codegen.core.annotation;
 
 import java.util.Set;
 
+import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Meta;
 
 /**
@@ -26,5 +27,20 @@ public interface DdlAnnotationHandler {
      * @param value 注解值；无值的注解（如 {@code @ignore}）为 {@code null}
      */
     void parse(Meta meta, String value);
+
+    /**
+     * 类型解析钩子（默认透传）：自定义注解可在类型映射阶段改写列的默认 Java 类型。
+     * <p>
+     * 调用时机在 {@code @type} 注解与 enum 映射之后（DESIGN §8 解析顺序第 3 步之后），
+     * 因此内置语义始终优先；本钩子只供自定义注解参与类型决策。
+     *
+     * @param column      目标列
+     * @param defaultType 默认解析出的类型（全限定名或简单名）
+     * 
+     * @return 最终类型
+     */
+    default String resolveType(Column column, String defaultType) {
+        return defaultType;
+    }
 
 }
