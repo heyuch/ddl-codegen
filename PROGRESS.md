@@ -32,6 +32,20 @@
 - **M3** 内置生成器 ×8 + EndToEndTest：63/63（@type/@as/@ignore/索引拆分/拦截器全链路）
 - **M4** CLI + README：CLI 冒烟全通过（create/幂等/dry-run/alter/用户代码保留/drop）
 
+## PIT 变异测试（2026-08 引入）
+
+运行：`JAVA_HOME=... mvn org.pitest:pitest-maven:mutationCoverage -pl ddl-codegen-core -Dmaven.compiler-plugin.debug=true`（约 1 分钟）
+
+- **首轮 817 变异，杀死 604，73%**；补测后 74%
+- **实际价值：是。** PIT 抓到的真缺口（行覆盖率看不到）：
+  1. 方法级 reconcile（reconcileMethods）从未被测试——TestGenerator 只生成字段 → 已补（ReconcileLifecycleTest 增加 describe() 方法 + 断言）
+  2. merge 路径的包/import 保留未断言 → 已补（package com.test 断言 + 幂等断言）
+  3. ALTER ADD INDEX 的注解处理路径未测试 → 已补（DruidDdlParserTest.addIndexWithIgnoreAnnotation）
+- **剩余存活变异分类**：
+  - MapperXmlGenerator 50%：e2e 用 contains() 子串断言，XML 结构内部变异（stripTrailingComma/边界条件）杀不死——改为结构断言/全文 golden 可进一步提升
+  - POJO getter/record、System.Logger 调用、防御性代码 → 噪声（可用 mutator 分组/排除配置过滤）
+- 建议：核心逻辑类（gen/ddl 包）可设 PIT 门槛（如 ≥70%），XML 生成器待 golden 化后再纳入
+
 ## 已知限制（留给后续）
 
 - `--sync` 未实现（需要文件归属标记才能对账磁盘，见 DESIGN §4）

@@ -4,11 +4,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import hyc.codegen.core.model.Column;
+import hyc.codegen.core.model.Index;
 import hyc.codegen.core.model.Table;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -94,6 +96,18 @@ class DruidDdlParserTest {
 
         assertNull(table.getColumn("id").getMeta().getString("type"));
         assertEquals("t_x", table.getName());
+    }
+
+    @Test
+    void addIndexWithIgnoreAnnotation() {
+        // PIT 抓到的缺口：ALTER ADD INDEX 的注解处理路径未被测试
+        String ddl = "ALTER TABLE t_user ADD INDEX idx_name (name) COMMENT '@ignore'";
+        List<DdlOperation> ops = parser.parse(ddl);
+
+        assertEquals(1, ops.size());
+        assertTrue(ops.get(0) instanceof AddIndexOp);
+        Index index = ((AddIndexOp)ops.get(0)).getIndex();
+        assertNotNull(index.getMeta().get("ignore"), "索引注释 @ignore 应被解析");
     }
 
     @Test

@@ -21,18 +21,21 @@ import hyc.codegen.tree.Variable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * 成员级 reconcile 生命周期测试：create → alter（增/删/改类型）→ 用户代码保留 → drop。
+ * <p>
+ * 覆盖字段与方法两级 reconcile（PIT 变异测试曾抓出方法级 reconcile 未被测试）。
  */
 class ReconcileLifecycleTest {
 
     @TempDir
     Path temp;
 
-    /** 测试生成器：把每列生成为一个 private 字段（类型走 TypeMapper）。 */
+    /** 测试生成器：每列一个 private 字段 + 一个由表名驱动的 describe() 方法（覆盖方法级 reconcile）。 */
     static final class TestGenerator extends AbstractJavaArtifactGenerator {
 
         @Override
@@ -49,6 +52,12 @@ class ReconcileLifecycleTest {
                         .name(ctx.fieldName(column))
                         .build());
             }
+            builder.method(hyc.codegen.tree.Method.builder()
+                    .modifiers(Modifier.PUBLIC)
+                    .returnType(new TypeReference("java.lang.String"))
+                    .name("describe")
+                    .body("return \"" + ctx.getTable().getName() + "\";")
+                    .build());
         }
 
     }
@@ -89,20 +98,25 @@ class ReconcileLifecycleTest {
         generate(config, schema, create);
         assertTrue(fileExists());
         String created = content();
+        assertTrue(created.contains("package com.test;"), created);
         assertTrue(created.contains("private Long id"));
         assertTrue(created.contains("private String name"));
         assertTrue(created.contains("@Generated"));
+        assertTrue(created.contains("public String describe()"), created);
         assertTrue(created.contains("class User"));
 
-        // alter add column
+        // alter add column：字段/方法级 reconcile + 包保留（PIT 抓到的缺口）
         String alter = "alter table user add column email varchar(100) comment '邮箱'";
         generate(config, schema, alter);
         String afterAdd = content();
+        assertTrue(afterAdd.contains("package com.test;"), afterAdd);
         assertTrue(afterAdd.contains("private String email"));
-        assertTrue(created.contains("private String name"));
+        assertTrue(afterAdd.contains("private String name"));
+        assertTrue(afterAdd.contains("public String describe()"), afterAdd);
 
         // 幂等：同样输入重跑 → 无变化
-        String rerun = content();
+        generate(config, schema, alter);
+        assertEquals(afterAdd, content(), "同输入重跑应无变化");
 
         // alter drop column
         String dropColumn = "alter table user drop column name";
@@ -110,6 +124,7 @@ class ReconcileLifecycleTest {
         String afterDrop = content();
         assertFalse(afterDrop.contains("private String name"));
         assertTrue(afterDrop.contains("private String email"));
+        assertTrue(afterDrop.contains("public String describe()"), afterDrop);
 
         // 类型变化：email varchar → bigint
         String changeType = "alter table user modify column email bigint";
@@ -130,10 +145,12 @@ class ReconcileLifecycleTest {
         Schema schema = new Schema();
         generate(config, schema, "create table user (id bigint primary key)");
 
-        // 用户手写一个方法（模拟用户编辑）
+        // 用户手写一个方法（模拟用户编辑：插入到类结尾前）
         Path file = temp.resolve("com/test/User.java");
         String userMethod = "\n    /** 用户手写方法 */\n    public String hello() {\n        return \"hi\";\n    }\n";
-        String edited = content().replace("}", userMethod + "}");
+        String existing = content();
+        int lastBrace = existing.lastIndexOf('}');
+        String edited = existing.substring(0, lastBrace) + userMethod + existing.substring(lastBrace);
         Files.write(file, edited.getBytes(StandardCharsets.UTF_8));
 
         // alter 增加列 → 用户方法必须保留
