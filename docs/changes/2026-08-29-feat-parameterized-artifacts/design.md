@@ -99,7 +99,7 @@ config 顶层只有三类键：**产物段**（其余全部，第一段 = 产物
 | `mybatisMapper` | `target` | 接口；参数用 POJO 视图（TypeMapper 已统一 enum→String，无需视图逻辑） |
 | `mybatisXml` | `target` + mapper 引用 | XML 模板 |
 | `repository` | `target` | 接口；enum 参数用枚举类（由 enums 语义决定——repository 的 use 里配 enums） |
-| `repositoryImpl` | `target`/`mapper`/`converter` | 桥接 |
+| `mybatisRepositoryImpl` | `target`/`mapper`/`converter` | MyBatis 桥接（显式依赖 mapper；hibernate repository 无需 impl） |
 | `converter` | `source`/`target` | 逐字段映射 |
 
 注意：repository/repositoryImpl 的 enum 参数视图由**该产物自身的 `use: enums`** 决定（不再按产物名魔法）。
@@ -108,9 +108,23 @@ config 顶层只有三类键：**产物段**（其余全部，第一段 = 产物
 
 | 拦截器 | 级别 | 行为 |
 |---|---|---|
-| `enums`（新） | 字段级 | `@Generated` 字段的 enum 列：类型 String → 枚举类 FQN（enum 产物 pkg + naming.enumClassName），幂等 |
+| `enums`（use 信号） | 生成时 | **实现为 `typeOf` 按 use 决定视图**（非独立拦截器）：产物 use 含 enums → enum 列返回枚举类 FQN；否则 String。一个机制覆盖字段与方法参数，避免拦截器+typeOf 双机制；枚举类 FQN = enum 产物 pkg + naming.enumClassName |
 | `jsr305`（新） | 字段级 | nullable 列 → `@javax.annotation.Nullable`（与 jsr303 的 @NotNull 互补；语义假设，review 确认） |
 | `lombok`/`jsr303` | 类级/字段级 | 现有，不变 |
+
+### mybatisRepositoryImpl 转换规则（配置驱动，无路径查找）
+
+对每个 findBy* 方法，生成器比较三个引用（均为显式/缺省配置）：
+
+```
+if (mapper.target == 自己的 target)  → return mapper.findX(...);          // 直连
+else                                → return converter.toX(mapper.findX(...));  // 转换
+```
+
+- 转换方法名 `toX` 由 converter.target 类名推导（target=entity → toEntity / toEntityList）
+- **一致性校验（替代"连通性推导"）**：converter.source 必须 == mapper.target、converter.target 必须 == 自己的 target，
+  不满足给出明确配置错误（提示加/改 converter），框架不做路径查找
+- converter 引用：显式配置（一行）；不做匹配查找（歧义规则成本 > 收益）
 
 ### 移除的硬编码
 
