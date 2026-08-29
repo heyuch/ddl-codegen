@@ -77,12 +77,14 @@ Java 类产物继承 `AbstractJavaArtifactGenerator` 自动获得 @Generated 增
 - config：`use=` 移除，改特性布尔；README/插件 IT/测试 config 迁移
 - 影响：拦截器扩展点删除（行为收敛到生成器）；`use` 配置键废弃
 
-## 跨生成器依赖原则（config 引用，非 DI）
+## 跨生成器依赖原则（config 引用 + 查询契约）
 
-生成器 A 需要产物 X 的类型/字段信息时：**依赖"X 的标识（config 名字）"，不依赖"生成器 B 的执行"**
-——类名/包名由 package+naming+suffix 推导，字段视图由 model+配置推导，信息不经过其他生成器。
-`mapper.target=po`（核心必需）与 converter 的 `source/target`（衍生物）同机制；
-对照 codegen.groovy 的构造器注入，本设计用声明式名字引用（无构造顺序、可换任意产物、自定义生成器只改 config）。
+生成器 A 需要产物 X 的类型/字段信息时：**依赖"X 的标识（config 名字）"，解析时查询 X 的生成器实例**
+——生成器暴露查询方法 `className/fieldName/fieldType`（默认从 config+naming+model 推导，可覆盖），
+TableContext 作为统一查询门面路由到产物生成器。这保留 codegen.groovy 构造器注入的**内聚与准确**
+（特殊命名/类型逻辑在生成器内，引用不漂移），同时去掉构造器耦合（config 名字引用、无构造顺序、
+可换任意产物、自定义生成器只改 config+可覆盖查询方法）。查询是 (model, config) 的纯函数，无执行依赖。
+`mapper.target=po`（核心必需）与 converter 的 `source/target`（衍生物）同机制。
 校验：引用一致性（如 converter.source==mapper.target）在生成前校验并给出明确报错。
 
 ## 验证
