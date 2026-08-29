@@ -76,7 +76,7 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
         }
 
         for (Index index : ctx.indexes()) {
-            if (MetaSupport.isIgnored(index)) {
+            if (IgnoreSupport.isIgnored(index)) {
                 continue;
             }
             for (QueryMethods.Spec spec : QueryMethods.of(index, naming)) {
@@ -241,7 +241,7 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
     private List<Column> visibleColumns(TableContext ctx) {
         List<Column> columns = new ArrayList<>();
         for (Column column : ctx.columns()) {
-            if (!MetaSupport.isIgnored(column)) {
+            if (!IgnoreSupport.isIgnored(column)) {
                 columns.add(column);
             }
         }

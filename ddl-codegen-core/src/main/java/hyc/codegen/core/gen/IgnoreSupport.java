@@ -4,21 +4,19 @@ import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Index;
 
 /**
- * 模型元数据便捷判断（DDL 注解结果，见 DESIGN §9）。
+ * DDL 注解 {@code @ignore} 的元数据读取（位于 gen：生成器在构建成员时跳过被忽略的列/索引；
+ * 拦截器不处理忽略成员——被忽略的列不生成字段、被忽略的索引不生成方法，天然不会到达拦截器）。
  */
-public final class MetaSupport {
+public final class IgnoreSupport {
 
     /** {@code @ignore} 元数据键。 */
     public static final String IGNORE = "ignore";
 
-    /** {@code @type} 元数据键。 */
-    public static final String TYPE = "type";
-
-    private MetaSupport() {
+    private IgnoreSupport() {
         throw new AssertionError("no instances");
     }
 
-    /** 列是否被 {@code @ignore}（所有 artifact 跳过该字段）。 */
+    /** 列是否被 {@code @ignore}（所有产物跳过该字段）。 */
     public static boolean isIgnored(Column column) {
         return column.getMeta().get(IGNORE) != null;
     }
@@ -26,11 +24,6 @@ public final class MetaSupport {
     /** 索引是否被 {@code @ignore}（不生成查询方法）。 */
     public static boolean isIgnored(Index index) {
         return index.getMeta().get(IGNORE) != null;
-    }
-
-    /** 列是否有 {@code @type} 覆盖。 */
-    public static boolean hasTypeOverride(Column column) {
-        return column.getMeta().get(TYPE) != null;
     }
 
 }

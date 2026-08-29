@@ -26,7 +26,7 @@ public final class PojoGenerator extends AbstractJavaArtifactGenerator {
     @Override
     protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
         for (Column column : ctx.columns()) {
-            if (MetaSupport.isIgnored(column)) {
+            if (IgnoreSupport.isIgnored(column)) {
                 continue;
             }
             builder.field(Variable.builder()

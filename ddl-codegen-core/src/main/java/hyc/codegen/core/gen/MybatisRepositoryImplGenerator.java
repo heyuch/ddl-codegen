@@ -80,7 +80,7 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGe
         }
 
         for (Index index : ctx.indexes()) {
-            if (MetaSupport.isIgnored(index)) {
+            if (IgnoreSupport.isIgnored(index)) {
                 continue;
             }
             for (QueryMethods.Spec spec : QueryMethods.of(index, gctx.getNaming())) {

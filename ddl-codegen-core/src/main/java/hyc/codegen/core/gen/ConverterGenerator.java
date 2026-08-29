@@ -65,7 +65,7 @@ public final class ConverterGenerator extends AbstractJavaArtifactGenerator {
         String enumPackage = gctx.enumPackage();
         if (enumPackage != null) {
             for (Column column : ctx.columns()) {
-                if (!column.getEnumValues().isEmpty() && !MetaSupport.isIgnored(column)) {
+                if (!column.getEnumValues().isEmpty() && !IgnoreSupport.isIgnored(column)) {
                     imports.add(new Import(enumPackage + "." + ctx.enumClassName(column)));
                 }
             }
@@ -81,7 +81,7 @@ public final class ConverterGenerator extends AbstractJavaArtifactGenerator {
         List<String> stmts = new ArrayList<>();
         stmts.add(m.toType + " " + toVar + " = new " + m.toType + "();");
         for (Column column : ctx.columns()) {
-            if (MetaSupport.isIgnored(column)) {
+            if (IgnoreSupport.isIgnored(column)) {
                 continue;
             }
             String field = ctx.fieldName(column);

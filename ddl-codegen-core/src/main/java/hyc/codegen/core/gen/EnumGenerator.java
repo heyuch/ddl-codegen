@@ -32,7 +32,7 @@ public final class EnumGenerator extends AbstractJavaArtifactGenerator {
     @Override
     protected boolean shouldGenerate(TableContext ctx) {
         for (Column column : ctx.columns()) {
-            if (!column.getEnumValues().isEmpty() && !MetaSupport.isIgnored(column)) {
+            if (!column.getEnumValues().isEmpty() && !IgnoreSupport.isIgnored(column)) {
                 return true;
             }
         }
@@ -46,7 +46,7 @@ public final class EnumGenerator extends AbstractJavaArtifactGenerator {
             return;
         }
         for (Column column : ctx.columns()) {
-            if (column.getEnumValues().isEmpty() || MetaSupport.isIgnored(column)) {
+            if (column.getEnumValues().isEmpty() || IgnoreSupport.isIgnored(column)) {
                 continue;
             }
             String enumName = ctx.enumClassName(column);
