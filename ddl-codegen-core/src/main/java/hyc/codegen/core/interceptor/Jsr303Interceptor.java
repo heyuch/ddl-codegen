@@ -5,11 +5,9 @@ import java.util.List;
 
 import com.sun.source.tree.AnnotationTree;
 import hyc.codegen.core.gen.ArtifactInterceptor;
-import hyc.codegen.core.gen.GeneratedSupport;
 import hyc.codegen.core.gen.TableContext;
 import hyc.codegen.core.model.Column;
 import hyc.codegen.tree.Annotation;
-import hyc.codegen.tree.Class;
 import hyc.codegen.tree.Variable;
 
 /**
@@ -19,7 +17,7 @@ import hyc.codegen.tree.Variable;
  * <li>{@code varchar(n)/char(n)} → {@code @Size(max=n)}</li>
  * <li>{@code decimal(p,s)} → {@code @Digits(integer=p-s, fraction=s)}</li>
  * </ul>
- * 管理 {@code javax.validation.constraints.*} 的这三个注解，幂等重算。
+ * 管理 {@code javax.validation.constraints.*} 的这三个注解，幂等重算。字段级拦截器（见 SPI 默认 apply）。
  */
 public final class Jsr303Interceptor implements ArtifactInterceptor {
 
@@ -34,19 +32,10 @@ public final class Jsr303Interceptor implements ArtifactInterceptor {
     }
 
     @Override
-    public void apply(Class cls, TableContext ctx) {
-        for (Variable field : cls.getFields()) {
-            if (!GeneratedSupport.isGenerated(field)) {
-                continue;
-            }
-            Column column = findColumn(ctx, field.getName().toString());
-            if (column == null) {
-                continue;
-            }
-            List<String> managed = InterceptorSupport.managed("NotNull", "Size", "Digits");
-            List<AnnotationTree> targets = buildTargets(column);
-            InterceptorSupport.replaceAnnotations(field, managed, targets);
-        }
+    public void onField(Variable field, Column column, TableContext ctx) {
+        List<String> managed = InterceptorSupport.managed("NotNull", "Size", "Digits");
+        List<AnnotationTree> targets = buildTargets(column);
+        InterceptorSupport.replaceAnnotations(field, managed, targets);
     }
 
     private List<AnnotationTree> buildTargets(Column column) {
@@ -64,15 +53,6 @@ public final class Jsr303Interceptor implements ArtifactInterceptor {
                     "integer = " + integer + ", fraction = " + column.getScale()));
         }
         return targets;
-    }
-
-    private Column findColumn(TableContext ctx, String fieldName) {
-        for (Column column : ctx.columns()) {
-            if (ctx.fieldName(column).equals(fieldName)) {
-                return column;
-            }
-        }
-        return null;
     }
 
 }

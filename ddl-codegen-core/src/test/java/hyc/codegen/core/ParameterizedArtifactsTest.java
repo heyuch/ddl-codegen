@@ -228,4 +228,30 @@ class ParameterizedArtifactsTest {
         assertTrue(implCode.contains("return userMapper.findById(id);"), implCode);
     }
 
+    @Test
+    void typeAnnotationScopedByEnumView() throws Exception {
+        ArtifactConfig entity = artifact("entity", "pojo");
+        entity.setPkg("com.demo.entity");
+        entity.setUse(Arrays.asList("enums"));
+        ArtifactConfig po = artifact("po", "pojo");
+        po.setPkg("com.demo.pojo");
+        po.setSuffix("Po");
+
+        setUp(entity, enumArtifact(), po);
+        DdlParser parser = new DruidDdlParser();
+        Schema schema = new Schema();
+        String ddl = "create table user (\n"
+                + "    id bigint primary key,\n"
+                + "    ext_info varchar(100) comment '扩展 @type:com.example.UserExtInfo'\n"
+                + ")";
+        ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
+        ChangeReport report = generator.generate(config, schema, result, Collections.emptyList());
+        assertTrue(report.hasChanges());
+
+        String entityCode = read("com/demo/entity/User.java");
+        assertTrue(entityCode.contains("private UserExtInfo extInfo"), entityCode);
+        String poCode = read("com/demo/pojo/UserPo.java");
+        assertTrue(poCode.contains("private String extInfo"), poCode);
+    }
+
 }

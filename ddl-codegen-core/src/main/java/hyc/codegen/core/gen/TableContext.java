@@ -94,14 +94,32 @@ public final class TableContext {
     }
 
     /**
-     * 列 → Java 类型（按产物解析）：use 含 {@code enums} 时 enum 列返回枚举类全限定名（含 {@code @as} 覆盖）；
-     * 否则走 {@link TypeMapper}（enum→String）。视图完全由配置决定，无产物名硬编码。
+     * 列 → Java 类型（按产物解析，视图完全由配置决定，无产物名硬编码）：
+     * use 含 {@code enums}（实体视图）时——{@code @type} 覆盖优先，enum 列返回枚举类全限定名（含 {@code @as}）；
+     * 否则走 {@link TypeMapper}（enum→String 等 SQL 映射）。
      */
     public String typeOf(Column column) {
-        if (!column.getEnumValues().isEmpty() && usesEnums()) {
-            return enumPackage + "." + enumClassName(column);
+        if (usesEnums()) {
+            Object type = column.getMeta().get("type");
+            if (type != null) {
+                return type.toString();
+            }
+            if (!column.getEnumValues().isEmpty()) {
+                return enumPackage + "." + enumClassName(column);
+            }
         }
-        return types.resolveType(table.getName(), column, artifactName);
+        return types.resolveType(table.getName(), column);
+    }
+
+    /** 按字段名反查列（字段名 = 命名策略转换后的列名）；未匹配返回 null。 */
+    @Nullable
+    public Column findColumn(String fieldName) {
+        for (Column column : table.getColumns()) {
+            if (fieldName(column).equals(fieldName)) {
+                return column;
+            }
+        }
+        return null;
     }
 
     /** use 链是否含 enums（enum 列 → 枚举类视图）。 */

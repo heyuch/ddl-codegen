@@ -103,31 +103,22 @@ public final class TypeMapper {
     /**
      * 列 → Java 类型（全限定名或原样返回的简单名）。
      * <p>
-     * 解析顺序：{@code @type}（entity）> enum 列 → String（POJO 固定视图，enum 类由 TableContext 解析）>
-     * SQL→Java 基础类型 > 自定义处理器钩子。
+     * 解析顺序：enum 列 → String（实体视图的枚举类与 {@code @type} 覆盖由 TableContext#typeOf
+     * 按 use:enums 处理，这里只管 SQL 映射）> SQL→Java 基础类型 > 自定义处理器钩子。
      *
-     * @param tableName    所属表名
-     * @param column       目标列
-     * @param artifactKind artifact 类型
+     * @param tableName 所属表名
+     * @param column    目标列
      */
-    public String resolveType(String tableName, Column column, String artifactKind) {
-        // 1. @type 注解（仅 entity 视图：复用已有类型，不生成、不校验存在；POJO 保持固定基础类型）
-        if ("entity".equals(artifactKind)) {
-            Object type = column.getMeta().get("type");
-            if (type != null) {
-                return type.toString();
-            }
-        }
-
-        // 2. enum 列：POJO 等视图固定 String（entity 视图的枚举类由 TableContext#typeOf 解析）
+    public String resolveType(String tableName, Column column) {
+        // 1. enum 列：非实体视图固定 String
         if (!column.getEnumValues().isEmpty()) {
             return "java.lang.String";
         }
 
-        // 3. SQL → Java 基础类型
+        // 2. SQL → Java 基础类型
         String javaType = sqlToJava(column);
 
-        // 4. 自定义注解处理器类型解析钩子
+        // 3. 自定义注解处理器类型解析钩子
         for (DdlAnnotationHandler handler : customHandlers) {
             javaType = handler.resolveType(column, javaType);
         }

@@ -34,7 +34,7 @@ class TypeMapperTest {
                 .sqlType("enum")
                 .enumValues(Arrays.asList("male", "female"))
                 .build();
-        assertEquals("java.lang.String", mapper.resolveType("user", c, "pojo"));
+        assertEquals("java.lang.String", mapper.resolveType("user", c));
     }
 
     @Test
@@ -45,18 +45,19 @@ class TypeMapperTest {
                 .sqlType("enum")
                 .enumValues(Arrays.asList("male", "female"))
                 .build();
-        assertEquals("java.lang.String", mapper.resolveType("user", c, "entity"));
+        assertEquals("java.lang.String", mapper.resolveType("user", c));
     }
 
     @Test
-    void typeAnnotationOverridesEverything() {
+    void typeAnnotationHandledByTableContextNotTypeMapper() {
+        // @type 与 enum 视图已收进 TableContext（按 use:enums），TypeMapper 只做 SQL 映射
         Column c = Column.builder()
                 .name("ext_info")
                 .sqlType("varchar")
                 .enumValues(Arrays.asList("a"))
                 .build();
         c.getMeta().put("type", "com.msxf.ValidEnum");
-        assertEquals("com.msxf.ValidEnum", mapper.resolveType("user", c, "entity"));
+        assertEquals("java.lang.String", mapper.resolveType("user", c));
     }
 
     @Test
@@ -120,7 +121,7 @@ class TypeMapperTest {
 
         };
         TypeMapper customMapper = new TypeMapper(naming, Collections.singletonList(handler));
-        assertEquals("com.example.Money", customMapper.resolveType("user", column("amount"), "pojo"));
+        assertEquals("com.example.Money", customMapper.resolveType("user", column("amount")));
     }
 
 }

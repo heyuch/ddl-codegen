@@ -5,16 +5,14 @@ import java.util.List;
 
 import com.sun.source.tree.AnnotationTree;
 import hyc.codegen.core.gen.ArtifactInterceptor;
-import hyc.codegen.core.gen.GeneratedSupport;
 import hyc.codegen.core.gen.TableContext;
 import hyc.codegen.core.model.Column;
 import hyc.codegen.tree.Annotation;
-import hyc.codegen.tree.Class;
 import hyc.codegen.tree.Variable;
 
 /**
  * jsr305 拦截器：nullable 列的 {@code @Generated} 字段加 {@code @Nullable}
- * （与 jsr303 的 {@code @NotNull} 互补），幂等重算。
+ * （与 jsr303 的 {@code @NotNull} 互补），幂等重算。字段级拦截器（见 SPI 默认 apply）。
  */
 public final class Jsr305Interceptor implements ArtifactInterceptor {
 
@@ -27,33 +25,12 @@ public final class Jsr305Interceptor implements ArtifactInterceptor {
     }
 
     @Override
-    public void apply(Class cls, TableContext ctx) {
-        for (Variable field : cls.getFields()) {
-            if (!GeneratedSupport.isGenerated(field)) {
-                continue;
-            }
-            Column column = findColumn(ctx, field.getName().toString());
-            if (column == null) {
-                continue;
-            }
-            List<String> managed = InterceptorSupport.managed("Nullable");
-            if (column.isNullable()) {
-                List<AnnotationTree> targets = Collections.singletonList(
-                        Annotation.of(ctx.getNullableAnnotation()));
-                InterceptorSupport.replaceAnnotations(field, managed, targets);
-            } else {
-                InterceptorSupport.replaceAnnotations(field, managed, Collections.emptyList());
-            }
-        }
-    }
-
-    private Column findColumn(TableContext ctx, String fieldName) {
-        for (Column column : ctx.columns()) {
-            if (ctx.fieldName(column).equals(fieldName)) {
-                return column;
-            }
-        }
-        return null;
+    public void onField(Variable field, Column column, TableContext ctx) {
+        List<String> managed = InterceptorSupport.managed("Nullable");
+        List<AnnotationTree> targets = column.isNullable()
+                ? Collections.singletonList(Annotation.of(ctx.getNullableAnnotation()))
+                : Collections.emptyList();
+        InterceptorSupport.replaceAnnotations(field, managed, targets);
     }
 
 }
