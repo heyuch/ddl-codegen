@@ -14,7 +14,7 @@ This document provides guidelines for AI agents working on this codebase.
 
 轻量落地（不引入工具）：
 - **小改动**（1-3 个文件、逻辑清晰）：分析+设计写进 commit message（首行概括，正文给取舍）
-- **中/大改动**：在 `docs/changes/{YYYY-MM-DD}-{类型}-{标题}/` 建变更目录（类型：feat/opt/fix/chore），内含固定文档 `design.md`（必填，用 `docs/changes/TEMPLATE.md` 模板）与 `progress.md`（变更执行状态，可选）；同时把决策追加到 `docs/progress.md`「关键决策记录」
+- **中/大改动**：用 skill `design-first`（`.pi/skills/design-first/`）——运行 `new-change.sh <类型> <标题>` 脚手架建变更目录，填 `design.md` 后**呈现给用户评审，认可后才实现**；同时把决策追加到 `docs/progress.md`「关键决策记录」
 - **禁止直接开写**：先写出「要改什么、为什么、怎么改、影响谁」再动代码
 
 ### 文档命名与组织规范
