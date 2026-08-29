@@ -41,7 +41,7 @@ import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Index;
 import hyc.codegen.core.model.Table;
 
-// 扇出/抽象耦合抑制依据（元素驱动而非逻辑混杂，见 STATIC-RULES-REVIEW.md §6）：
+// 扇出/抽象耦合抑制依据（元素驱动而非逻辑混杂，见 docs/static-rules-review.md §6）：
 // 本类是 Druid AST → 模型操作的转换器，引用类型数 ≈ 需处理的节点类型数（列/索引/各类
 // ALTER 子项与操作类型），每种节点对应一个转换分支，单方法引用类型 ≤4；已做抽取
 // （DruidAst）后残余指标仍结构性偏高，与 JavaTreeConverter 同属"分发器"类别。

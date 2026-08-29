@@ -39,7 +39,7 @@ import hyc.codegen.core.model.Schema;
  * <p>
  * 用法：{@code java -jar ddl-codegen-cli.jar --config 项目根/ddlgen.properties --ddl schema.sql [--dry-run]}
  * <p>
- * 扇出抑制依据（元素驱动，见 STATIC-RULES-REVIEW.md §6）：组合根类，职责是把全部生成器/拦截器
+ * 扇出抑制依据（元素驱动，见 docs/static-rules-review.md §6）：组合根类，职责是把全部生成器/拦截器
  * 组装进 {@link CodeGenerator}，引用类型数 ≈ 组件数，无逻辑混杂可拆分。
  */
 @SuppressWarnings({"ClassFanOutComplexity", "ClassDataAbstractionCoupling"})
@@ -93,7 +93,7 @@ public final class Main {
         }
 
         if (sync) {
-            System.err.println("--sync 尚未实现（需要文件归属标记，见 PROGRESS.md 已知限制）");
+            System.err.println("--sync 尚未实现（需要文件归属标记，见 docs/progress.md 已知限制）");
             return 1;
         }
 

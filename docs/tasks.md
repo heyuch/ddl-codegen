@@ -1,7 +1,7 @@
 # DDL Codegen 任务列表
 
 > 执行顺序：M0 是地基（tree lib），必须先完成并全绿；M1→M2→M3 是框架核心；M4 收尾。
-> 技术方案见 `DESIGN.md`。每项完成后更新勾选状态。
+> 技术方案见 `docs/design.md`。每项完成后更新勾选状态。
 
 ## M0：ddl-codegen-tree 提取与改造（前置，正确性红线）
 

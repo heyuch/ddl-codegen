@@ -45,7 +45,7 @@ class GenHelpersTest {
         assertEquals(expected, code);
     }
 
-    /** DESIGN.md §10 的 plain converter toEntity 方法体示例。 */
+    /** docs/design.md §10 的 plain converter toEntity 方法体示例。 */
     @Test
     void testToEntityBody() {
         String body = Block.statements(

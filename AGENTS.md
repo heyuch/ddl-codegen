@@ -10,12 +10,20 @@ This document provides guidelines for AI agents working on this codebase.
 2. **设计**：采用哪个方案、改动哪些文件、影响面（依赖此逻辑的其他模块/生成器）、测试策略
 3. **实现**：按设计写代码
 4. **验证**：`JAVA_HOME=... mvn clean test` 全绿 + 静态检查全绿
-5. **文档同步**：涉及架构/数据流/约定变化时，更新本文件「项目架构」节或 `DESIGN.md`；决策追加到 `PROGRESS.md`「关键决策记录」
+5. **文档同步**：涉及架构/数据流/约定变化时，更新本文件「项目架构」节或 `docs/design.md`；决策追加到 `docs/progress.md`「关键决策记录」
 
 轻量落地（不引入工具）：
 - **小改动**（1-3 个文件、逻辑清晰）：分析+设计写进 commit message（首行概括，正文给取舍）
-- **中/大改动**：先在 `PROGRESS.md` 追加决策记录（问题/方案/取舍/影响面）；复杂设计写 `docs/design-notes/<name>.md`（用 `TEMPLATE.md` 模板）
+- **中/大改动**：在 `docs/changes/{YYYY-MM-DD}-{类型}-{标题}/` 建变更目录（类型：feat/opt/fix/chore），内含固定文档 `design.md`（必填，用 `docs/changes/TEMPLATE.md` 模板）与 `progress.md`（变更执行状态，可选）；同时把决策追加到 `docs/progress.md`「关键决策记录」
 - **禁止直接开写**：先写出「要改什么、为什么、怎么改、影响谁」再动代码
+
+### 文档命名与组织规范
+
+- 文档名一律小写，多词用 `-` 连接（`design.md` / `static-rules-review.md`）
+- 项目级文档（架构/进度/规则）在 `docs/` 顶层；变更级文档在 `docs/changes/` 下
+- 变更目录命名：`{YYYY-MM-DD}-{feat|opt|fix|chore}-{标题}`（同日冲突加 `-2`）；refactor 归入 chore 或 opt
+- 目录内固定文档：`design.md`（必填）、`progress.md`（可选）；其他按需添加
+- 根目录只允许：`AGENTS.md`、`README.md`、构建配置（pom/checkstyle 等）
 
 ## 项目架构（顶层）
 
@@ -63,16 +71,16 @@ DDL 文本
 | 文档 | 内容 |
 |---|---|
 | `README.md` | 快速开始 + config/注解参考 |
-| `DESIGN.md` | 完整技术方案（边界契约/模块/管线/SPI/风险取舍） |
-| `PROGRESS.md` | 开发进度 + 关键决策记录 + 已知限制 |
-| `STATIC-RULES-REVIEW.md` | 静态检查规则考察（阈值基线/实证/抑制准则） |
-| `TASKS.md` | 任务列表 |
-| `docs/design-notes/` | 变更设计说明（先设计后实现的工作流产物） |
+| `docs/design.md` | 完整技术方案（边界契约/模块/管线/SPI/风险取舍） |
+| `docs/progress.md` | 项目级进度 + 关键决策记录 + 已知限制 |
+| `docs/static-rules-review.md` | 静态检查规则考察（阈值基线/实证/抑制准则） |
+| `docs/tasks.md` | 历史任务列表（M0-M4 已完成） |
+| `docs/changes/` | 变更目录：`{YYYY-MM-DD}-{feat/opt/fix/chore}-{标题}/`，内含 `design.md` + `progress.md` |
 
 ### 修改约束
 
-- 架构/数据流变化必须同步本节约 `DESIGN.md`
-- 新生成器必须遵守「config 存在即启用」与「@Generated 成员所有权」契约（见 `DESIGN.md` §1）
+- 架构/数据流变化必须同步本节约 `docs/design.md`
+- 新生成器必须遵守「config 存在即启用」与「@Generated 成员所有权」契约（见 `docs/design.md` §1）
 
 ## Build, Lint, and Test Commands
 
@@ -209,4 +217,4 @@ mvn versions:display-plugin-updates
 - 代码按开源项目标准编写：命名传达意图（不用 `U`/`Tmp` 这类无名工具类名）、类小而聚焦、包按职责组织、公共 API 最小化（不暴露无需暴露的）
 - 复用旧代码：质量不达标直接优化，不机械照搬；迁移即改进
 - 本项目同时是学习材料：结构清晰、命名优雅、注释解释 WHY 而非 WHAT
-- 静态检查是硬门槛：spotless/checkstyle/error-prone/checkerframework 报错按提示修复（规则考察见 `STATIC-RULES-REVIEW.md`）
+- 静态检查是硬门槛：spotless/checkstyle/error-prone/checkerframework 报错按提示修复（规则考察见 `docs/static-rules-review.md`）

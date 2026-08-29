@@ -2,7 +2,7 @@
 
 > 本文件是 DDL→Java 代码生成框架的完整技术设计，供实现 session 直接执行。
 > 相关背景：所有决策来自 2026-08 的设计讨论，已定稿，勿再推翻（除非发现硬伤）。
-> 配套任务列表见 `TASKS.md`。
+> 配套任务列表见 `docs/tasks.md`。
 
 ## 1. 定位与边界
 
@@ -293,7 +293,7 @@ public interface ArtifactInterceptor {
 - lambda 改写（`d ->` → `(d)->`）、局部变量声明丢分号、块内语句缩进塌缩
 - `Method.getTypeParameters()` 返回 `List.of()`（getter 与字段不一致）
 
-### 改造任务（对应 TASKS.md M0）
+### 改造任务（对应 docs/tasks.md M0）
 
 1. **提取**：独立模块 `ddl-codegen-tree`；包名 `hyc.codegen.tree`；连同 `utils/CodePrinter`、`utils/U` 一起迁移，移除对 codegen-groovy 其余代码的依赖；现有测试（JavaParserTest/JavaCodegenTest/JavadocCodegenTest/Demo + 冒烟 RoundTripSmokeTest）迁移
 2. **保真层四修**（正确性红线，round-trip 内容无损）：

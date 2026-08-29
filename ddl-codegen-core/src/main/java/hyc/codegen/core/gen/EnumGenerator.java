@@ -17,7 +17,7 @@ import hyc.codegen.tree.Variable;
  * <p>
  * 结构：常量（携带 DDL 值）+ {@code value()}（常量 → DDL 值）+ {@code fromValue(String)}（DDL 值 → 常量，
  * 支持非标识符值如 {@code in-progress}）。类名按命名策略（{@code Gender} / {@code UserGender}），
- * 可被 {@code @as} 覆盖。列失去 enum 类型后文件不自动清理（见 PROGRESS.md 已知限制）。
+ * 可被 {@code @as} 覆盖。列失去 enum 类型后文件不自动清理（见 docs/progress.md 已知限制）。
  */
 public final class EnumGenerator extends AbstractJavaArtifactGenerator {
 

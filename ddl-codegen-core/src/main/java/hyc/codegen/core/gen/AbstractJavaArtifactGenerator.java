@@ -86,7 +86,7 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
     }
 
     /**
-     * 额外 import（方法体字符串引用的类型不会自动收集，由子类在此显式登记，见 PROGRESS.md 决策）。
+     * 额外 import（方法体字符串引用的类型不会自动收集，由子类在此显式登记，见 docs/progress.md 决策）。
      */
     protected List<hyc.codegen.tree.Import> extraImports(TableContext ctx, GenerationContext gctx) {
         return java.util.Collections.emptyList();

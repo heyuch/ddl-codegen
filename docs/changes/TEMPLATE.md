@@ -1,8 +1,9 @@
-# <变更名>
+# design.md（变更设计说明模板）
 
-> 变更设计说明模板：中/大改动按「开发工作流」（AGENTS.md）先写本文件再实现。
+> 本文件是 docs/changes/{YYYY-MM-DD}-{feat/opt/fix/chore}-{标题}/design.md 的模板：
+> 中/大改动按「开发工作流」（AGENTS.md）先写设计再实现；小改动（1-3 文件）可省略，把分析+设计写进 commit message。
 > 小改动（1-3 文件、逻辑清晰）可省略本文件，把分析+设计写进 commit message。
-> 完成后将本文件归档到 docs/design-notes/archive/ 或随变更保留。
+> 变更完成后，目录可归档到 docs/changes/archive/ 或随变更保留。
 
 ## 背景与问题
 
