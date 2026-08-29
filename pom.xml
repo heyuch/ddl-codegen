@@ -11,6 +11,7 @@
         <module>ddl-codegen-tree</module>
         <module>ddl-codegen-core</module>
         <module>ddl-codegen-cli</module>
+        <module>ddl-codegen-maven-plugin</module>
     </modules>
 
     <properties>

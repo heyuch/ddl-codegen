@@ -1,0 +1,18 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>it</groupId>
+    <artifactId>it-simple</artifactId>
+    <version>1.0</version>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.github.heyuch</groupId>
+                <artifactId>ddl-codegen-maven-plugin</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <configuration>
+                    <ddlFile>schema.sql</ddlFile>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

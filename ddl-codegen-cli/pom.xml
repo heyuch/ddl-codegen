@@ -16,6 +16,16 @@
             <artifactId>ddl-codegen-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!-- NullnessChecker 初始化需要（构建期），不进入运行时 -->
         <dependency>
             <groupId>org.checkerframework</groupId>

@@ -12,9 +12,9 @@ MySQL DDL（create/alter/drop）驱动的 Java 代码生成框架：手写 schem
 # 构建（Java 11+）
 JAVA_HOME=/path/to/jdk-11 mvn clean package -pl ddl-codegen-cli -am -DskipTests
 
-# 项目根放 ddlgen.properties（项目根 = 该文件所在目录），DDL 放 schema.sql
+# 项目根放 ddl-codegen.properties（项目根 = 该文件所在目录，--config 缺省 = cwd/ddl-codegen.properties），DDL 放 schema.sql
 java -jar ddl-codegen-cli/target/ddl-codegen-cli-1.0-SNAPSHOT.jar \
-    --config /path/to/ddlgen.properties --ddl /path/to/schema.sql
+    --ddl /path/to/schema.sql
 
 # 只报告不写盘
 java -jar ... --config ... --ddl ... --dry-run
@@ -27,6 +27,27 @@ Mapper (接口+XML) → POJO（基础类型）→ RepositoryImpl（桥接）→ 
 ```
 
 config 里配置了哪些 artifact 就生成哪些（`artifacts.*` 段存在即启用）；只配 entity+mapper 就没有 pojo/converter/repository 一整套。
+
+## Maven 插件（mvn ddl-codegen:generate）
+
+```bash
+# 构建并安装（先 install 插件与依赖到本地仓库）
+JAVA_HOME=/path/to/jdk-11 mvn install -pl ddl-codegen-maven-plugin -am -DskipTests
+
+# 在目标项目里运行（config 缺省 = 项目根/ddl-codegen.properties）
+mvn ddl-codegen:generate
+
+# 常用参数（均可 -D 覆盖：-DddlCodegen.ddlFile=...）
+#   -DddlCodegen.projectRoot=<目录>     项目根（缺省 = 执行目录）
+#   -DddlCodegen.configFile=<文件>      配置文件
+#   -DddlCodegen.ddl=<SQL>              内联 DDL（与 ddlFile 互斥）
+#   -DddlCodegen.ddlFile=<文件[:起-止]>  DDL 文件，支持行范围（create-user.sql:66-120）
+#   -DddlCodegen.dryRun=true            只报告不写盘
+#   -DddlCodegen.skip=true              跳过
+```
+
+也支持在项目 pom 的 plugin `<configuration>` 里配置（效果等同参数）。集成测试见
+`ddl-codegen-maven-plugin/src/it/`（it-simple / it-range / it-inline）。
 
 ## 运行时依赖
 
@@ -41,7 +62,7 @@ config 里配置了哪些 artifact 就生成哪些（`artifacts.*` 段存在即�
 4. **`@Generated` 成员 = 工具拥有**：reconcile 只动它们；其余（含用户手写成员）内容上永不触碰。
 5. 解析失败 → 不动文件并报错（不覆盖用户坏文件）。
 
-## Config（ddlgen.properties）
+## Config（ddl-codegen.properties）
 
 ```properties
 # module = 项目根下的一级子目录；留空 = 项目根
