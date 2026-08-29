@@ -1,4 +1,4 @@
-# design.md（变更设计说明模板）
+# <变更名>
 
 > 本文件是 docs/changes/{YYYY-MM-DD}-{feat/opt/fix/chore}-{标题}/design.md 的模板：
 > 中/大改动按「开发工作流」（AGENTS.md）先写设计再实现；小改动（1-3 文件）可省略，把分析+设计写进 commit message。
