@@ -19,6 +19,7 @@
 
 ## 关键决策记录（执行中拍板）
 
+- **2026-08：移除 OpenSpec，采用轻量工作流**。删除了 openspec 残留（含 add-ddl-codegen-framework 提案）；新工作流见 AGENTS.md「开发工作流」：先分析设计后实现，决策记入本节，复杂设计写 docs/design-notes/（模板 TEMPLATE.md）；顶层架构与数据流常驻 AGENTS.md「项目架构」节，随变更同步
 - ClassFanOutComplexity：阈值 20 保留；分发器类针对性 @SuppressWarnings + 实证注释（见 STATIC-RULES-REVIEW.md §5/§6）
 - **Expr/Block 助手简化**（M0c 并入 M2）：助手为纯字符串组合，不做 import 魔法；方法体引用类型的 import 由生成器显式 addImport（避免状态化 import-sink API，更清晰）。M0c 拆入 M2（对着真实生成上下文构建，避免空想 API）。
 - 其余开放问题按 DESIGN.md §17 默认值
