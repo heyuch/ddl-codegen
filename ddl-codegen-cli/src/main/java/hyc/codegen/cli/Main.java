@@ -27,7 +27,6 @@ import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
 import hyc.codegen.core.gen.RepositoryGenerator;
 import hyc.codegen.core.gen.RepositoryImplGenerator;
-import hyc.codegen.core.interceptor.ArtifactInterceptor;
 import hyc.codegen.core.interceptor.Jsr303Interceptor;
 import hyc.codegen.core.interceptor.LombokInterceptor;
 import hyc.codegen.core.io.ChangeReport;

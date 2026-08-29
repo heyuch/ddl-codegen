@@ -1,6 +1,5 @@
-package hyc.codegen.core.interceptor;
+package hyc.codegen.core.gen;
 
-import hyc.codegen.core.gen.TableContext;
 import hyc.codegen.tree.Class;
 
 /**

@@ -9,7 +9,6 @@ import hyc.codegen.core.annotation.AnnotationRegistry;
 import hyc.codegen.core.annotation.DdlAnnotationHandler;
 import hyc.codegen.core.config.DdlConfig;
 import hyc.codegen.core.ddl.ApplyResult;
-import hyc.codegen.core.interceptor.ArtifactInterceptor;
 import hyc.codegen.core.io.ChangeReport;
 import hyc.codegen.core.io.ChangeStatus;
 import hyc.codegen.core.io.FileWriter;

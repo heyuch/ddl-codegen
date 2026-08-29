@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.sun.source.tree.AnnotationTree;
+import hyc.codegen.core.gen.ArtifactInterceptor;
 import hyc.codegen.core.gen.GeneratedSupport;
 import hyc.codegen.core.gen.TableContext;
 import hyc.codegen.core.model.Column;
