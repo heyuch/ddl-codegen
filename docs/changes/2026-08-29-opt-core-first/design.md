@@ -87,6 +87,18 @@ TableContext 作为统一查询门面路由到产物生成器。这保留 codege
 `mapper.target=po`（核心必需）与 converter 的 `source/target`（衍生物）同机制。
 校验：引用一致性（如 converter.source==mapper.target）在生成前校验并给出明确报错。
 
+## MapperXml 生成（基础集，字符串模板）
+
+- 生成形态：字符串模板生成器（非 AST），整文件重生成 + 字节比对幂等；不做成员级同步（XML 无成员粒度；
+  用户手改 XML 会被覆盖——需要时再加保护区域，YAGNI）
+- 引用（查询契约）：namespace = mapper 产物 FQN、resultMap type = target 产物 FQN
+- 内容组成（固定 + 索引派生）：
+  - resultMap（主键 `<id>` + 其余 `<result>`，property=字段名 column=列名 jdbcType）
+  - BaseColumnList（`t.` 前缀）
+  - insert（自增主键不入列 + useGeneratedKeys）/ update（不含主键）/ deleteById / selectById
+  - 索引派生 findBy*（与 mapper 接口方法同源：QueryMethods + naming，MyBatis 绑定一致）
+- **明确不做**：insertSelective、条件查询、分页、排序——动态条件 SQL 易导致无法命中索引（坏实践），忽略
+
 ## 验证
 
 - 全量 `mvn clean test` + 插件 IT 绿（e2e/参数化测试迁移到特性开关）
