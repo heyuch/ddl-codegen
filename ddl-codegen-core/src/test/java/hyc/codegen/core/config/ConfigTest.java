@@ -34,16 +34,21 @@ class ConfigTest {
     @Test
     void fullKeysParsed() throws Exception {
         DdlConfig config = load(String.join("\n",
-                "artifacts.entity.module=core",
-                "artifacts.entity.package=com.myapp.core.entity",
-                "artifacts.entity.suffix=",
-                "artifacts.entity.use=lombok,jsr303",
-                "artifacts.mybatisXml.module=service",
-                "artifacts.mybatisXml.path=src/main/resources/mapper",
-                "artifacts.repositoryImpl.module=service",
-                "artifacts.repositoryImpl.package=com.myapp.service.repository.impl",
-                "artifacts.repositoryImpl.suffix=RepositoryImpl",
-                "artifacts.repositoryImpl.di=field",
+                "entity.generator=pojo",
+                "entity.module=core",
+                "entity.package=com.myapp.core.entity",
+                "entity.suffix=",
+                "entity.use=lombok,jsr303,enums",
+                "xml.generator=mybatisXml",
+                "xml.module=service",
+                "xml.path=src/main/resources/mapper",
+                "xml.target=po",
+                "repositoryImpl.generator=mybatisRepositoryImpl",
+                "repositoryImpl.module=service",
+                "repositoryImpl.package=com.myapp.service.repository.impl",
+                "repositoryImpl.suffix=RepositoryImpl",
+                "repositoryImpl.target=entity",
+                "repositoryImpl.di=field",
                 "naming.table.stripPrefixes=t_,tmp_",
                 "naming.table.stripShardSuffix=true",
                 "naming.column.keywordSuffix=_",
@@ -54,17 +59,22 @@ class ConfigTest {
         assertEquals(tmpDir.toAbsolutePath(), config.getRoot());
 
         ArtifactConfig entity = config.artifact("entity").orElseThrow();
+        assertEquals("pojo", entity.getGenerator());
         assertEquals("core", entity.getModule());
         assertEquals("com.myapp.core.entity", entity.getPkg());
         assertEquals("", entity.getSuffix());
-        assertEquals(Arrays.asList("lombok", "jsr303"), entity.getUse());
+        assertEquals(Arrays.asList("lombok", "jsr303", "enums"), entity.getUse());
 
-        ArtifactConfig xml = config.artifact("mybatisXml").orElseThrow();
+        ArtifactConfig xml = config.artifact("xml").orElseThrow();
+        assertEquals("mybatisXml", xml.getGenerator());
         assertEquals("src/main/resources/mapper", xml.getPath());
         assertNull(xml.getPkg());
         assertFalse(xml.isJavaArtifact());
+        assertEquals("po", xml.getTarget());
 
         ArtifactConfig impl = config.artifact("repositoryImpl").orElseThrow();
+        assertEquals("mybatisRepositoryImpl", impl.getGenerator());
+        assertEquals("entity", impl.getTarget());
         assertEquals("field", impl.getOptions().get("di"));
 
         assertEquals(Arrays.asList("t_", "tmp_"), config.getTableStripPrefixes());
@@ -77,7 +87,7 @@ class ConfigTest {
 
     @Test
     void defaultsApplied() throws Exception {
-        DdlConfig config = load("artifacts.entity.package=com.x.entity");
+        DdlConfig config = load("entity.generator=pojo\nentity.package=com.x.entity");
 
         assertTrue(config.getTableStripPrefixes().isEmpty());
         assertFalse(config.isTableStripShardSuffix());
@@ -95,25 +105,36 @@ class ConfigTest {
     }
 
     @Test
-    void artifactKindsKeepConfigOrder() throws Exception {
+    void artifactNamesKeepConfigOrder() throws Exception {
         DdlConfig config = load(String.join("\n",
-                "artifacts.pojo.package=com.x.pojo",
-                "artifacts.entity.package=com.x.entity",
-                "artifacts.mybatisMapper.package=com.x.mapper"));
+                "po.generator=pojo",
+                "po.package=com.x.pojo",
+                "entity.generator=pojo",
+                "entity.package=com.x.entity",
+                "mapper.generator=mybatisMapper",
+                "mapper.package=com.x.mapper"));
 
-        assertEquals(Arrays.asList("pojo", "entity", "mybatisMapper"), config.artifactKinds());
+        assertEquals(Arrays.asList("po", "entity", "mapper"), config.artifactNames());
     }
 
     @Test
     void missingPackageThrows() throws Exception {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> load("artifacts.entity.module=core"));
+                () -> load("entity.generator=pojo\nentity.module=core"));
         assertTrue(e.getMessage().contains("entity"));
     }
 
     @Test
+    void reservedNamespaceRejectedAsArtifact() throws Exception {
+        // naming.* 是保留命名空间，不会被当作产物
+        DdlConfig config = load("naming.table.stripPrefixes=t_\nentity.package=com.x.entity");
+        assertFalse(config.artifact("naming").isPresent());
+        assertTrue(config.artifact("entity").isPresent());
+    }
+
+    @Test
     void emptyUseIgnored() throws Exception {
-        DdlConfig config = load("artifacts.entity.package=com.x.entity\nartifacts.entity.use=lombok,,jsr303 ,");
+        DdlConfig config = load("entity.package=com.x.entity\nentity.use=lombok,,jsr303 ,");
         List<String> use = config.artifact("entity").orElseThrow().getUse();
         assertEquals(Arrays.asList("lombok", "jsr303"), use);
     }

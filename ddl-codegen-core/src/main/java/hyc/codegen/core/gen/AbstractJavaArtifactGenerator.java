@@ -257,7 +257,7 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
     private void writeFile(Path file, TableContext ctx, GenerationContext gctx, String code, String className) {
         try {
             ChangeStatus status = FileWriter.writeIfChanged(file, code);
-            gctx.getReport().add(file, status, ctx.getArtifactKind() + " " + className);
+            gctx.getReport().add(file, status, ctx.getArtifactName() + " " + className);
         } catch (IOException e) {
             throw new IllegalStateException("写文件失败: " + file, e);
         }
@@ -269,7 +269,7 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
             if (FileWriter.deleteIfExists(ctx.javaFile(gctx.getProjectRoot()))) {
                 gctx.getReport()
                         .add(ctx.javaFile(gctx.getProjectRoot()), ChangeStatus.DELETED,
-                                ctx.getArtifactKind() + " " + ctx.className() + "（不再适用）");
+                                ctx.getArtifactName() + " " + ctx.className() + "（不再适用）");
             }
         } catch (IOException e) {
             throw new IllegalStateException("删除文件失败: " + ctx.javaFile(gctx.getProjectRoot()), e);

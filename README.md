@@ -65,52 +65,70 @@ mvn ddl-codegen:generate
 ## Config（ddl-codegen.properties）
 
 ```properties
-# module = 项目根下的一级子目录；留空 = 项目根
-artifacts.entity.module=core
-artifacts.entity.package=com.myapp.core.entity
-artifacts.entity.suffix=
-artifacts.entity.use=lombok,jsr303        # 拦截器链
+# 产物名自由定义（顶层键第一段）；generator 引用注册的生成器
+# 保留命名空间：naming.* / annotations.*
+entity.generator=pojo
+entity.module=core
+entity.package=com.myapp.core.entity
+entity.suffix=
+entity.use=lombok,jsr303,enums          # 拦截器链；enums = enum 列映射为枚举类（需配置 enum 产物）
 
-artifacts.enum.module=core
-artifacts.enum.package=com.myapp.core.enums
+enum.generator=enum
+enum.module=core
+enum.package=com.myapp.core.enums
 
-artifacts.pojo.module=core
-artifacts.pojo.package=com.myapp.core.pojo
-artifacts.pojo.suffix=Po                  # user → UserPo
+po.generator=pojo
+po.module=core
+po.package=com.myapp.core.pojo
+po.suffix=Po
+po.use=lombok
 
-artifacts.mybatisMapper.module=service
-artifacts.mybatisMapper.package=com.myapp.service.mapper
-artifacts.mybatisMapper.suffix=Mapper
+mapper.generator=mybatisMapper
+mapper.module=service
+mapper.package=com.myapp.service.mapper
+mapper.suffix=Mapper
+mapper.target=po                        # 返回类型产物（无 po 时配 target=entity）
 
-artifacts.mybatisXml.module=service
-artifacts.mybatisXml.path=src/main/resources/mapper   # XML 走资源路径，不用 package
+xml.generator=mybatisXml
+xml.module=service
+xml.path=src/main/resources/mapper
+xml.target=po
 
-artifacts.repository.module=service
-artifacts.repository.package=com.myapp.service.repository
-artifacts.repository.suffix=Repository
+repository.generator=repository
+repository.module=service
+repository.package=com.myapp.service.repository
+repository.suffix=Repository
+repository.target=entity
 
-artifacts.repositoryImpl.module=service
-artifacts.repositoryImpl.package=com.myapp.service.repository.impl
-artifacts.repositoryImpl.suffix=RepositoryImpl
-artifacts.repositoryImpl.di=field         # field=@Resource 字段注入 / constructor
+repositoryImpl.generator=mybatisRepositoryImpl
+repositoryImpl.module=service
+repositoryImpl.package=com.myapp.service.repository.impl
+repositoryImpl.suffix=RepositoryImpl
+repositoryImpl.target=entity
+repositoryImpl.mapper=mapper            # 引用：缺省 = 该生成器唯一实例
+repositoryImpl.converter=entityConverter
+repositoryImpl.di=field                 # field=@Resource 字段注入 / constructor
 
-artifacts.converter.module=service
-artifacts.converter.package=com.myapp.service.converter
-artifacts.converter.suffix=Converter
+entityConverter.generator=converter
+entityConverter.package=com.myapp.service.converter
+entityConverter.suffix=Converter
+entityConverter.source=po
+entityConverter.target=entity
 
 # 命名
-naming.table.stripPrefixes=t_,tmp_        # t_user → User
-naming.table.stripShardSuffix=true        # user_0 → User
+naming.table.stripPrefixes=t_,tmp_      # t_user → User
+naming.table.stripShardSuffix=true      # user_0 → User
 naming.table.shardPattern=_\d+$
-naming.column.camelCase=true              # user_id → userId
-naming.column.keywordSuffix=_             # SQL/Java 保留字：order → order_
-naming.method.prefix=find                 # 索引 → findByNameAndGender
-naming.enum.style=column                  # gender → Gender；或 tableColumn → UserGender
+naming.column.camelCase=true            # user_id → userId
+naming.column.keywordSuffix=_           # SQL/Java 保留字：order → order_
+naming.method.prefix=find               # 索引 → findByNameAndGender
+naming.enum.style=column                # gender → Gender；或 tableColumn → UserGender
 
 # 自定义注解处理器（实现 DdlAnnotationHandler，须有 public 无参构造）
 annotations.custom=com.myapp.MyHandler
 annotations.nullable=javax.annotation.Nullable
 ```
+
 
 ## DDL 注解（列/表/索引注释中，严格 `@name[:value]`）
 

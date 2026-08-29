@@ -53,16 +53,16 @@ public final class DdlConfig {
     }
 
     public void addArtifact(ArtifactConfig artifact) {
-        artifacts.put(artifact.getKind(), artifact);
+        artifacts.put(artifact.getName(), artifact);
     }
 
-    /** 按 kind 取 artifact 配置。 */
-    public Optional<ArtifactConfig> artifact(String kind) {
-        return Optional.ofNullable(artifacts.get(kind));
+    /** 按产物名取配置。 */
+    public Optional<ArtifactConfig> artifact(String name) {
+        return Optional.ofNullable(artifacts.get(name));
     }
 
     /** 启用的生成器集合（配置出现顺序）。 */
-    public List<String> artifactKinds() {
+    public List<String> artifactNames() {
         return new ArrayList<>(artifacts.keySet());
     }
 

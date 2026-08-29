@@ -34,9 +34,9 @@ class GenerateMojoTest {
 
     private Path writeConfig() throws Exception {
         Path config = temp.resolve("ddl-codegen.properties");
-        Files.write(config, ("artifacts.entity.module=\n"
-                + "artifacts.entity.package=com.demo.entity\n"
-                + "artifacts.entity.suffix=\n").getBytes(StandardCharsets.UTF_8));
+        Files.write(config, ("entity.generator=pojo\n"
+                + "entity.package=com.demo.entity\n"
+                + "entity.suffix=\n").getBytes(StandardCharsets.UTF_8));
         return config;
     }
 

@@ -6,7 +6,9 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -25,7 +27,8 @@ import javax.annotation.Nullable;
  */
 public final class PropertiesConfigLoader implements ConfigLoader {
 
-    private static final String ARTIFACTS_PREFIX = "artifacts.";
+    /** 保留命名空间：naming.* 与 annotations.*；其余顶层键第一段 = 产物名。 */
+    private static final List<String> RESERVED = Arrays.asList("naming", "annotations");
 
     @Override
     public DdlConfig load(Path configFile) {
@@ -46,16 +49,16 @@ public final class PropertiesConfigLoader implements ConfigLoader {
     }
 
     private static void loadArtifacts(Properties props, DdlConfig config, Path configFile) {
-        // kind 顺序 = 配置文件出现顺序（Properties 底层是 Hashtable，迭代无序，需按文件行序收集）
-        Map<String, ArtifactConfig> byKind = new LinkedHashMap<>();
+        // 产物顺序 = 配置文件出现顺序（Properties 底层是 Hashtable，迭代无序，需按文件行序收集）
+        Map<String, ArtifactConfig> byName = new LinkedHashMap<>();
         try (BufferedReader r = Files.newBufferedReader(configFile, StandardCharsets.UTF_8)) {
             String line;
             while ((line = r.readLine()) != null) {
                 String key = keyOfLine(line);
-                if (key != null && key.startsWith(ARTIFACTS_PREFIX)) {
-                    int dot = key.indexOf('.', ARTIFACTS_PREFIX.length());
-                    if (dot > 0) {
-                        byKind.computeIfAbsent(key.substring(ARTIFACTS_PREFIX.length(), dot), ArtifactConfig::new);
+                if (key != null) {
+                    String name = artifactNameOf(key);
+                    if (name != null) {
+                        byName.computeIfAbsent(name, ArtifactConfig::new);
                     }
                 }
             }
@@ -64,26 +67,37 @@ public final class PropertiesConfigLoader implements ConfigLoader {
         }
 
         for (String key : props.stringPropertyNames()) {
-            if (!key.startsWith(ARTIFACTS_PREFIX)) {
+            String name = artifactNameOf(key);
+            if (name == null) {
                 continue;
             }
-            int dot = key.indexOf('.', ARTIFACTS_PREFIX.length());
-            if (dot < 0) {
-                continue;
-            }
-            String kind = key.substring(ARTIFACTS_PREFIX.length(), dot);
+            int dot = key.indexOf('.');
             String prop = key.substring(dot + 1);
-            ArtifactConfig artifact = byKind.computeIfAbsent(kind, ArtifactConfig::new);
+            ArtifactConfig artifact = byName.computeIfAbsent(name, ArtifactConfig::new);
             applyArtifactProperty(artifact, prop, props.getProperty(key));
         }
 
-        for (ArtifactConfig artifact : byKind.values()) {
+        for (ArtifactConfig artifact : byName.values()) {
             if (artifact.getPkg() == null && artifact.getPath() == null) {
-                throw new IllegalArgumentException("artifact '" + artifact.getKind()
-                        + "' 缺少 package（Java 类 artifact 必须配置 package，XML artifact 请配置 path）: " + configFile);
+                throw new IllegalArgumentException("产物 '" + artifact.getName()
+                        + "' 缺少 package（Java 类产物必须配置 package，XML 产物请配置 path）: " + configFile);
             }
             config.addArtifact(artifact);
         }
+    }
+
+    /** 顶层键的产物名：非保留命名空间且有属性的键返回第一段，否则 null。 */
+    @Nullable
+    private static String artifactNameOf(String key) {
+        int dot = key.indexOf('.');
+        if (dot <= 0) {
+            return null;
+        }
+        String first = key.substring(0, dot);
+        if (RESERVED.contains(first)) {
+            return null;
+        }
+        return first;
     }
 
     /** 提取属性行中的键（支持 {@code key=value} 与 {@code key: value}；注释/空行返回 null）。 */
@@ -103,6 +117,15 @@ public final class PropertiesConfigLoader implements ConfigLoader {
 
     private static void applyArtifactProperty(ArtifactConfig artifact, String prop, String value) {
         switch (prop) {
+            case "generator":
+                artifact.setGenerator(emptyToNull(value));
+                break;
+            case "source":
+                artifact.setSource(emptyToNull(value));
+                break;
+            case "target":
+                artifact.setTarget(emptyToNull(value));
+                break;
             case "module":
                 artifact.setModule(emptyToNull(value));
                 break;

@@ -21,8 +21,8 @@ import hyc.codegen.core.gen.EnumGenerator;
 import hyc.codegen.core.gen.FieldArtifactGenerator;
 import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
+import hyc.codegen.core.gen.MybatisRepositoryImplGenerator;
 import hyc.codegen.core.gen.RepositoryGenerator;
-import hyc.codegen.core.gen.RepositoryImplGenerator;
 import hyc.codegen.core.interceptor.Jsr303Interceptor;
 import hyc.codegen.core.interceptor.LombokInterceptor;
 import hyc.codegen.core.io.ChangeReport;
@@ -53,24 +53,31 @@ class EndToEndTest {
         config.addTableStripPrefix("t_");
         config.setTableStripShardSuffix(true);
 
-        add("entity", "com.demo.entity", "", "lombok,jsr303");
-        add("enum", "com.demo.enums", "", "");
-        add("pojo", "com.demo.pojo", "Po", "");
-        add("mybatisMapper", "com.demo.mapper", "Mapper", "");
-        add("mybatisXml", null, null, "");
-        config.artifact("mybatisXml").get().setPath("src/main/resources/mapper");
-        add("repository", "com.demo.repository", "Repository", "");
-        add("repositoryImpl", "com.demo.repository.impl", "RepositoryImpl", "");
-        add("converter", "com.demo.converter", "Converter", "");
+        add("entity", "pojo", "com.demo.entity", "", "lombok,jsr303,enums");
+        add("enum", "enum", "com.demo.enums", "", "");
+        add("po", "pojo", "com.demo.pojo", "Po", "");
+        add("mapper", "mybatisMapper", "com.demo.mapper", "Mapper", "");
+        config.artifact("mapper").get().setTarget("po");
+        add("xml", "mybatisXml", null, null, "");
+        config.artifact("xml").get().setPath("src/main/resources/mapper");
+        config.artifact("xml").get().setTarget("po");
+        add("repository", "repository", "com.demo.repository", "Repository", "");
+        config.artifact("repository").get().setTarget("entity");
+        add("repositoryImpl", "mybatisRepositoryImpl", "com.demo.repository.impl", "RepositoryImpl", "");
+        config.artifact("repositoryImpl").get().setTarget("entity");
+        config.artifact("repositoryImpl").get().putOption("mapper", "mapper");
+        config.artifact("repositoryImpl").get().putOption("converter", "entityConverter");
+        add("entityConverter", "converter", "com.demo.converter", "Converter", "");
+        config.artifact("entityConverter").get().setSource("po");
+        config.artifact("entityConverter").get().setTarget("entity");
 
         List<ArtifactGenerator> generators = Arrays.asList(
-                new FieldArtifactGenerator("entity"),
+                new FieldArtifactGenerator(),
                 new EnumGenerator(),
-                new FieldArtifactGenerator("pojo"),
                 new MapperGenerator(),
                 new MapperXmlGenerator(),
                 new RepositoryGenerator(),
-                new RepositoryImplGenerator(),
+                new MybatisRepositoryImplGenerator(),
                 new ConverterGenerator());
         List<ArtifactInterceptor> interceptors = Arrays.asList(
                 new LombokInterceptor(),
@@ -78,8 +85,9 @@ class EndToEndTest {
         generator = new CodeGenerator(generators, interceptors);
     }
 
-    private void add(String kind, String pkg, String suffix, String use) {
-        ArtifactConfig artifact = new ArtifactConfig(kind);
+    private void add(String name, String generator, String pkg, String suffix, String use) {
+        ArtifactConfig artifact = new ArtifactConfig(name);
+        artifact.setGenerator(generator);
         artifact.setModule("");
         artifact.setPkg(pkg);
         artifact.setSuffix(suffix);
@@ -146,8 +154,8 @@ class EndToEndTest {
 
         // Mapper：CRUD + 唯一键 @Nullable + @ignore 索引跳过
         String mapper = read("com/demo/mapper/UserMapper.java");
-        assertTrue(mapper.contains("int insert(UserPo po)"), mapper);
-        assertTrue(mapper.contains("int update(UserPo po)"), mapper);
+        assertTrue(mapper.contains("int insert(UserPo userPo)"), mapper);
+        assertTrue(mapper.contains("int update(UserPo userPo)"), mapper);
         assertTrue(mapper.contains("int deleteById(@Param(\"id\") Long id)"), mapper);
         assertTrue(mapper.contains("@Nullable"), mapper);
         assertTrue(mapper.contains("UserPo findById(@Param(\"id\") Long id)"), mapper);
@@ -177,17 +185,18 @@ class EndToEndTest {
         String impl = read("com/demo/repository/impl/UserRepositoryImpl.java");
         assertTrue(impl.contains("private UserMapper userMapper;"), impl);
         assertTrue(impl.contains("private UserConverter userConverter;"), impl);
-        assertTrue(impl.contains("return userConverter.toEntity(userMapper.findById(id));"), impl);
-        assertTrue(impl.contains("return userConverter.toEntity(userMapper.findByName(name));"), impl);
+        assertTrue(impl.contains("return userConverter.toUser(userMapper.findById(id));"), impl);
+        assertTrue(impl.contains("return userConverter.toUser(userMapper.findByName(name));"), impl);
 
         // Converter：逐字段 + enum 双向转换
         String converter = read("com/demo/converter/UserConverter.java");
-        assertTrue(converter.contains("User u = new User();"), converter);
+        assertTrue(converter.contains("User user = new User();"), converter);
         assertTrue(
-                converter
-                        .contains("u.setGender(po.getGender() == null ? null : GenderType.fromValue(po.getGender()));"),
+                converter.contains(
+                        "user.setGender(source.getGender() == null ? null : GenderType.fromValue(source.getGender()));"),
                 converter);
-        assertTrue(converter.contains("po.setGender(entity.getGender() == null ? null : entity.getGender().value());"),
+        assertTrue(
+                converter.contains("userPo.setGender(target.getGender() == null ? null : target.getGender().value());"),
                 converter);
     }
 

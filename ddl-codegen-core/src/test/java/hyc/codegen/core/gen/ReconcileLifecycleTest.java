@@ -66,6 +66,7 @@ class ReconcileLifecycleTest {
         DdlConfig config = new DdlConfig();
         config.setRoot(temp);
         ArtifactConfig artifact = new ArtifactConfig("test");
+        artifact.setGenerator("test");
         artifact.setModule("");
         artifact.setPkg("com.test");
         config.addArtifact(artifact);

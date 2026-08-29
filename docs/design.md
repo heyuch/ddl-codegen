@@ -73,57 +73,61 @@ DDL 文件/目录 → Druid 解析语句 → 顺序应用到内存 SchemaModel�
 
 ## 6. Config 格式（JDK Properties，位于项目根）
 
+**产物与生成器解耦**（见 docs/changes/2026-08-29-feat-parameterized-artifacts/design.md）：
+顶层键第一段 = 产物名（自由定义），`generator` 引用注册的生成器；`naming.*` 与 `annotations.*` 为保留命名空间。
+
 ```properties
-# module = 项目根下的一级子目录；module 为空 = 项目根
-artifacts.entity.module=core
-artifacts.entity.package=com.myapp.core.entity
-artifacts.entity.suffix=
-artifacts.entity.use=lombok,jsr303
+entity.generator=pojo
+entity.package=com.myapp.core.entity
+entity.suffix=
+entity.use=lombok,jsr303,enums       # enums = enum 列映射枚举类（需 enum 产物）
 
-artifacts.enum.module=core
-artifacts.enum.package=com.myapp.core.enums
-artifacts.enum.suffix=
+enum.generator=enum
+enum.package=com.myapp.core.enums
 
-artifacts.pojo.module=core
-artifacts.pojo.package=com.myapp.core.pojo
-artifacts.pojo.suffix=Po
+po.generator=pojo
+po.package=com.myapp.core.pojo
+po.suffix=Po
 
-artifacts.mybatisMapper.module=service
-artifacts.mybatisMapper.package=com.myapp.service.mapper
-artifacts.mybatisMapper.suffix=Mapper
+mapper.generator=mybatisMapper
+mapper.package=com.myapp.service.mapper
+mapper.suffix=Mapper
+mapper.target=po                     # 返回类型产物；无 po 时 target=entity
 
-artifacts.mybatisXml.module=service
-artifacts.mybatisXml.path=src/main/resources/mapper     # XML 走资源路径，不用 package
+xml.generator=mybatisXml
+xml.path=src/main/resources/mapper
+xml.target=po
 
-artifacts.repository.module=service
-artifacts.repository.package=com.myapp.service.repository
-artifacts.repository.suffix=Repository
+repository.generator=repository
+repository.package=com.myapp.service.repository
+repository.suffix=Repository
+repository.target=entity
 
-artifacts.repositoryImpl.module=service
-artifacts.repositoryImpl.package=com.myapp.service.repository.impl
-artifacts.repositoryImpl.suffix=RepositoryImpl
-artifacts.repositoryImpl.di=field                        # spring @Resource 字段注入 / constructor
+repositoryImpl.generator=mybatisRepositoryImpl
+repositoryImpl.package=com.myapp.service.repository.impl
+repositoryImpl.suffix=RepositoryImpl
+repositoryImpl.target=entity
+repositoryImpl.mapper=mapper
+repositoryImpl.converter=entityConverter
 
-artifacts.converter.module=service
-artifacts.converter.package=com.myapp.service.converter
-artifacts.converter.suffix=Converter
-artifacts.converter.style=plain                          # plain（手写方法体）或 mapstruct
+entityConverter.generator=converter
+entityConverter.package=com.myapp.service.converter
+entityConverter.source=po
+entityConverter.target=entity
 
-# 命名策略（作用于所有 artifact，可按 artifact 覆盖）
-naming.table.stripPrefixes=t_,tmp_                       # t_user → user
-naming.table.stripShardSuffix=true                       # user_0 → user
+naming.table.stripPrefixes=t_,tmp_
+naming.table.stripShardSuffix=true
 naming.table.shardPattern=_\d+$
-naming.column.camelCase=true                             # user_id → userId
-naming.column.keywordSuffix=_                            # Java 关键字：order → order_
-naming.method.prefix=find                                # 索引 → findByNameAndGender
-naming.enum.style=column                                 # gender → Gender；或 tableColumn → UserGender
+naming.column.camelCase=true
+naming.column.keywordSuffix=_
+naming.method.prefix=find
+naming.enum.style=column
 
-# 自定义注解处理器
 annotations.custom=com.myapp.MyHandler
 ```
 
-- **`artifacts.*` 存在即启用**：配置了哪些生成器就启用哪些，其余不生成
-- PO 类型推导：pojo 未启用 → mapper 直接用 Entity 类型
+- **产物存在即启用**：配置了哪些产物就生成哪些；引用（source/target/mapper/converter）缺省 = 该生成器唯一实例，多实例/无实例必须显式
+- PO 推导规则已废弃：mapper 返回类型由 `target` 显式/缺省决定
 
 ## 7. 命名策略
 

@@ -21,9 +21,12 @@ import hyc.codegen.tree.Variable;
  */
 public final class EnumGenerator extends AbstractJavaArtifactGenerator {
 
+    /** 生成器注册名。 */
+    public static final String NAME = "enum";
+
     @Override
     public String kind() {
-        return "enum";
+        return NAME;
     }
 
     @Override

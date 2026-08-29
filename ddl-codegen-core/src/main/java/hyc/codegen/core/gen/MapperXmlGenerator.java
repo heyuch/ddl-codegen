@@ -20,16 +20,24 @@ import hyc.codegen.core.naming.NamingService;
  */
 public final class MapperXmlGenerator implements ArtifactGenerator {
 
+    /** 生成器注册名。 */
+    public static final String NAME = "mybatisXml";
+
     @Override
     public String kind() {
-        return "mybatisXml";
+        return NAME;
     }
 
     @Override
     public void generate(TableContext ctx, GenerationContext gctx) {
-        String mapperName = gctx.getNaming().artifactClassName(ctx.getTable().getName(), "mybatisMapper");
-        String namespace = gctx.artifactFqn(ctx.getTable().getName(), "mybatisMapper");
-        String poType = gctx.poType(ctx.getTable().getName());
+        hyc.codegen.core.config.ArtifactConfig mapper = gctx.resolveReference(
+                ctx.getArtifactName(), "mapper", MapperGenerator.NAME);
+        String mapperFqn = gctx.refFqn(ctx.getTable().getName(), mapper);
+        String mapperName = simpleName(mapperFqn);
+        String namespace = mapperFqn;
+        hyc.codegen.core.config.ArtifactConfig target = gctx.resolveReference(
+                ctx.getArtifactName(), "target", FieldArtifactGenerator.NAME);
+        String poType = gctx.refFqn(ctx.getTable().getName(), target);
 
         String xml = build(ctx, gctx.getNaming(), poType, namespace);
         Path file = ctx.xmlFile(gctx.getProjectRoot(), ctx.getArtifactConfig().getPath(), mapperName + ".xml");
@@ -246,6 +254,11 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
             sb.setLength(len - 2);
             sb.append('\n');
         }
+    }
+
+    private static String simpleName(String fqn) {
+        int dot = fqn.lastIndexOf('.');
+        return dot < 0 ? fqn : fqn.substring(dot + 1);
     }
 
 }

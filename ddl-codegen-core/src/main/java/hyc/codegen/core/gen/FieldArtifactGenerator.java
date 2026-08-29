@@ -7,22 +7,19 @@ import hyc.codegen.tree.Class;
 import hyc.codegen.tree.Variable;
 
 /**
- * 纯字段类生成器：entity 与 pojo 共用（差别仅在 artifact kind，进而 TypeMapper 给不同类型视图）。
+ * 纯字段类生成器（注册名 {@code pojo}）：entity/po/dto 等字段类产物共用。
  * <p>
- * entity：enum 列 → 枚举类；pojo：enum 列 → String（固定基础类型，不进 config）。
- * {@code @ignore} 列不生成字段。
+ * enum 列默认 String；产物 use 含 {@code enums} 时（{@link TableContext#typeOf} 按配置决定）
+ * 返回枚举类全限定名。{@code @ignore} 列不生成字段。
  */
 public final class FieldArtifactGenerator extends AbstractJavaArtifactGenerator {
 
-    private final String kind;
-
-    public FieldArtifactGenerator(String kind) {
-        this.kind = kind;
-    }
+    /** 生成器注册名。 */
+    public static final String NAME = "pojo";
 
     @Override
     public String kind() {
-        return kind;
+        return NAME;
     }
 
     @Override

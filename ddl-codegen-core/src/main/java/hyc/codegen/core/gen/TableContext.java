@@ -22,7 +22,7 @@ public final class TableContext {
 
     private final Table table;
 
-    private final String artifactKind;
+    private final String artifactName;
 
     private final ArtifactConfig artifactConfig;
 
@@ -33,22 +33,31 @@ public final class TableContext {
     @Nullable
     private final String enumPackage;
 
-    TableContext(Table table, String artifactKind, ArtifactConfig artifactConfig,
-            NamingService naming, TypeMapper types, @Nullable String enumPackage) {
+    private final String nullableAnnotation;
+
+    TableContext(Table table, ArtifactConfig artifactConfig,
+            NamingService naming, TypeMapper types, @Nullable String enumPackage, String nullableAnnotation) {
         this.table = table;
-        this.artifactKind = artifactKind;
+        this.artifactName = artifactConfig.getName();
         this.artifactConfig = artifactConfig;
         this.naming = naming;
         this.types = types;
         this.enumPackage = enumPackage;
+        this.nullableAnnotation = nullableAnnotation;
     }
 
     public Table getTable() {
         return table;
     }
 
-    public String getArtifactKind() {
-        return artifactKind;
+    /** 产物名。 */
+    public String getArtifactName() {
+        return artifactName;
+    }
+
+    /** {@code @Nullable} 注解全限定名（config {@code annotations.nullable}）。 */
+    public String getNullableAnnotation() {
+        return nullableAnnotation;
     }
 
     public ArtifactConfig getArtifactConfig() {
@@ -61,7 +70,7 @@ public final class TableContext {
         if (as != null) {
             return as + artifactConfig.getSuffix();
         }
-        return naming.artifactClassName(table.getName(), artifactKind);
+        return naming.artifactClassName(table.getName(), artifactName);
     }
 
     /** 包名（artifact 配置）。 */
@@ -85,23 +94,19 @@ public final class TableContext {
     }
 
     /**
-     * 列 → Java 类型（按 artifact 解析）：实体链（entity/repository/repositoryImpl/converter）的
-     * enum 列返回枚举类全限定名（含 {@code @as} 覆盖）；其余视图走 {@link TypeMapper}（enum→String 等）。
+     * 列 → Java 类型（按产物解析）：use 含 {@code enums} 时 enum 列返回枚举类全限定名（含 {@code @as} 覆盖）；
+     * 否则走 {@link TypeMapper}（enum→String）。视图完全由配置决定，无产物名硬编码。
      */
     public String typeOf(Column column) {
-        if (!column.getEnumValues().isEmpty() && isEntityView(artifactKind)) {
-            String name = enumClassName(column);
-            return enumPackage == null ? name : enumPackage + "." + name;
+        if (!column.getEnumValues().isEmpty() && usesEnums()) {
+            return enumPackage + "." + enumClassName(column);
         }
-        return types.resolveType(table.getName(), column, artifactKind);
+        return types.resolveType(table.getName(), column, artifactName);
     }
 
-    /** 实体链视图（enum 列用枚举类）。 */
-    private static boolean isEntityView(String artifactKind) {
-        return "entity".equals(artifactKind)
-                || "repository".equals(artifactKind)
-                || "repositoryImpl".equals(artifactKind)
-                || "converter".equals(artifactKind);
+    /** use 链是否含 enums（enum 列 → 枚举类视图）。 */
+    public boolean usesEnums() {
+        return artifactConfig.getUse().contains("enums");
     }
 
     /** 列 → MyBatis jdbcType。 */
