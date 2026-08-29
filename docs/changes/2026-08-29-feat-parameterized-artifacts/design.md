@@ -7,7 +7,7 @@
 （硬编码查 `artifacts.pojo`/`artifacts.entity`）。用户需要自定义产物（dto/vo/query）、一个生成器多实例
 （多个 converter）、无 po 时 mapper 直连 entity——当前设计都要改框架代码。
 
-目标：**artifact = 生成器的具名实例 + 实例配置**。`artifacts.<名字>.generator=<生成器名>`，
+目标：**artifact = 生成器的具名实例 + 实例配置**。`<产物名>.generator=<生成器名>`（顶层键，无 artifacts 前缀），
 生成器通过实例配置参数化（`use` 拦截器链、`source`/`target` 产物引用）。
 
 ## 可选方案与取舍
@@ -24,58 +24,64 @@
 ### Config schema（Properties，格式不变）
 
 ```properties
-# 产物名自由定义；generator 引用注册的生成器
-artifacts.entity.generator=pojo
-artifacts.entity.module=
-artifacts.entity.package=com.demo.entity
-artifacts.entity.suffix=
-artifacts.entity.use=lombok,jsr303,jsr305,enums   # 拦截器链（lombok 类级，jsr303/jsr305/enums 字段级）
+# 产物名自由定义（第一段）；generator 引用注册的生成器。naming.* 与 annotations.* 为保留命名空间
+entity.generator=pojo
+entity.module=
+entity.package=com.demo.entity
+entity.suffix=
+entity.use=lombok,jsr303,jsr305,enums      # 拦截器链（lombok 类级，jsr303/jsr305/enums 字段级）
 
-artifacts.po.generator=pojo
-artifacts.po.package=com.demo.pojo
-artifacts.po.suffix=Po
-artifacts.po.use=lombok
+po.generator=pojo
+po.package=com.demo.pojo
+po.suffix=Po
+po.use=lombok
 
-artifacts.dto.generator=pojo
-artifacts.dto.package=com.demo.dto
-artifacts.dto.suffix=Dto
+dto.generator=pojo
+dto.package=com.demo.dto
+dto.suffix=Dto
 
-artifacts.enum.generator=enum
-artifacts.enum.package=com.demo.enums
+enum.generator=enum
+enum.package=com.demo.enums
 
-artifacts.mapper.generator=mybatisMapper
-artifacts.mapper.package=com.demo.mapper
-artifacts.mapper.suffix=Mapper
-artifacts.mapper.target=po                    # 返回类型产物（无 po 时配 target=entity）
+mapper.generator=mybatisMapper
+mapper.package=com.demo.mapper
+mapper.suffix=Mapper
+mapper.target=po                           # 返回类型产物（无 po 时配 target=entity）
 
-artifacts.xml.generator=mybatisXml
-artifacts.xml.path=src/main/resources/mapper
-artifacts.xml.target=po
+xml.generator=mybatisXml
+xml.path=src/main/resources/mapper
+xml.target=po
 
-artifacts.repository.generator=repository
-artifacts.repository.package=com.demo.repository
-artifacts.repository.suffix=Repository
-artifacts.repository.target=entity
+repository.generator=repository
+repository.package=com.demo.repository
+repository.suffix=Repository
+repository.target=entity
 
-artifacts.repositoryImpl.generator=repositoryImpl
-artifacts.repositoryImpl.package=com.demo.repository.impl
-artifacts.repositoryImpl.suffix=RepositoryImpl
-artifacts.repositoryImpl.target=entity
-artifacts.repositoryImpl.mapper=mapper          # 引用：缺省 = 该生成器唯一实例
-artifacts.repositoryImpl.converter=entityConverter
+repositoryImpl.generator=repositoryImpl
+repositoryImpl.package=com.demo.repository.impl
+repositoryImpl.suffix=RepositoryImpl
+repositoryImpl.target=entity
+repositoryImpl.mapper=mapper               # 引用：缺省 = 该生成器唯一实例
+repositoryImpl.converter=entityConverter
 
-artifacts.entityConverter.generator=converter
-artifacts.entityConverter.package=com.demo.converter
-artifacts.entityConverter.suffix=Converter
-artifacts.entityConverter.source=po
-artifacts.entityConverter.target=entity
+entityConverter.generator=converter
+entityConverter.package=com.demo.converter
+entityConverter.suffix=Converter
+entityConverter.source=po
+entityConverter.target=entity
 
-artifacts.dtoConverter.generator=converter
-artifacts.dtoConverter.package=com.demo.converter
-artifacts.dtoConverter.suffix=DtoConverter
-artifacts.dtoConverter.source=entity
-artifacts.dtoConverter.target=dto
+dtoConverter.generator=converter
+dtoConverter.package=com.demo.converter
+dtoConverter.suffix=DtoConverter
+dtoConverter.source=entity
+dtoConverter.target=dto
 ```
+
+### 命名空间
+
+config 顶层只有三类键：**产物段**（其余全部，第一段 = 产物名）+ `naming.*` + `annotations.*`。
+`naming`/`annotations` 为保留产物名（配置了同名产物 → 明确报错）。
+简化收益：产物多时（dto/vo/query/mapper/...）不再每行带 `artifacts.` 噪音前缀。
 
 ### 引用解析规则
 
