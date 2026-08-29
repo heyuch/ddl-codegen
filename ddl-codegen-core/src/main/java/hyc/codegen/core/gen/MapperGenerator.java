@@ -34,7 +34,7 @@ public final class MapperGenerator extends AbstractJavaArtifactGenerator {
     protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
         builder.kind(Kind.INTERFACE);
 
-        ArtifactConfig target = gctx.resolveReference(ctx.getArtifactName(), "target", FieldArtifactGenerator.NAME);
+        ArtifactConfig target = gctx.resolveReference(ctx.getArtifactName(), "target", PojoGenerator.NAME);
         String poType = gctx.refFqn(ctx.getTable().getName(), target);
         String nullable = ctx.getNullableAnnotation();
         Column id = primaryKey(ctx);

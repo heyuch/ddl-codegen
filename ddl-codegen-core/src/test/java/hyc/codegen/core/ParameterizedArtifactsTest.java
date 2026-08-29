@@ -17,10 +17,10 @@ import hyc.codegen.core.gen.ArtifactGenerator;
 import hyc.codegen.core.gen.CodeGenerator;
 import hyc.codegen.core.gen.ConverterGenerator;
 import hyc.codegen.core.gen.EnumGenerator;
-import hyc.codegen.core.gen.FieldArtifactGenerator;
 import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
 import hyc.codegen.core.gen.MybatisRepositoryImplGenerator;
+import hyc.codegen.core.gen.PojoGenerator;
 import hyc.codegen.core.gen.RepositoryGenerator;
 import hyc.codegen.core.io.ChangeReport;
 import hyc.codegen.core.model.Schema;
@@ -57,7 +57,7 @@ class ParameterizedArtifactsTest {
             config.addArtifact(artifact);
         }
         List<ArtifactGenerator> generators = Arrays.asList(
-                new FieldArtifactGenerator(),
+                new PojoGenerator(),
                 new EnumGenerator(),
                 new MapperGenerator(),
                 new MapperXmlGenerator(),

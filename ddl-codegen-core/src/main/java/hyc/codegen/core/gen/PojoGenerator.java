@@ -7,12 +7,13 @@ import hyc.codegen.tree.Class;
 import hyc.codegen.tree.Variable;
 
 /**
- * 纯字段类生成器（注册名 {@code pojo}）：entity/po/dto 等字段类产物共用。
+ * 纯字段类生成器（注册名 {@code pojo}，类名与配置 {@code generator=pojo} 一致）：
+ * entity/po/dto 等字段类产物共用。
  * <p>
  * enum 列默认 String；产物 use 含 {@code enums} 时（{@link TableContext#typeOf} 按配置决定）
  * 返回枚举类全限定名。{@code @ignore} 列不生成字段。
  */
-public final class FieldArtifactGenerator extends AbstractJavaArtifactGenerator {
+public final class PojoGenerator extends AbstractJavaArtifactGenerator {
 
     /** 生成器注册名。 */
     public static final String NAME = "pojo";

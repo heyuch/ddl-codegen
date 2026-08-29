@@ -22,7 +22,7 @@ public final class RepositoryGenerator extends AbstractJavaArtifactGenerator {
     protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
         builder.kind(Kind.INTERFACE);
 
-        ArtifactConfig target = gctx.resolveReference(ctx.getArtifactName(), "target", FieldArtifactGenerator.NAME);
+        ArtifactConfig target = gctx.resolveReference(ctx.getArtifactName(), "target", PojoGenerator.NAME);
         String returnType = gctx.refFqn(ctx.getTable().getName(), target);
         String nullable = ctx.getNullableAnnotation();
 

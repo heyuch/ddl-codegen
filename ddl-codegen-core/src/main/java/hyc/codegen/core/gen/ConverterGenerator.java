@@ -35,8 +35,8 @@ public final class ConverterGenerator extends AbstractJavaArtifactGenerator {
         String tableName = ctx.getTable().getName();
         String ownName = ctx.getArtifactName();
 
-        ArtifactConfig source = gctx.resolveReference(ownName, "source", FieldArtifactGenerator.NAME);
-        ArtifactConfig target = gctx.resolveReference(ownName, "target", FieldArtifactGenerator.NAME);
+        ArtifactConfig source = gctx.resolveReference(ownName, "source", PojoGenerator.NAME);
+        ArtifactConfig target = gctx.resolveReference(ownName, "target", PojoGenerator.NAME);
 
         String sourceFqn = gctx.refFqn(tableName, source);
         String targetFqn = gctx.refFqn(tableName, target);
@@ -59,9 +59,9 @@ public final class ConverterGenerator extends AbstractJavaArtifactGenerator {
     protected List<Import> extraImports(TableContext ctx, GenerationContext gctx) {
         List<Import> imports = new ArrayList<>();
         imports.add(new Import(gctx.refFqn(ctx.getTable().getName(),
-                gctx.resolveReference(ctx.getArtifactName(), "source", FieldArtifactGenerator.NAME))));
+                gctx.resolveReference(ctx.getArtifactName(), "source", PojoGenerator.NAME))));
         imports.add(new Import(gctx.refFqn(ctx.getTable().getName(),
-                gctx.resolveReference(ctx.getArtifactName(), "target", FieldArtifactGenerator.NAME))));
+                gctx.resolveReference(ctx.getArtifactName(), "target", PojoGenerator.NAME))));
         String enumPackage = gctx.enumPackage();
         if (enumPackage != null) {
             for (Column column : ctx.columns()) {

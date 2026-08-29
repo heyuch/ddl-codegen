@@ -36,7 +36,7 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
         String mapperName = simpleName(mapperFqn);
         String namespace = mapperFqn;
         hyc.codegen.core.config.ArtifactConfig target = gctx.resolveReference(
-                ctx.getArtifactName(), "target", FieldArtifactGenerator.NAME);
+                ctx.getArtifactName(), "target", PojoGenerator.NAME);
         String poType = gctx.refFqn(ctx.getTable().getName(), target);
 
         String xml = build(ctx, gctx.getNaming(), poType, namespace);

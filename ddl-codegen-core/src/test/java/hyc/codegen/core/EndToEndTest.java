@@ -18,10 +18,10 @@ import hyc.codegen.core.gen.ArtifactInterceptor;
 import hyc.codegen.core.gen.CodeGenerator;
 import hyc.codegen.core.gen.ConverterGenerator;
 import hyc.codegen.core.gen.EnumGenerator;
-import hyc.codegen.core.gen.FieldArtifactGenerator;
 import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
 import hyc.codegen.core.gen.MybatisRepositoryImplGenerator;
+import hyc.codegen.core.gen.PojoGenerator;
 import hyc.codegen.core.gen.RepositoryGenerator;
 import hyc.codegen.core.interceptor.EnumsInterceptor;
 import hyc.codegen.core.interceptor.Jsr303Interceptor;
@@ -73,7 +73,7 @@ class EndToEndTest {
         config.artifact("entityConverter").get().setTarget("entity");
 
         List<ArtifactGenerator> generators = Arrays.asList(
-                new FieldArtifactGenerator(),
+                new PojoGenerator(),
                 new EnumGenerator(),
                 new MapperGenerator(),
                 new MapperXmlGenerator(),

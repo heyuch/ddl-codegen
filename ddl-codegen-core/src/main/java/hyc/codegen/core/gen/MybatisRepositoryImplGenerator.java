@@ -42,7 +42,7 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGe
         String tableName = ctx.getTable().getName();
         String ownName = ctx.getArtifactName();
 
-        ArtifactConfig target = gctx.resolveReference(ownName, "target", FieldArtifactGenerator.NAME);
+        ArtifactConfig target = gctx.resolveReference(ownName, "target", PojoGenerator.NAME);
         ArtifactConfig mapper = gctx.resolveReference(ownName, "mapper", MapperGenerator.NAME);
         ArtifactConfig repository = gctx.resolveReference(ownName, "repository", RepositoryGenerator.NAME);
 
@@ -150,20 +150,20 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGe
     private Bridge resolveBridge(TableContext ctx, GenerationContext gctx, String targetFqn) {
         String ownName = ctx.getArtifactName();
         ArtifactConfig mapper = gctx.resolveReference(ownName, "mapper", MapperGenerator.NAME);
-        ArtifactConfig target = gctx.resolveReference(ownName, "target", FieldArtifactGenerator.NAME);
+        ArtifactConfig target = gctx.resolveReference(ownName, "target", PojoGenerator.NAME);
 
         String mapperField = decapitalize(simpleName(gctx.refFqn(ctx.getTable().getName(), mapper)));
 
-        ArtifactConfig mapperTarget = gctx.resolveReference(mapper.getName(), "target", FieldArtifactGenerator.NAME);
+        ArtifactConfig mapperTarget = gctx.resolveReference(mapper.getName(), "target", PojoGenerator.NAME);
         if (mapperTarget.getName().equals(target.getName())) {
             return new Bridge(mapperField, false, null, null);
         }
         ArtifactConfig converter = gctx.resolveReference(ownName, "converter", ConverterGenerator.NAME);
         String converterFqn = gctx.refFqn(ctx.getTable().getName(), converter);
         ArtifactConfig converterSource =
-                gctx.resolveReference(converter.getName(), "source", FieldArtifactGenerator.NAME);
+                gctx.resolveReference(converter.getName(), "source", PojoGenerator.NAME);
         ArtifactConfig converterTarget =
-                gctx.resolveReference(converter.getName(), "target", FieldArtifactGenerator.NAME);
+                gctx.resolveReference(converter.getName(), "target", PojoGenerator.NAME);
         if (!converterSource.getName().equals(mapperTarget.getName())) {
             throw new IllegalStateException("产物 '" + converter.getName() + "' 的 source("
                     + converterSource.getName() + ") 应与 mapper(" + mapper.getName()

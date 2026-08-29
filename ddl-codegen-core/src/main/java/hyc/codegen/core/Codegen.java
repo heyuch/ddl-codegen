@@ -19,10 +19,10 @@ import hyc.codegen.core.gen.ArtifactInterceptor;
 import hyc.codegen.core.gen.CodeGenerator;
 import hyc.codegen.core.gen.ConverterGenerator;
 import hyc.codegen.core.gen.EnumGenerator;
-import hyc.codegen.core.gen.FieldArtifactGenerator;
 import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
 import hyc.codegen.core.gen.MybatisRepositoryImplGenerator;
+import hyc.codegen.core.gen.PojoGenerator;
 import hyc.codegen.core.gen.RepositoryGenerator;
 import hyc.codegen.core.interceptor.EnumsInterceptor;
 import hyc.codegen.core.interceptor.Jsr303Interceptor;
@@ -96,7 +96,7 @@ public final class Codegen {
 
     private static List<ArtifactGenerator> defaultGenerators() {
         List<ArtifactGenerator> generators = new ArrayList<>();
-        generators.add(new FieldArtifactGenerator());
+        generators.add(new PojoGenerator());
         generators.add(new EnumGenerator());
         generators.add(new MapperGenerator());
         generators.add(new MapperXmlGenerator());
