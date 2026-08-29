@@ -38,6 +38,13 @@ config 文件、内联 DDL 字符串、DDL 文件（含文件内行范围，如 
 
 执行流程：解析参数 → 加载 config → 读 DDL（内联或文件+范围切片）→ 调 `Codegen` 门面 → 变更报告打到 Maven log（getLog）。
 
+### DDL 输入与多语句处理
+
+- **无范围 = 整个文件内容**（可含多条语句）：`DruidDdlParser` 用 `SQLUtils.parseStatements` 解析多条语句，`StatementApplier` 按顺序应用（同文件内 create 后 alter 可见——CLI 冒烟已实证）。这是现有能力，插件继承
+- **范围 = 精确按行切片**（`create-user.sql:66-120`）：语义是"文件 66-120 行的内容"，不做语句感知的智能扩展
+- **切片截断语句**（边界落在语句中间导致语法错误）：错误信息携带原始文件与范围上下文（如 `create-user.sql:66-120 第 3 行语法错误`），提示用户检查范围边界；不做自动补全（确定性优先，用户可控）
+- **明确不做**：语句级范围（按语句序号而非行号）——需求未提，将来要时再加参数
+
 ### core 新增门面 `hyc.codegen.core.Codegen`
 
 ```java
