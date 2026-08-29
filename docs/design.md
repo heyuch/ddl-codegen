@@ -80,7 +80,9 @@ DDL 文件/目录 → Druid 解析语句 → 顺序应用到内存 SchemaModel�
 entity.generator=pojo
 entity.package=com.myapp.core.entity
 entity.suffix=
-entity.use=lombok,jsr303,enums       # enums = enum 列映射枚举类（需 enum 产物）
+entity.lombok=true                  # 特性开关（生成器内部应用）
+entity.jsr303=true
+entity.enums=true                   # enum 列 → 枚举类（需 enum 产物）
 
 enum.generator=enum
 enum.package=com.myapp.core.enums

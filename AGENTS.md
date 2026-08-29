@@ -60,9 +60,9 @@ DDL 文本
 
 | SPI | 位置 | 用途 |
 |---|---|---|
-| `ArtifactGenerator` | `hyc.codegen.core.gen` | 自定义 artifact；继承 `AbstractJavaArtifactGenerator` 只写成员构建 |
-| `GeneratorInterceptor` | `hyc.codegen.core.interceptor` | AST 装饰（内置 lombok/jsr303），config `use` 引用 |
-| `DdlAnnotationHandler` | `hyc.codegen.core.annotation` | DDL 注解解析 + 类型钩子，`annotations.custom` 注册 |
+| `ArtifactGenerator` | `hyc.codegen.core.gen` | 唯一扩展点；自定义生成器拿全模型，Java 类继承 `AbstractJavaArtifactGenerator` 自动获得 @Generated 增量同步 |
+| 特性开关 | 产物配置选项（如 `entity.lombok=true`） | 生成器内部应用；无需扩展代码 |
+| DDL 注解 | `@name:value` 解析存 meta | `@ignore` 模型剪枝；`@type` 由 pojo 的 `type` 特性处理；其余留给自定义生成器 |
 
 另有可替换 SPI：`DdlParser`（DDL 解析）/ `ConfigLoader`（配置加载）/ `TableNameStrategy`（命名）。
 

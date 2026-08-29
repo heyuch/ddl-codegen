@@ -1,8 +1,6 @@
 package hyc.codegen.core.config;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -36,8 +34,6 @@ public final class ArtifactConfig {
 
     @Nullable
     private String target;
-
-    private final List<String> use = new ArrayList<>();
 
     private final Map<String, String> options = new LinkedHashMap<>();
 
@@ -117,16 +113,6 @@ public final class ArtifactConfig {
 
     public void setTarget(@Nullable String target) {
         this.target = target;
-    }
-
-    /** 拦截器链（{@code use=lombok,jsr303,enums}），按序执行/生效。 */
-    public List<String> getUse() {
-        return new ArrayList<>(use);
-    }
-
-    public void setUse(List<String> use) {
-        this.use.clear();
-        this.use.addAll(use);
     }
 
     /** 该产物的其余任意键值。 */

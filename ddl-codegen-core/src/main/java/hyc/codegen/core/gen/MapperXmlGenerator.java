@@ -28,6 +28,22 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
         return NAME;
     }
 
+    /** XML 无 Java 类/字段，查询契约不适用。 */
+    @Override
+    public String className(TableContext ctx) {
+        throw new UnsupportedOperationException("XML 产物无类名");
+    }
+
+    @Override
+    public String fieldName(Column column, TableContext ctx) {
+        throw new UnsupportedOperationException("XML 产物无字段");
+    }
+
+    @Override
+    public String fieldType(Column column, TableContext ctx) {
+        throw new UnsupportedOperationException("XML 产物无成员类型");
+    }
+
     @Override
     public void generate(TableContext ctx, GenerationContext gctx) {
         hyc.codegen.core.config.ArtifactConfig mapper = gctx.resolveReference(
@@ -76,9 +92,7 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
         }
 
         for (Index index : ctx.indexes()) {
-            if (IgnoreSupport.isIgnored(index)) {
-                continue;
-            }
+
             for (QueryMethods.Spec spec : QueryMethods.of(index, naming)) {
                 if ("findById".equals(spec.getMethodName())) {
                     continue;
@@ -241,9 +255,7 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
     private List<Column> visibleColumns(TableContext ctx) {
         List<Column> columns = new ArrayList<>();
         for (Column column : ctx.columns()) {
-            if (!IgnoreSupport.isIgnored(column)) {
-                columns.add(column);
-            }
+            columns.add(column);
         }
         return columns;
     }

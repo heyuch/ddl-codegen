@@ -42,13 +42,13 @@ public final class ConverterGenerator extends AbstractJavaArtifactGenerator {
         String targetFqn = gctx.refFqn(tableName, target);
         String sourceSimple = simpleName(sourceFqn);
         String targetSimple = simpleName(targetFqn);
-        boolean sourceEnums = gctx.usesEnums(source.getName());
-        boolean targetEnums = gctx.usesEnums(target.getName());
 
         builder.method(toMethod(ctx, new Mapping(
-                "to" + capitalize(targetSimple), sourceSimple, targetSimple, "source", targetEnums, sourceEnums)));
+                "to" + capitalize(targetSimple), sourceSimple, targetSimple, "source", source.getName(),
+                target.getName()), gctx));
         builder.method(toMethod(ctx, new Mapping(
-                "to" + capitalize(sourceSimple), targetSimple, sourceSimple, "target", sourceEnums, targetEnums)));
+                "to" + capitalize(sourceSimple), targetSimple, sourceSimple, "target", target.getName(),
+                source.getName()), gctx));
         builder.method(listMethod("to" + capitalize(targetSimple) + "List", targetFqn, sourceSimple, targetSimple,
                 "to" + capitalize(targetSimple), "sourceList", "source"));
         builder.method(listMethod("to" + capitalize(sourceSimple) + "List", sourceFqn, targetSimple, sourceSimple,
@@ -65,7 +65,7 @@ public final class ConverterGenerator extends AbstractJavaArtifactGenerator {
         String enumPackage = gctx.enumPackage();
         if (enumPackage != null) {
             for (Column column : ctx.columns()) {
-                if (!column.getEnumValues().isEmpty() && !IgnoreSupport.isIgnored(column)) {
+                if (!column.getEnumValues().isEmpty()) {
                     imports.add(new Import(enumPackage + "." + ctx.enumClassName(column)));
                 }
             }
@@ -76,21 +76,25 @@ public final class ConverterGenerator extends AbstractJavaArtifactGenerator {
     }
 
     /** 构建单对象映射方法：{@code fromType} → {@code toType}。 */
-    private Method toMethod(TableContext ctx, Mapping m) {
+    private Method toMethod(TableContext ctx, Mapping m, GenerationContext gctx) {
         String toVar = decapitalize(m.toType);
         List<String> stmts = new ArrayList<>();
         stmts.add(m.toType + " " + toVar + " = new " + m.toType + "();");
+        TableContext fromCtx = gctx.tableContext(ctx.getTable(), m.fromName);
+        TableContext toCtx = gctx.tableContext(ctx.getTable(), m.toName);
         for (Column column : ctx.columns()) {
-            if (IgnoreSupport.isIgnored(column)) {
-                continue;
-            }
             String field = ctx.fieldName(column);
             String getter = m.fromParam + ".get" + capitalize(field) + "()";
             String expr = getter;
             if (!column.getEnumValues().isEmpty()) {
-                if (m.toEnums && !m.fromEnums) {
+                // 转换方向 = from/to 产物各自 fieldType 的视图差异（查询契约）
+                String fromType = gctx.generatorFor(m.fromName).fieldType(column, fromCtx);
+                String toType = gctx.generatorFor(m.toName).fieldType(column, toCtx);
+                boolean fromEnumView = !"java.lang.String".equals(fromType);
+                boolean toEnumView = !"java.lang.String".equals(toType);
+                if (toEnumView && !fromEnumView) {
                     expr = Expr.nullSafe(getter, ctx.enumClassName(column) + ".fromValue(" + getter + ")");
-                } else if (m.fromEnums && !m.toEnums) {
+                } else if (fromEnumView && !toEnumView) {
                     expr = Expr.nullSafe(getter, getter + ".value()");
                 }
             }
@@ -161,18 +165,18 @@ public final class ConverterGenerator extends AbstractJavaArtifactGenerator {
 
         final String fromParam;
 
-        final boolean toEnums;
+        final String fromName;
 
-        final boolean fromEnums;
+        final String toName;
 
         Mapping(String methodName, String fromType, String toType, String fromParam,
-                boolean toEnums, boolean fromEnums) {
+                String fromName, String toName) {
             this.methodName = methodName;
             this.fromType = fromType;
             this.toType = toType;
             this.fromParam = fromParam;
-            this.toEnums = toEnums;
-            this.fromEnums = fromEnums;
+            this.fromName = fromName;
+            this.toName = toName;
         }
 
     }

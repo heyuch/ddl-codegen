@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -38,7 +37,9 @@ class ConfigTest {
                 "entity.module=core",
                 "entity.package=com.myapp.core.entity",
                 "entity.suffix=",
-                "entity.use=lombok,jsr303,enums",
+                "entity.lombok=true",
+                "entity.jsr303=true",
+                "entity.enums=true",
                 "xml.generator=mybatisXml",
                 "xml.module=service",
                 "xml.path=src/main/resources/mapper",
@@ -63,7 +64,8 @@ class ConfigTest {
         assertEquals("core", entity.getModule());
         assertEquals("com.myapp.core.entity", entity.getPkg());
         assertEquals("", entity.getSuffix());
-        assertEquals(Arrays.asList("lombok", "jsr303", "enums"), entity.getUse());
+        assertEquals("true", entity.getOption("lombok"));
+        assertEquals("true", entity.getOption("enums"));
 
         ArtifactConfig xml = config.artifact("xml").orElseThrow();
         assertEquals("mybatisXml", xml.getGenerator());
@@ -101,7 +103,7 @@ class ConfigTest {
         ArtifactConfig entity = config.artifact("entity").orElseThrow();
         assertNull(entity.getModule());
         assertEquals("", entity.getSuffix());
-        assertTrue(entity.getUse().isEmpty());
+        assertTrue(entity.getOptions().isEmpty());
     }
 
     @Test
@@ -133,10 +135,10 @@ class ConfigTest {
     }
 
     @Test
-    void emptyUseIgnored() throws Exception {
-        DdlConfig config = load("entity.package=com.x.entity\nentity.use=lombok,,jsr303 ,");
-        List<String> use = config.artifact("entity").orElseThrow().getUse();
-        assertEquals(Arrays.asList("lombok", "jsr303"), use);
+    void unknownKeysStoredAsOptions() throws Exception {
+        DdlConfig config = load("entity.package=com.x.entity\nentity.customKey=customValue");
+        ArtifactConfig entity = config.artifact("entity").orElseThrow();
+        assertEquals("customValue", entity.getOption("customKey"));
     }
 
 }

@@ -71,7 +71,10 @@ entity.generator=pojo
 entity.module=core
 entity.package=com.myapp.core.entity
 entity.suffix=
-entity.use=lombok,jsr303,enums          # 拦截器链；enums = enum 列映射为枚举类（需配置 enum 产物）
+entity.lombok=true                  # 特性开关：lombok 注解集
+entity.jsr303=true                  # @NotNull/@Size/@Digits
+entity.enums=true                   # enum 列映射为枚举类（需配置 enum 产物）
+entity.type=true                    # @type 注解 → 字段类型
 
 enum.generator=enum
 enum.module=core
@@ -81,7 +84,7 @@ po.generator=pojo
 po.module=core
 po.package=com.myapp.core.pojo
 po.suffix=Po
-po.use=lombok
+po.lombok=true
 
 mapper.generator=mybatisMapper
 mapper.module=service

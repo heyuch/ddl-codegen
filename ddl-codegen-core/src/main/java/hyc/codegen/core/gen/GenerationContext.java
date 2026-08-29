@@ -14,7 +14,6 @@ import hyc.codegen.core.io.ChangeReport;
 import hyc.codegen.core.model.Table;
 import hyc.codegen.core.naming.NamingService;
 import hyc.codegen.core.types.TypeMapper;
-import hyc.codegen.tree.Class;
 
 /**
  * 一次代码生成执行的全局上下文：配置、共享服务、拦截器注册表、变更报告。
@@ -33,7 +32,7 @@ public final class GenerationContext {
 
     private final ArtifactRegistry artifactRegistry;
 
-    private final Map<String, GeneratorInterceptor> interceptors;
+    private final Map<String, ArtifactGenerator> generators;
 
     private final ChangeReport report;
 
@@ -41,14 +40,14 @@ public final class GenerationContext {
 
     GenerationContext(DdlConfig config, NamingService naming, TypeMapper typeMapper,
             AnnotationRegistry annotationRegistry, ArtifactRegistry artifactRegistry,
-            Map<String, GeneratorInterceptor> interceptors, ChangeReport report) {
+            Map<String, ArtifactGenerator> generators, ChangeReport report) {
         this.config = config;
         this.projectRoot = config.getRoot();
         this.naming = naming;
         this.typeMapper = typeMapper;
         this.annotationRegistry = annotationRegistry;
         this.artifactRegistry = artifactRegistry;
-        this.interceptors = interceptors;
+        this.generators = generators;
         this.report = report;
     }
 
@@ -79,6 +78,47 @@ public final class GenerationContext {
 
     public ChangeReport getReport() {
         return report;
+    }
+
+    /** 产物对应的生成器实例（config.generator → 注册表）。 */
+    public ArtifactGenerator generatorFor(String artifactName) {
+        ArtifactConfig artifactConfig = config.artifact(artifactName)
+                .orElseThrow(() -> new IllegalStateException("未配置产物: " + artifactName));
+        String generatorName = artifactConfig.getGenerator();
+        if (generatorName == null) {
+            throw new IllegalStateException("产物 '" + artifactName + "' 未配置 generator");
+        }
+        ArtifactGenerator generator = generators.get(generatorName);
+        if (generator == null) {
+            throw new IllegalStateException("产物 '" + artifactName + "' 引用了未注册的生成器: " + generatorName);
+        }
+        return generator;
+    }
+
+    /** enum 产物包（enums 特性开启时：唯一 enum 生成器产物，缺省/多实例报错）。 */
+    @Nullable
+    public String enumPackageFor(String artifactName) {
+        if (!usesEnums(artifactName)) {
+            return null;
+        }
+        List<ArtifactConfig> matches = new ArrayList<>();
+        for (ArtifactConfig artifact : config.getArtifacts().values()) {
+            if ("enum".equals(artifact.getGenerator())) {
+                matches.add(artifact);
+            }
+        }
+        if (matches.size() != 1) {
+            throw new IllegalStateException("产物 '" + artifactName + "' 的 enums 特性需要 enum 产物"
+                    + "（generator=enum 应唯一，当前 " + matches.size() + " 个）");
+        }
+        return matches.get(0).getPkg();
+    }
+
+    /** 产物 enums 特性开关。 */
+    public boolean usesEnums(String artifactName) {
+        return config.artifact(artifactName)
+                .map(a -> Boolean.parseBoolean(a.getOption("enums")))
+                .orElse(false);
     }
 
     /** 产物类的全限定名（包 + 类名；未启用报错）。 */
@@ -140,62 +180,21 @@ public final class GenerationContext {
         throw new IllegalStateException("enum 生成器实例数 = " + matches.size() + "（应唯一，多个时需显式配置引用）");
     }
 
-    /** 产物引用 → FQN。 */
+    /** 产物引用 → FQN（查询契约：路由到引用产物的生成器 className）。 */
     public String refFqn(String tableName, ArtifactConfig referenced) {
-        return referenced.getPkg() + "." + naming.artifactClassName(tableName, referenced.getName());
+        TableContext refCtx = tableContext(syntheticTable(tableName, referenced), referenced.getName());
+        return referenced.getPkg() + "." + generatorFor(referenced.getName()).className(refCtx);
+    }
+
+    private Table syntheticTable(String tableName, ArtifactConfig referenced) {
+        return new Table(tableName, null);
     }
 
     /** 按产物配置创建表上下文。 */
     public TableContext tableContext(Table table, String artifactName) {
         ArtifactConfig artifactConfig = config.artifact(artifactName)
                 .orElseThrow(() -> new IllegalStateException("未配置产物: " + artifactName));
-        String enumPackage = uniqueEnumPackage(artifactName);
-        return new TableContext(table, artifactConfig, naming, typeMapper, enumPackage, config.getNullableAnnotation());
-    }
-
-    /** use 含 enums 时解析 enum 产物包（唯一 enum 实例；缺省报错）。 */
-    private String uniqueEnumPackage(String artifactName) {
-        if (!usesEnums(artifactName)) {
-            return null;
-        }
-        try {
-            ArtifactConfig enumArtifact = resolveReference(artifactName, "enums", "enum");
-            return enumArtifact.getPkg();
-        } catch (IllegalStateException e) {
-            throw new IllegalStateException("产物 '" + artifactName + "' 的 use 含 enums，但未配置 enum 产物（generator=enum）", e);
-        }
-    }
-
-    /** 产物 use 链是否含 enums（enum 列 → 枚举类视图信号）。 */
-    public boolean usesEnums(String artifactName) {
-        return config.artifact(artifactName)
-                .map(a -> a.getUse().contains("enums"))
-                .orElse(false);
-    }
-
-    /** 某 artifact 配置的拦截器链（按 use 顺序解析；未注册的名字记 warning 跳过）。 */
-    public List<GeneratorInterceptor> interceptorsFor(String artifactKind) {
-        List<GeneratorInterceptor> result = new ArrayList<>();
-        ArtifactConfig artifactConfig = config.artifact(artifactKind).orElse(null);
-        if (artifactConfig == null) {
-            return result;
-        }
-        for (String name : artifactConfig.getUse()) {
-            GeneratorInterceptor interceptor = interceptors.get(name);
-            if (interceptor == null) {
-                warning("artifact '" + artifactKind + "' use 引用了未注册的拦截器: " + name);
-            } else {
-                result.add(interceptor);
-            }
-        }
-        return result;
-    }
-
-    /** 对生成的类执行某 artifact 的拦截器链（只动 @Generated 成员与 import）。 */
-    public void applyInterceptors(Class cls, TableContext ctx) {
-        for (GeneratorInterceptor interceptor : interceptorsFor(ctx.getArtifactName())) {
-            interceptor.apply(cls, ctx);
-        }
+        return new TableContext(table, artifactConfig, this);
     }
 
     /** 记一条警告（不中断生成）。 */
@@ -216,7 +215,7 @@ public final class GenerationContext {
     /** 构造器。 */
     public static final class Builder {
 
-        private final Map<String, GeneratorInterceptor> interceptors = new LinkedHashMap<>();
+        private final Map<String, ArtifactGenerator> generators = new LinkedHashMap<>();
 
         private DdlConfig config;
 
@@ -260,14 +259,14 @@ public final class GenerationContext {
             return this;
         }
 
-        public Builder interceptor(GeneratorInterceptor interceptor) {
-            interceptors.put(interceptor.name(), interceptor);
+        public Builder generator(ArtifactGenerator generator) {
+            generators.put(generator.kind(), generator);
             return this;
         }
 
         public GenerationContext build() {
             return new GenerationContext(config, naming, typeMapper,
-                    annotationRegistry, artifactRegistry, interceptors, report);
+                    annotationRegistry, artifactRegistry, generators, report);
         }
 
     }

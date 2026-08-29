@@ -28,14 +28,9 @@ public final class CodeGenerator {
 
     private final Map<String, ArtifactGenerator> generators = new LinkedHashMap<>();
 
-    private final Map<String, GeneratorInterceptor> interceptors = new LinkedHashMap<>();
-
-    public CodeGenerator(List<ArtifactGenerator> generators, List<GeneratorInterceptor> interceptors) {
+    public CodeGenerator(List<ArtifactGenerator> generators) {
         for (ArtifactGenerator generator : generators) {
             this.generators.put(generator.kind(), generator);
-        }
-        for (GeneratorInterceptor interceptor : interceptors) {
-            this.interceptors.put(interceptor.name(), interceptor);
         }
     }
 
@@ -66,8 +61,8 @@ public final class CodeGenerator {
                 .typeMapper(typeMapper)
                 .annotationRegistry(annotationRegistry)
                 .report(report);
-        for (GeneratorInterceptor interceptor : interceptors.values()) {
-            gb.interceptor(interceptor);
+        for (ArtifactGenerator generator : generators.values()) {
+            gb.generator(generator);
         }
         GenerationContext gctx = gb.build();
 

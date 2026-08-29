@@ -11,6 +11,7 @@ import com.sun.source.tree.VariableTree;
 import hyc.codegen.core.io.ChangeStatus;
 import hyc.codegen.core.io.FileWriter;
 import hyc.codegen.core.io.PathResolver;
+import hyc.codegen.core.model.Column;
 import hyc.codegen.tree.Class;
 import hyc.codegen.tree.CompileUnit;
 import hyc.codegen.tree.JavaCodegen;
@@ -75,8 +76,6 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
             cu = existingCu;
         }
 
-        gctx.applyInterceptors(target, ctx);
-
         cu.addClass(target);
         for (hyc.codegen.tree.Import imp : extraImports(ctx, gctx)) {
             cu.addImport(imp);
@@ -92,9 +91,27 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
         return java.util.Collections.emptyList();
     }
 
-    /** artifact 类型名（对应 config {@code artifacts.<kind>}）。 */
+    /** artifact 类型名（对应 config {@code generator=<名>}）。 */
     @Override
     public abstract String kind();
+
+    /** 类名（框架默认：命名策略 + 产物后缀；特殊命名逻辑可覆盖）。 */
+    @Override
+    public String className(TableContext ctx) {
+        return ctx.getNaming().artifactClassName(ctx.getTable().getName(), ctx.getArtifactName());
+    }
+
+    /** 字段名（框架默认：命名策略；特殊逻辑可覆盖）。 */
+    @Override
+    public String fieldName(Column column, TableContext ctx) {
+        return ctx.getNaming().columnFieldName(column.getName());
+    }
+
+    /** 成员类型（框架默认：SQL 类型映射；特性/特殊类型逻辑在生成器内覆盖）。 */
+    @Override
+    public String fieldType(Column column, TableContext ctx) {
+        return ctx.getTypeMapper().resolveType(ctx.getTable().getName(), column);
+    }
 
     /** 从模型构建期望成员（所有成员会由基类自动打上 {@code @Generated}）。 */
     protected abstract void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx);

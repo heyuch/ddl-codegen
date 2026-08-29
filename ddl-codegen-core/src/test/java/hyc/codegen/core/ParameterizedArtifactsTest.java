@@ -64,8 +64,7 @@ class ParameterizedArtifactsTest {
                 new RepositoryGenerator(),
                 new MybatisRepositoryImplGenerator(),
                 new ConverterGenerator());
-        generator = new CodeGenerator(generators,
-                java.util.Collections.singletonList(new hyc.codegen.core.interceptor.EnumsInterceptor()));
+        generator = new CodeGenerator(generators);
     }
 
     private void generate() {
@@ -99,7 +98,7 @@ class ParameterizedArtifactsTest {
     void mapperTargetCanBeEntityWithoutPo() throws Exception {
         ArtifactConfig entity = artifact("entity", "pojo");
         entity.setPkg("com.demo.entity");
-        entity.setUse(Arrays.asList("enums"));
+        entity.putOption("enums", "true");
         ArtifactConfig mapper = artifact("mapper", "mybatisMapper");
         mapper.setPkg("com.demo.mapper");
         mapper.setSuffix("Mapper");
@@ -117,7 +116,7 @@ class ParameterizedArtifactsTest {
     void customDtoArtifactAndEnumViewByUse() throws Exception {
         ArtifactConfig entity = artifact("entity", "pojo");
         entity.setPkg("com.demo.entity");
-        entity.setUse(Arrays.asList("enums"));
+        entity.putOption("enums", "true");
         ArtifactConfig dto = artifact("dto", "pojo");
         dto.setPkg("com.demo.dto");
         dto.setSuffix("Dto");
@@ -135,14 +134,14 @@ class ParameterizedArtifactsTest {
     void multipleConvertersWithSourceTarget() throws Exception {
         ArtifactConfig entity = artifact("entity", "pojo");
         entity.setPkg("com.demo.entity");
-        entity.setUse(Arrays.asList("enums"));
+        entity.putOption("enums", "true");
         ArtifactConfig po = artifact("po", "pojo");
         po.setPkg("com.demo.pojo");
         po.setSuffix("Po");
         ArtifactConfig dto = artifact("dto", "pojo");
         dto.setPkg("com.demo.dto");
         dto.setSuffix("Dto");
-        dto.setUse(Arrays.asList("enums"));
+        dto.putOption("enums", "true");
 
         ArtifactConfig entityConverter = artifact("entityConverter", "converter");
         entityConverter.setPkg("com.demo.converter");
@@ -169,7 +168,7 @@ class ParameterizedArtifactsTest {
     void repositoryImplConverterConsistencyValidated() throws Exception {
         ArtifactConfig entity = artifact("entity", "pojo");
         entity.setPkg("com.demo.entity");
-        entity.setUse(Arrays.asList("enums"));
+        entity.putOption("enums", "true");
         ArtifactConfig po = artifact("po", "pojo");
         po.setPkg("com.demo.pojo");
         po.setSuffix("Po");
@@ -205,7 +204,7 @@ class ParameterizedArtifactsTest {
     void converterDirectWithoutPoUsesEntity() throws Exception {
         ArtifactConfig entity = artifact("entity", "pojo");
         entity.setPkg("com.demo.entity");
-        entity.setUse(Arrays.asList("enums"));
+        entity.putOption("enums", "true");
         ArtifactConfig mapper = artifact("mapper", "mybatisMapper");
         mapper.setPkg("com.demo.mapper");
         mapper.setSuffix("Mapper");
@@ -233,7 +232,8 @@ class ParameterizedArtifactsTest {
     void typeAnnotationScopedByEnumView() throws Exception {
         ArtifactConfig entity = artifact("entity", "pojo");
         entity.setPkg("com.demo.entity");
-        entity.setUse(Arrays.asList("enums"));
+        entity.putOption("enums", "true");
+        entity.putOption("type", "true");
         ArtifactConfig po = artifact("po", "pojo");
         po.setPkg("com.demo.pojo");
         po.setSuffix("Po");

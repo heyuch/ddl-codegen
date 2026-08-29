@@ -2,7 +2,10 @@ package hyc.codegen.core.ddl;
 
 import java.util.List;
 
+import hyc.codegen.core.model.Column;
+import hyc.codegen.core.model.Index;
 import hyc.codegen.core.model.Schema;
+import hyc.codegen.core.model.Table;
 
 /**
  * 把 {@link DdlOperation} 序列按顺序应用到 {@link Schema}，产出 {@link ApplyResult}。
@@ -21,6 +24,12 @@ public final class StatementApplier {
      * @return 应用结果（受影响表、改名/删除记录）
      */
     public ApplyResult apply(Schema schema, List<DdlOperation> operations) {
+        ApplyResult result = applyOps(schema, operations);
+        pruneIgnored(schema);
+        return result;
+    }
+
+    private ApplyResult applyOps(Schema schema, List<DdlOperation> operations) {
         ApplyResult result = new ApplyResult();
         for (DdlOperation operation : operations) {
             applyOne(schema, operation, result);
@@ -88,6 +97,25 @@ public final class StatementApplier {
             }
         } else {
             throw new IllegalArgumentException("未知 DDL 操作类型: " + operation.getClass().getName());
+        }
+    }
+
+    /**
+     * 模型级语义：{@code @ignore} 注解的列/索引在解析应用后从模型移除
+     * （一处解决所有产物含 XML；自定义生成器也不再见到被忽略的成员）。
+     */
+    private static void pruneIgnored(Schema schema) {
+        for (Table table : schema.tables()) {
+            for (Column column : new java.util.ArrayList<>(table.getColumns())) {
+                if (column.getMeta().get("ignore") != null) {
+                    table.removeColumn(column.getName());
+                }
+            }
+            for (Index index : new java.util.ArrayList<>(table.getIndexes())) {
+                if (index.getMeta().get("ignore") != null) {
+                    table.removeIndex(index.getName());
+                }
+            }
         }
     }
 

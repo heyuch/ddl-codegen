@@ -138,9 +138,6 @@ public final class PropertiesConfigLoader implements ConfigLoader {
             case "path":
                 artifact.setPath(emptyToNull(value));
                 break;
-            case "use":
-                artifact.setUse(splitList(value));
-                break;
             default:
                 artifact.putOption(prop, value);
         }

@@ -18,15 +18,11 @@ import hyc.codegen.core.gen.ArtifactGenerator;
 import hyc.codegen.core.gen.CodeGenerator;
 import hyc.codegen.core.gen.ConverterGenerator;
 import hyc.codegen.core.gen.EnumGenerator;
-import hyc.codegen.core.gen.GeneratorInterceptor;
 import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
 import hyc.codegen.core.gen.MybatisRepositoryImplGenerator;
 import hyc.codegen.core.gen.PojoGenerator;
 import hyc.codegen.core.gen.RepositoryGenerator;
-import hyc.codegen.core.interceptor.EnumsInterceptor;
-import hyc.codegen.core.interceptor.Jsr303Interceptor;
-import hyc.codegen.core.interceptor.LombokInterceptor;
 import hyc.codegen.core.io.ChangeReport;
 import hyc.codegen.core.io.FileWriter;
 import hyc.codegen.core.model.Schema;
@@ -73,7 +69,7 @@ public final class Codegen {
         Schema schema = new Schema();
         ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddlText));
 
-        CodeGenerator generator = new CodeGenerator(defaultGenerators(), defaultInterceptors());
+        CodeGenerator generator = new CodeGenerator(defaultGenerators());
         FileWriter.setDryRun(dryRun);
         return generator.generate(config, schema, result, handlers);
     }
@@ -104,14 +100,6 @@ public final class Codegen {
         generators.add(new MybatisRepositoryImplGenerator());
         generators.add(new ConverterGenerator());
         return generators;
-    }
-
-    private static List<GeneratorInterceptor> defaultInterceptors() {
-        List<GeneratorInterceptor> interceptors = new ArrayList<>();
-        interceptors.add(new LombokInterceptor());
-        interceptors.add(new Jsr303Interceptor());
-        interceptors.add(new EnumsInterceptor());
-        return interceptors;
     }
 
 }

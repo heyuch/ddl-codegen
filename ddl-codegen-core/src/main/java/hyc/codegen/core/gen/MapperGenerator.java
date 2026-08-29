@@ -46,9 +46,7 @@ public final class MapperGenerator extends AbstractJavaArtifactGenerator {
         }
 
         for (Index index : ctx.indexes()) {
-            if (IgnoreSupport.isIgnored(index)) {
-                continue;
-            }
+
             for (QueryMethods.Spec spec : QueryMethods.of(index, gctx.getNaming())) {
                 builder.method(findByMethod(spec, poType, nullable, ctx));
             }

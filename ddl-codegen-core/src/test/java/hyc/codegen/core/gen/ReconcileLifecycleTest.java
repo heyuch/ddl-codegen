@@ -76,8 +76,7 @@ class ReconcileLifecycleTest {
     private ChangeReport generate(DdlConfig config, Schema schema, String ddl) {
         DdlParser parser = new DruidDdlParser();
         ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
-        CodeGenerator generator = new CodeGenerator(Collections.singletonList(new TestGenerator()),
-                Collections.emptyList());
+        CodeGenerator generator = new CodeGenerator(Collections.singletonList(new TestGenerator()));
         return generator.generate(config, schema, result, Collections.emptyList());
     }
 

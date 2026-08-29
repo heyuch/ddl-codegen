@@ -14,7 +14,6 @@ import hyc.codegen.tree.Method;
 import hyc.codegen.tree.TypeReference;
 import hyc.codegen.tree.Types;
 import hyc.codegen.tree.Variable;
-import hyc.codegen.tree.gen.Expr;
 
 /**
  * MyBatis RepositoryImpl 生成器（注册名 {@code mybatisRepositoryImpl}）：桥接 Mapper → Converter → 目标产物。
@@ -80,9 +79,7 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGe
         }
 
         for (Index index : ctx.indexes()) {
-            if (IgnoreSupport.isIgnored(index)) {
-                continue;
-            }
+
             for (QueryMethods.Spec spec : QueryMethods.of(index, gctx.getNaming())) {
                 builder.method(bridgeMethod(spec, ctx, targetFqn, nullable, bridge));
             }
@@ -127,12 +124,8 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGe
                     .type(JavaTypes.typeTree(ctx.typeOf(column)))
                     .name(fieldName)
                     .build());
-            if (!column.getEnumValues().isEmpty() && ctx.usesEnums()) {
-                // 自己的视图是枚举类，mapper 视图是 String → 转回 DDL 值
-                args.add(Expr.nullSafe(fieldName, fieldName + ".value()"));
-            } else {
-                args.add(fieldName);
-            }
+            // 参数类型走本生成器 fieldType（SQL 映射，enum 列 String），与 mapper 参数同型，直传
+            args.add(fieldName);
         }
 
         String call = bridge.mapperField + "." + spec.getMethodName() + "(" + String.join(", ", args) + ")";

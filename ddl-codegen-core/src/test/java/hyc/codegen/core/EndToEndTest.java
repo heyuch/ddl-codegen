@@ -17,15 +17,11 @@ import hyc.codegen.core.gen.ArtifactGenerator;
 import hyc.codegen.core.gen.CodeGenerator;
 import hyc.codegen.core.gen.ConverterGenerator;
 import hyc.codegen.core.gen.EnumGenerator;
-import hyc.codegen.core.gen.GeneratorInterceptor;
 import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
 import hyc.codegen.core.gen.MybatisRepositoryImplGenerator;
 import hyc.codegen.core.gen.PojoGenerator;
 import hyc.codegen.core.gen.RepositoryGenerator;
-import hyc.codegen.core.interceptor.EnumsInterceptor;
-import hyc.codegen.core.interceptor.Jsr303Interceptor;
-import hyc.codegen.core.interceptor.LombokInterceptor;
 import hyc.codegen.core.io.ChangeReport;
 import hyc.codegen.core.model.Schema;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +50,10 @@ class EndToEndTest {
         config.addTableStripPrefix("t_");
         config.setTableStripShardSuffix(true);
 
-        add("entity", "pojo", "com.demo.entity", "", "lombok,jsr303,enums");
+        add("entity", "pojo", "com.demo.entity", "", "");
+        config.artifact("entity").get().putOption("lombok", "true");
+        config.artifact("entity").get().putOption("jsr303", "true");
+        config.artifact("entity").get().putOption("enums", "true");
         add("enum", "enum", "com.demo.enums", "", "");
         add("po", "pojo", "com.demo.pojo", "Po", "");
         add("mapper", "mybatisMapper", "com.demo.mapper", "Mapper", "");
@@ -80,11 +79,7 @@ class EndToEndTest {
                 new RepositoryGenerator(),
                 new MybatisRepositoryImplGenerator(),
                 new ConverterGenerator());
-        List<GeneratorInterceptor> interceptors = Arrays.asList(
-                new LombokInterceptor(),
-                new Jsr303Interceptor(),
-                new EnumsInterceptor());
-        generator = new CodeGenerator(generators, interceptors);
+        generator = new CodeGenerator(generators);
     }
 
     private void add(String name, String generator, String pkg, String suffix, String use) {
@@ -93,9 +88,6 @@ class EndToEndTest {
         artifact.setModule("");
         artifact.setPkg(pkg);
         artifact.setSuffix(suffix);
-        if (!use.isEmpty()) {
-            artifact.setUse(Arrays.asList(use.split(",")));
-        }
         config.addArtifact(artifact);
     }
 
@@ -114,7 +106,7 @@ class EndToEndTest {
     private static final String DDL = "create table t_user (\n"
             + "    id bigint not null auto_increment comment '主键',\n"
             + "    name varchar(50) not null comment '用户名',\n"
-            + "    gender enum('male','female') comment '性别 @as:GenderType',\n"
+            + "    gender enum('male','female') comment '性别',\n"
             + "    status tinyint not null default 0 comment '状态',\n"
             + "    credits decimal(10,2) comment '积分',\n"
             + "    ext_info varchar(500) comment '扩展信息 @ignore',\n"
@@ -132,7 +124,7 @@ class EndToEndTest {
         String entity = read("com/demo/entity/User.java");
         assertTrue(entity.contains("private Long id"), entity);
         assertTrue(entity.contains("private String name"), entity);
-        assertTrue(entity.contains("private GenderType gender"), entity);
+        assertTrue(entity.contains("private Gender gender"), entity);
         assertTrue(entity.contains("private BigDecimal credits"), entity);
         assertTrue(entity.contains("private LocalDateTime createTime"), entity);
         assertFalse(entity.contains("extInfo"), entity);
@@ -143,7 +135,7 @@ class EndToEndTest {
         assertTrue(entity.contains("public class User"), entity);
 
         // Enum：@as 命名 + 常量 + value/fromValue
-        String gender = read("com/demo/enums/GenderType.java");
+        String gender = read("com/demo/enums/Gender.java");
         assertTrue(gender.contains("MALE(\"male\")"), gender);
         assertTrue(gender.contains("FEMALE(\"female\")"), gender);
         assertTrue(gender.contains("fromValue"), gender);
@@ -195,7 +187,7 @@ class EndToEndTest {
         assertTrue(converter.contains("User user = new User();"), converter);
         assertTrue(
                 converter.contains(
-                        "user.setGender(source.getGender() == null ? null : GenderType.fromValue(source.getGender()));"),
+                        "user.setGender(source.getGender() == null ? null : Gender.fromValue(source.getGender()));"),
                 converter);
         assertTrue(
                 converter.contains("userPo.setGender(target.getGender() == null ? null : target.getGender().value());"),

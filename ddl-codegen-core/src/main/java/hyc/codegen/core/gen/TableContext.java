@@ -22,6 +22,8 @@ public final class TableContext {
 
     private final Table table;
 
+    private final GenerationContext gctx;
+
     private final String artifactName;
 
     private final ArtifactConfig artifactConfig;
@@ -35,15 +37,15 @@ public final class TableContext {
 
     private final String nullableAnnotation;
 
-    TableContext(Table table, ArtifactConfig artifactConfig,
-            NamingService naming, TypeMapper types, @Nullable String enumPackage, String nullableAnnotation) {
+    TableContext(Table table, ArtifactConfig artifactConfig, GenerationContext gctx) {
         this.table = table;
+        this.gctx = gctx;
         this.artifactName = artifactConfig.getName();
         this.artifactConfig = artifactConfig;
-        this.naming = naming;
-        this.types = types;
-        this.enumPackage = enumPackage;
-        this.nullableAnnotation = nullableAnnotation;
+        this.naming = gctx.getNaming();
+        this.types = gctx.getTypeMapper();
+        this.enumPackage = gctx.enumPackageFor(artifactConfig.getName());
+        this.nullableAnnotation = gctx.getConfig().getNullableAnnotation();
     }
 
     public Table getTable() {
@@ -93,17 +95,20 @@ public final class TableContext {
         return naming.columnFieldName(column.getName());
     }
 
-    /**
-     * 列 → Java 类型（SQL 映射；enum 列固定 String）。
-     * <p>
-     * {@code @type} 覆盖与 enum→枚举类视图由 {@code enums} 拦截器在生成后统一改写
-     * （字段与方法参数同机制，见 GeneratorInterceptor#onField/onParam），此处不做视图决策。
-     */
+    /** 列 → 成员类型（查询契约：路由到本产物生成器的 fieldType，type/enums 特性生效）。 */
     public String typeOf(Column column) {
-        return types.resolveType(table.getName(), column);
+        return gctx.generatorFor(artifactName).fieldType(column, this);
     }
 
-    /** enum 产物包（use 含 enums 时已校验存在）。 */
+    public NamingService getNaming() {
+        return naming;
+    }
+
+    public TypeMapper getTypeMapper() {
+        return types;
+    }
+
+    /** enum 产物包（enums 特性开启时已校验存在）。 */
     @Nullable
     public String getEnumPackage() {
         return enumPackage;
@@ -120,9 +125,9 @@ public final class TableContext {
         return null;
     }
 
-    /** use 链是否含 enums（enum 列 → 枚举类视图）。 */
+    /** enums 特性开关（enum 列 → 枚举类视图）。 */
     public boolean usesEnums() {
-        return artifactConfig.getUse().contains("enums");
+        return Boolean.parseBoolean(artifactConfig.getOption("enums"));
     }
 
     /** 列 → MyBatis jdbcType。 */

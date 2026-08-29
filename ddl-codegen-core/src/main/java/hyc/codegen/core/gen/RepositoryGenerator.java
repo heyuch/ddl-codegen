@@ -27,9 +27,7 @@ public final class RepositoryGenerator extends AbstractJavaArtifactGenerator {
         String nullable = ctx.getNullableAnnotation();
 
         for (Index index : ctx.indexes()) {
-            if (IgnoreSupport.isIgnored(index)) {
-                continue;
-            }
+
             for (QueryMethods.Spec spec : QueryMethods.of(index, gctx.getNaming())) {
                 builder.method(QueryMethodFactory.findBy(spec, ctx, returnType, nullable, false));
             }
