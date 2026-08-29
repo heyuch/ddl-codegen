@@ -23,6 +23,7 @@ import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
 import hyc.codegen.core.gen.MybatisRepositoryImplGenerator;
 import hyc.codegen.core.gen.RepositoryGenerator;
+import hyc.codegen.core.interceptor.EnumsInterceptor;
 import hyc.codegen.core.interceptor.Jsr303Interceptor;
 import hyc.codegen.core.interceptor.LombokInterceptor;
 import hyc.codegen.core.io.ChangeReport;
@@ -81,7 +82,8 @@ class EndToEndTest {
                 new ConverterGenerator());
         List<ArtifactInterceptor> interceptors = Arrays.asList(
                 new LombokInterceptor(),
-                new Jsr303Interceptor());
+                new Jsr303Interceptor(),
+                new EnumsInterceptor());
         generator = new CodeGenerator(generators, interceptors);
     }
 

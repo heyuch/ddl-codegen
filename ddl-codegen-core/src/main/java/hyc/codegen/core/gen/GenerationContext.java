@@ -181,10 +181,6 @@ public final class GenerationContext {
             return result;
         }
         for (String name : artifactConfig.getUse()) {
-            if ("enums".equals(name)) {
-                // 视图信号（typeOf 按 use 决定），非装饰拦截器
-                continue;
-            }
             ArtifactInterceptor interceptor = interceptors.get(name);
             if (interceptor == null) {
                 warning("artifact '" + artifactKind + "' use 引用了未注册的拦截器: " + name);

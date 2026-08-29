@@ -4,7 +4,7 @@
 
 - [x] config：顶层键 = 产物名（无 artifacts. 前缀），generator/source/target 属性；naming./annotations. 保留命名空间
 - [x] 引用解析：source/target/mapper/converter 显式或"生成器唯一实例"缺省，多实例/无实例明确报错
-- [x] enums 视图：实现为 typeOf 按 use 决定（非独立拦截器，避免双机制；设计文档已注明）
+- [x] enums 拦截器（EnumsInterceptor）：onField + onParam 类型改写（@type 覆盖 + enum→枚举类 FQN）；SPI 默认 apply 遍历 @Generated 字段与方法参数，字段/参数类型拦截统一为 onField/onParam 钩子
 - [x] 移除硬编码：TypeMapper.isEnumArtifact、TableContext.typeOf entity-view、poType/entityType
 - [x] 生成器注册名：pojo/enum/mybatisMapper/mybatisXml/repository/mybatisRepositoryImpl/converter（repositoryImpl 更名）
 - [x] mybatisRepositoryImpl 转换规则：mapper.target == 自己 target → 直连；否则 converter.toX + 一致性校验（converter 仅在转换时解析）

@@ -94,21 +94,19 @@ public final class TableContext {
     }
 
     /**
-     * 列 → Java 类型（按产物解析，视图完全由配置决定，无产物名硬编码）：
-     * use 含 {@code enums}（实体视图）时——{@code @type} 覆盖优先，enum 列返回枚举类全限定名（含 {@code @as}）；
-     * 否则走 {@link TypeMapper}（enum→String 等 SQL 映射）。
+     * 列 → Java 类型（SQL 映射；enum 列固定 String）。
+     * <p>
+     * {@code @type} 覆盖与 enum→枚举类视图由 {@code enums} 拦截器在生成后统一改写
+     * （字段与方法参数同机制，见 ArtifactInterceptor#onField/onParam），此处不做视图决策。
      */
     public String typeOf(Column column) {
-        if (usesEnums()) {
-            Object type = column.getMeta().get("type");
-            if (type != null) {
-                return type.toString();
-            }
-            if (!column.getEnumValues().isEmpty()) {
-                return enumPackage + "." + enumClassName(column);
-            }
-        }
         return types.resolveType(table.getName(), column);
+    }
+
+    /** enum 产物包（use 含 enums 时已校验存在）。 */
+    @Nullable
+    public String getEnumPackage() {
+        return enumPackage;
     }
 
     /** 按字段名反查列（字段名 = 命名策略转换后的列名）；未匹配返回 null。 */

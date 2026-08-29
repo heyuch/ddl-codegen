@@ -1,7 +1,9 @@
 package hyc.codegen.core.gen;
 
+import com.sun.source.tree.VariableTree;
 import hyc.codegen.core.model.Column;
 import hyc.codegen.tree.Class;
+import hyc.codegen.tree.Method;
 import hyc.codegen.tree.Variable;
 
 /**
@@ -30,10 +32,20 @@ public interface ArtifactInterceptor {
                 continue;
             }
             Column column = ctx.findColumn(field.getName().toString());
-            if (column == null) {
+            if (column != null) {
+                onField(field, column, ctx);
+            }
+        }
+        for (Method method : cls.getMethods()) {
+            if (!GeneratedSupport.isGenerated(method)) {
                 continue;
             }
-            onField(field, column, ctx);
+            for (VariableTree param : method.getParameters()) {
+                Column column = ctx.findColumn(param.getName().toString());
+                if (column != null) {
+                    onParam(param, column, method, ctx);
+                }
+            }
         }
     }
 
@@ -45,5 +57,15 @@ public interface ArtifactInterceptor {
      * @param ctx    表上下文
      */
     default void onField(Variable field, Column column, TableContext ctx) {}
+
+    /**
+     * 方法参数级钩子（默认无操作）：仅对 {@code @Generated} 方法的参数调用。
+     *
+     * @param param  方法参数（类型改写与字段同一套机制）
+     * @param column 参数对应的列（按参数名匹配；匹配不到不调用）
+     * @param method 所属方法
+     * @param ctx    表上下文
+     */
+    default void onParam(VariableTree param, Column column, Method method, TableContext ctx) {}
 
 }

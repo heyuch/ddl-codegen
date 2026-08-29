@@ -108,7 +108,7 @@ config 顶层只有三类键：**产物段**（其余全部，第一段 = 产物
 
 | 拦截器 | 级别 | 行为 |
 |---|---|---|
-| `enums`（use 信号） | 生成时 | **实现为 `typeOf` 按 use 决定视图**（非独立拦截器）：产物 use 含 enums → enum 列返回枚举类 FQN；否则 String。一个机制覆盖字段与方法参数，避免拦截器+typeOf 双机制；枚举类 FQN = enum 产物 pkg + naming.enumClassName |
+| `enums`（拦截器） | 字段+参数级 | **EnumsInterceptor**（onField + onParam，见 SPI 默认 apply）：`@type` 覆盖优先；enum 列类型 String → 枚举类 FQN（enum 产物 pkg + naming.enumClassName）。字段与方法参数类型拦截同机制（onParam 钩子），`use` 链完全统一（无信号/装饰割裂） |
 | `jsr305`（新） | 字段级 | nullable 列 → `@javax.annotation.Nullable`（与 jsr303 的 @NotNull 互补；语义假设，review 确认） |
 | `lombok`/`jsr303` | 类级/字段级 | 现有，不变 |
 
