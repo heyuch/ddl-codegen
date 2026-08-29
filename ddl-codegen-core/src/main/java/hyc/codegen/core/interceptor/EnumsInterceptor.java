@@ -2,7 +2,7 @@ package hyc.codegen.core.interceptor;
 
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
-import hyc.codegen.core.gen.ArtifactInterceptor;
+import hyc.codegen.core.gen.GeneratorInterceptor;
 import hyc.codegen.core.gen.TableContext;
 import hyc.codegen.core.model.Column;
 import hyc.codegen.tree.Method;
@@ -15,7 +15,7 @@ import hyc.codegen.tree.Variable;
  * use 含 {@code enums} 的产物上：{@code @type} 注解覆盖优先；enum 列的类型 String → 枚举类 FQN
  * （enum 产物 pkg + naming.enumClassName，含 {@code @as} 覆盖）。非 enum/无 @type 的列不触碰。
  */
-public final class EnumsInterceptor implements ArtifactInterceptor {
+public final class EnumsInterceptor implements GeneratorInterceptor {
 
     /** 拦截器名。 */
     public static final String NAME = "enums";

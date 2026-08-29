@@ -231,7 +231,7 @@ public interface ArtifactGenerator {
 ## 11. 拦截器体系
 
 ```java
-public interface ArtifactInterceptor {
+public interface GeneratorInterceptor {
     String name();
     void apply(JavaSource<?> source, GenerationContext ctx);
 }

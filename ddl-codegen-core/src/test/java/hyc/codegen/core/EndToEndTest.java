@@ -14,10 +14,10 @@ import hyc.codegen.core.ddl.DdlParser;
 import hyc.codegen.core.ddl.DruidDdlParser;
 import hyc.codegen.core.ddl.StatementApplier;
 import hyc.codegen.core.gen.ArtifactGenerator;
-import hyc.codegen.core.gen.ArtifactInterceptor;
 import hyc.codegen.core.gen.CodeGenerator;
 import hyc.codegen.core.gen.ConverterGenerator;
 import hyc.codegen.core.gen.EnumGenerator;
+import hyc.codegen.core.gen.GeneratorInterceptor;
 import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
 import hyc.codegen.core.gen.MybatisRepositoryImplGenerator;
@@ -80,7 +80,7 @@ class EndToEndTest {
                 new RepositoryGenerator(),
                 new MybatisRepositoryImplGenerator(),
                 new ConverterGenerator());
-        List<ArtifactInterceptor> interceptors = Arrays.asList(
+        List<GeneratorInterceptor> interceptors = Arrays.asList(
                 new LombokInterceptor(),
                 new Jsr303Interceptor(),
                 new EnumsInterceptor());

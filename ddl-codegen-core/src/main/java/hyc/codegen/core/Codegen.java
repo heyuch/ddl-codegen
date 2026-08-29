@@ -15,10 +15,10 @@ import hyc.codegen.core.ddl.DdlParser;
 import hyc.codegen.core.ddl.DruidDdlParser;
 import hyc.codegen.core.ddl.StatementApplier;
 import hyc.codegen.core.gen.ArtifactGenerator;
-import hyc.codegen.core.gen.ArtifactInterceptor;
 import hyc.codegen.core.gen.CodeGenerator;
 import hyc.codegen.core.gen.ConverterGenerator;
 import hyc.codegen.core.gen.EnumGenerator;
+import hyc.codegen.core.gen.GeneratorInterceptor;
 import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
 import hyc.codegen.core.gen.MybatisRepositoryImplGenerator;
@@ -106,8 +106,8 @@ public final class Codegen {
         return generators;
     }
 
-    private static List<ArtifactInterceptor> defaultInterceptors() {
-        List<ArtifactInterceptor> interceptors = new ArrayList<>();
+    private static List<GeneratorInterceptor> defaultInterceptors() {
+        List<GeneratorInterceptor> interceptors = new ArrayList<>();
         interceptors.add(new LombokInterceptor());
         interceptors.add(new Jsr303Interceptor());
         interceptors.add(new EnumsInterceptor());

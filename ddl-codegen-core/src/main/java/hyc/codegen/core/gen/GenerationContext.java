@@ -33,7 +33,7 @@ public final class GenerationContext {
 
     private final ArtifactRegistry artifactRegistry;
 
-    private final Map<String, ArtifactInterceptor> interceptors;
+    private final Map<String, GeneratorInterceptor> interceptors;
 
     private final ChangeReport report;
 
@@ -41,7 +41,7 @@ public final class GenerationContext {
 
     GenerationContext(DdlConfig config, NamingService naming, TypeMapper typeMapper,
             AnnotationRegistry annotationRegistry, ArtifactRegistry artifactRegistry,
-            Map<String, ArtifactInterceptor> interceptors, ChangeReport report) {
+            Map<String, GeneratorInterceptor> interceptors, ChangeReport report) {
         this.config = config;
         this.projectRoot = config.getRoot();
         this.naming = naming;
@@ -174,14 +174,14 @@ public final class GenerationContext {
     }
 
     /** 某 artifact 配置的拦截器链（按 use 顺序解析；未注册的名字记 warning 跳过）。 */
-    public List<ArtifactInterceptor> interceptorsFor(String artifactKind) {
-        List<ArtifactInterceptor> result = new ArrayList<>();
+    public List<GeneratorInterceptor> interceptorsFor(String artifactKind) {
+        List<GeneratorInterceptor> result = new ArrayList<>();
         ArtifactConfig artifactConfig = config.artifact(artifactKind).orElse(null);
         if (artifactConfig == null) {
             return result;
         }
         for (String name : artifactConfig.getUse()) {
-            ArtifactInterceptor interceptor = interceptors.get(name);
+            GeneratorInterceptor interceptor = interceptors.get(name);
             if (interceptor == null) {
                 warning("artifact '" + artifactKind + "' use 引用了未注册的拦截器: " + name);
             } else {
@@ -193,7 +193,7 @@ public final class GenerationContext {
 
     /** 对生成的类执行某 artifact 的拦截器链（只动 @Generated 成员与 import）。 */
     public void applyInterceptors(Class cls, TableContext ctx) {
-        for (ArtifactInterceptor interceptor : interceptorsFor(ctx.getArtifactName())) {
+        for (GeneratorInterceptor interceptor : interceptorsFor(ctx.getArtifactName())) {
             interceptor.apply(cls, ctx);
         }
     }
@@ -216,7 +216,7 @@ public final class GenerationContext {
     /** 构造器。 */
     public static final class Builder {
 
-        private final Map<String, ArtifactInterceptor> interceptors = new LinkedHashMap<>();
+        private final Map<String, GeneratorInterceptor> interceptors = new LinkedHashMap<>();
 
         private DdlConfig config;
 
@@ -260,7 +260,7 @@ public final class GenerationContext {
             return this;
         }
 
-        public Builder interceptor(ArtifactInterceptor interceptor) {
+        public Builder interceptor(GeneratorInterceptor interceptor) {
             interceptors.put(interceptor.name(), interceptor);
             return this;
         }

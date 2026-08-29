@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.sun.source.tree.AnnotationTree;
-import hyc.codegen.core.gen.ArtifactInterceptor;
+import hyc.codegen.core.gen.GeneratorInterceptor;
 import hyc.codegen.core.gen.TableContext;
 import hyc.codegen.tree.Annotation;
 import hyc.codegen.tree.Class;
@@ -15,7 +15,7 @@ import hyc.codegen.tree.Class;
  * 可通过 artifact 配置的 {@code lombok} 选项指定注解列表（逗号分隔），如
  * {@code artifacts.entity.lombok=Data,Builder,NoArgsConstructor}；默认 {@code Data}。
  */
-public final class LombokInterceptor implements ArtifactInterceptor {
+public final class LombokInterceptor implements GeneratorInterceptor {
 
     /** 拦截器名。 */
     public static final String NAME = "lombok";

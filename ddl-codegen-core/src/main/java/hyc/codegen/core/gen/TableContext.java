@@ -97,7 +97,7 @@ public final class TableContext {
      * 列 → Java 类型（SQL 映射；enum 列固定 String）。
      * <p>
      * {@code @type} 覆盖与 enum→枚举类视图由 {@code enums} 拦截器在生成后统一改写
-     * （字段与方法参数同机制，见 ArtifactInterceptor#onField/onParam），此处不做视图决策。
+     * （字段与方法参数同机制，见 GeneratorInterceptor#onField/onParam），此处不做视图决策。
      */
     public String typeOf(Column column) {
         return types.resolveType(table.getName(), column);

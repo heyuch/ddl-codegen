@@ -36,7 +36,7 @@
 ### 2. @type → TypeInterceptor（use: type，独立拦截器）
 
 ```java
-public final class TypeInterceptor implements ArtifactInterceptor {
+public final class TypeInterceptor implements GeneratorInterceptor {
     // onField/onParam：列 meta 有 "type" → 类型改写为 JavaTypes.typeTree(value)
     // 值 = Java 类型字符串（FQN/简单名/primitive/byte[] 均可）
 }

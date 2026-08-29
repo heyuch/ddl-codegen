@@ -65,7 +65,7 @@ class ParameterizedArtifactsTest {
                 new MybatisRepositoryImplGenerator(),
                 new ConverterGenerator());
         generator = new CodeGenerator(generators,
-                Arrays.asList(new hyc.codegen.core.interceptor.EnumsInterceptor()));
+                java.util.Collections.singletonList(new hyc.codegen.core.interceptor.EnumsInterceptor()));
     }
 
     private void generate() {

@@ -4,7 +4,7 @@
 
 项目膨胀（第 4 个模块 maven-plugin 即将加入）后，架构依赖需要自动强制而非靠 review 记忆。
 模块方向已被 Maven 自身强制（pom 依赖不可能成环），真正需要工具化的是 **包级分层、循环、门面防绕过**。
-实测发现一个真实的包循环：`gen ↔ interceptor`（`ArtifactInterceptor` 接口依赖 `gen.TableContext`，而 `GenerationContext` 依赖该接口）。
+实测发现一个真实的包循环：`gen ↔ interceptor`（`GeneratorInterceptor` 接口依赖 `gen.TableContext`，而 `GenerationContext` 依赖该接口）。
 
 ## 可选方案与取舍
 
@@ -18,7 +18,7 @@
 
 ### 循环修复（gen ↔ interceptor）
 
-把 `ArtifactInterceptor` 接口从 `hyc.codegen.core.interceptor` 移到 `hyc.codegen.core.gen`
+把 `GeneratorInterceptor` 接口从 `hyc.codegen.core.interceptor` 移到 `hyc.codegen.core.gen`
 （与 `ArtifactGenerator` 同居，SPI 归位框架核心）；interceptor 包只留实现（Lombok/Jsr303/InterceptorSupport）。
 依赖变单向：`interceptor → gen`；`gen` 不再引用 interceptor 包。
 
@@ -38,10 +38,10 @@
 
 ## 改动文件与影响面
 
-- 移动：`interceptor/ArtifactInterceptor.java` → `gen/ArtifactInterceptor.java`（package 变更）
+- 移动：`interceptor/GeneratorInterceptor.java` → `gen/GeneratorInterceptor.java`（package 变更）
 - 更新 import：GenerationContext / CodeGenerator / CLI Main / LombokInterceptor / Jsr303Interceptor / 相关测试
 - 新增：`core/.../ArchitectureTest.java`；后续 cli/maven-plugin 各加一条防绕过规则
-- 影响：公共类型包路径变更（`interceptor.ArtifactInterceptor` → `gen.ArtifactInterceptor`）——破坏性但项目未发布、引用点少
+- 影响：公共类型包路径变更（`interceptor.GeneratorInterceptor` → `gen.GeneratorInterceptor`）——破坏性但项目未发布、引用点少
 
 ## 验证
 

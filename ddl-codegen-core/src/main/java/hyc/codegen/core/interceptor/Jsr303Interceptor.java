@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.sun.source.tree.AnnotationTree;
-import hyc.codegen.core.gen.ArtifactInterceptor;
+import hyc.codegen.core.gen.GeneratorInterceptor;
 import hyc.codegen.core.gen.TableContext;
 import hyc.codegen.core.model.Column;
 import hyc.codegen.tree.Annotation;
@@ -19,7 +19,7 @@ import hyc.codegen.tree.Variable;
  * </ul>
  * 管理 {@code javax.validation.constraints.*} 的这三个注解，幂等重算。字段级拦截器（见 SPI 默认 apply）。
  */
-public final class Jsr303Interceptor implements ArtifactInterceptor {
+public final class Jsr303Interceptor implements GeneratorInterceptor {
 
     /** 拦截器名。 */
     public static final String NAME = "jsr303";

@@ -69,7 +69,7 @@
 
 - [ ] 2.1 ArtifactGenerator SPI + AbstractJavaArtifactGenerator（@Generated 成员 reconcile 循环：
       缺→增 / 多余→删 / 签名类型不符→替换 / 一致→跳过）
-- [ ] 2.2 ArtifactInterceptor SPI（只动 @Generated 成员 + import；幂等）+ 内置 lombok、jsr303
+- [ ] 2.2 GeneratorInterceptor SPI（只动 @Generated 成员 + import；幂等）+ 内置 lombok、jsr303
 - [ ] 2.3 两阶段生成（阶段 A 发布描述 → 阶段 B 生成文件）+ ArtifactRegistry 兜底 +
       PO 类型推导（pojo 未启用 → mapper 用 Entity）
 - [ ] 2.4 拦截器/生成器/注解处理器的组合测试

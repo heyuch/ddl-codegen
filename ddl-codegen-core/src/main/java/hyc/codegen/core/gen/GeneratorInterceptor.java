@@ -12,7 +12,7 @@ import hyc.codegen.tree.Variable;
  * 契约（DESIGN §11）：只允许动 {@code @Generated} 成员与 import；幂等（先清理自身管理的注解再按模型重算）；
  * 写盘前字节比对兜底。按 artifact 配置 {@code use=} 引用，顺序执行。
  */
-public interface ArtifactInterceptor {
+public interface GeneratorInterceptor {
 
     /** 拦截器名（config {@code use} 里引用）。 */
     String name();
