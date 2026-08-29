@@ -77,6 +77,14 @@ Java 类产物继承 `AbstractJavaArtifactGenerator` 自动获得 @Generated 增
 - config：`use=` 移除，改特性布尔；README/插件 IT/测试 config 迁移
 - 影响：拦截器扩展点删除（行为收敛到生成器）；`use` 配置键废弃
 
+## 跨生成器依赖原则（config 引用，非 DI）
+
+生成器 A 需要产物 X 的类型/字段信息时：**依赖"X 的标识（config 名字）"，不依赖"生成器 B 的执行"**
+——类名/包名由 package+naming+suffix 推导，字段视图由 model+配置推导，信息不经过其他生成器。
+`mapper.target=po`（核心必需）与 converter 的 `source/target`（衍生物）同机制；
+对照 codegen.groovy 的构造器注入，本设计用声明式名字引用（无构造顺序、可换任意产物、自定义生成器只改 config）。
+校验：引用一致性（如 converter.source==mapper.target）在生成前校验并给出明确报错。
+
 ## 验证
 
 - 全量 `mvn clean test` + 插件 IT 绿（e2e/参数化测试迁移到特性开关）
