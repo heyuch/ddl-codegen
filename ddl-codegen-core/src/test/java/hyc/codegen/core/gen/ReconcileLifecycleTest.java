@@ -174,14 +174,38 @@ class ReconcileLifecycleTest {
     }
 
     @Test
-    void renameTableMovesFiles() throws Exception {
+    void renameKeepsOldFilesAndGeneratesNew() throws Exception {
         DdlConfig config = config();
         Schema schema = new Schema();
         generate(config, schema, "create table user (id bigint primary key)");
         assertTrue(fileExists());
 
         generate(config, schema, "alter table user rename to account");
-        assertFalse(fileExists());
+        // 旧表名文件保留（含用户手写代码，工具永不触碰）；新表名生成新文件
+        assertTrue(fileExists(), "rename 不应删除旧表名文件");
+        assertTrue(Files.isRegularFile(tempDir().resolve("com/test/Account.java")));
+    }
+
+    @Test
+    void renamePreservesUserWrittenCodeInOldFile() throws Exception {
+        DdlConfig config = config();
+        Schema schema = new Schema();
+        generate(config, schema, "create table user (id bigint primary key)");
+
+        // 用户手写方法（模拟用户编辑）
+        Path file = tempDir().resolve("com/test/User.java");
+        String userMethod = "\n    /** 用户手写方法 */\n    public String hello() {\n        return \"hi\";\n    }\n";
+        String existing = content();
+        int lastBrace = existing.lastIndexOf('}');
+        String edited = existing.substring(0, lastBrace) + userMethod + existing.substring(lastBrace);
+        Files.write(file, edited.getBytes(StandardCharsets.UTF_8));
+
+        generate(config, schema, "alter table user rename to account");
+
+        // 旧文件保留且手写代码不丢；新文件正常生成
+        String oldContent = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+        assertTrue(oldContent.contains("public String hello()"), "旧文件应保留用户手写代码");
+        assertTrue(oldContent.contains("return \"hi\";"));
         assertTrue(Files.isRegularFile(tempDir().resolve("com/test/Account.java")));
     }
 

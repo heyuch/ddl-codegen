@@ -73,10 +73,9 @@ public final class CodeGenerator {
             deleteArtifacts(root, tableName, gctx);
         }
 
-        // RENAME：删旧文件，新名走正常生成
-        for (ApplyResult.TableRename rename : result.getTableRenames()) {
-            deleteArtifacts(root, rename.getFrom(), gctx);
-        }
+        // RENAME：旧表名产物文件保留（含用户手写代码——工具永不触碰用户代码，见设计契约），
+        // 新表名走正常生成；仅当类名变化（非 shard 后缀类改名）时提示手动迁移。
+        handleRenames(result, naming, config, gctx);
 
         // CREATE/MODIFY/RENAME 目标：逐 artifact 生成（跳过已删除的表）
         List<String> dropped = result.getDroppedTables();
@@ -96,6 +95,27 @@ public final class CodeGenerator {
             report.addWarning(warning);
         }
         return report;
+    }
+
+    /** 任一 artifact 的类名因表改名而变化（true → 旧文件与新旧文件不同名，需保留提示迁移）。 */
+    private boolean classNameChanged(ApplyResult.TableRename rename, NamingService naming, DdlConfig config) {
+        for (String artifactName : config.artifactNames()) {
+            if (!naming.artifactClassName(rename.getFrom(), artifactName)
+                    .equals(naming.artifactClassName(rename.getTo(), artifactName))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** RENAME 处理：保留旧表名产物文件（用户手写代码），新表名走正常生成；类名变化时提示迁移。 */
+    private void handleRenames(ApplyResult result, NamingService naming, DdlConfig config, GenerationContext gctx) {
+        for (ApplyResult.TableRename rename : result.getTableRenames()) {
+            if (classNameChanged(rename, naming, config)) {
+                gctx.warning("表 '" + rename.getFrom() + "' 已改名为 '" + rename.getTo()
+                        + "'：旧表名产物文件已保留（含手写代码），请迁移手写内容后手动删除旧文件");
+            }
+        }
     }
 
     /** 对一张表执行全部启用的产物生成器（产物名 → config.generator → 注册生成器）。 */
