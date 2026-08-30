@@ -46,6 +46,28 @@ public final class CodeGenerator {
      */
     public ChangeReport generate(DdlConfig config, Schema schema, ApplyResult result,
             List<DdlAnnotationHandler> customHandlers) {
+        GenerationContext gctx = buildContext(config, customHandlers);
+        ChangeReport report = gctx.getReport();
+        Path root = config.getRoot();
+
+        // DROP：删除该表所有启用的 artifact 文件
+        handleDrops(root, result, gctx);
+
+        // RENAME：旧表名产物文件保留（含用户手写代码——工具永不触碰用户代码，见设计契约），
+        // 新表名走正常生成；仅当类名变化（非 shard 后缀类改名）时提示手动迁移。
+        handleRenames(result, gctx.getNaming(), config, gctx);
+
+        // CREATE/MODIFY/RENAME 目标：逐 artifact 生成（跳过已删除的表）
+        generateAffectedTables(schema, result, gctx);
+
+        for (String warning : gctx.getWarnings()) {
+            report.addWarning(warning);
+        }
+        return report;
+    }
+
+    /** 构建全局上下文：共享服务（命名/类型映射）、注解注册表、生成器、变更报告。 */
+    private GenerationContext buildContext(DdlConfig config, List<DdlAnnotationHandler> customHandlers) {
         NamingService naming = new NamingService(config);
         TypeMapper typeMapper = new TypeMapper(customHandlers);
         ChangeReport report = new ChangeReport();
@@ -64,20 +86,18 @@ public final class CodeGenerator {
         for (ArtifactGenerator generator : generators.values()) {
             gb.generator(generator);
         }
-        GenerationContext gctx = gb.build();
+        return gb.build();
+    }
 
-        Path root = config.getRoot();
-
-        // DROP：删除该表所有启用的 artifact 文件
+    /** DROP：删除被删表在所有启用 artifact 路径下的产物文件。 */
+    private void handleDrops(Path root, ApplyResult result, GenerationContext gctx) {
         for (String tableName : result.getDroppedTables()) {
             deleteArtifacts(root, tableName, gctx);
         }
+    }
 
-        // RENAME：旧表名产物文件保留（含用户手写代码——工具永不触碰用户代码，见设计契约），
-        // 新表名走正常生成；仅当类名变化（非 shard 后缀类改名）时提示手动迁移。
-        handleRenames(result, naming, config, gctx);
-
-        // CREATE/MODIFY/RENAME 目标：逐 artifact 生成（跳过已删除的表）
+    /** CREATE/MODIFY/RENAME 目标：逐表 × 逐 artifact 生成（已删除的表跳过）。 */
+    private void generateAffectedTables(Schema schema, ApplyResult result, GenerationContext gctx) {
         List<String> dropped = result.getDroppedTables();
         for (String tableName : result.getAffectedTables()) {
             if (dropped.contains(tableName)) {
@@ -90,11 +110,6 @@ public final class CodeGenerator {
             }
             generateTable(table, gctx);
         }
-
-        for (String warning : gctx.getWarnings()) {
-            report.addWarning(warning);
-        }
-        return report;
     }
 
     /** 任一 artifact 的类名因表改名而变化（true → 旧文件与新旧文件不同名，需保留提示迁移）。 */
