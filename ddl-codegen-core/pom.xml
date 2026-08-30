@@ -39,6 +39,13 @@
             <version>3.42.0</version>
             <scope>provided</scope>
         </dependency>
+        <!-- 就地 @SuppressFBWarnings（EI 设计使然的类级抑制，替代集中 exclude） -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>4.8.6</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

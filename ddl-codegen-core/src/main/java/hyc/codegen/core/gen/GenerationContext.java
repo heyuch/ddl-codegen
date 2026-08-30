@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hyc.codegen.core.annotation.AnnotationRegistry;
 import hyc.codegen.core.config.ArtifactConfig;
 import hyc.codegen.core.config.DdlConfig;
@@ -19,6 +20,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * 一次代码生成执行的全局上下文：配置、共享服务、拦截器注册表、变更报告。
  */
+// EI 抑制：生成上下文持有 config（只读高频）与 report（生成器写入通道）：getReport 拷贝则写入丢失，config 深拷贝不现实
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public final class GenerationContext {
 
     private final DdlConfig config;
@@ -220,6 +223,8 @@ public final class GenerationContext {
      * 构造器。
      * 可修改构建对象：字段由 builder 方法在 build() 前设置，初始化时序检查不适用。
      */
+    // EI 抑制：builder 模式固有：持有待构建对象（config/report），构建时传给上下文
+    @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
     public static final class Builder {
 
         private final Map<String, ArtifactGenerator> generators = new LinkedHashMap<>();

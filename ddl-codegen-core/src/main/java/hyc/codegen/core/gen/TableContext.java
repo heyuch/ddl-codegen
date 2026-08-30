@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hyc.codegen.core.config.ArtifactConfig;
 import hyc.codegen.core.io.PathResolver;
 import hyc.codegen.core.model.Column;
@@ -18,6 +19,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * <p>
  * 由 {@link GenerationContext#tableContext} 创建，生成器不直接持有底层服务。
  */
+// EI 抑制：表上下文持有 Table 模型与 artifact 配置：生成器高频读取，Table 深拷贝不现实且拷贝后与 config 查找结果引用不等
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public final class TableContext {
 
     private final Table table;

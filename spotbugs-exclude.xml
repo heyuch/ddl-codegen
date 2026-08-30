@@ -14,23 +14,4 @@
         <Justification>可修改 AST 设计：节点/构建器共享内部可变对象是语义要求，深拷贝为过度工程</Justification>
     </Match>
 
-    <!-- EI_EXPOSE_REP / EI_EXPOSE_REP2：core 管线内部对象按引用共享（DDL 操作携带完整 Table 模型、
-         生成上下文/表上下文/规格对象持有可变的模型与配置、模型类的 Meta 容器设计为开放读写、
-         服务对象（NamingService/TypeMapper）持有 config 与处理器列表）。
-         拷贝会破坏「操作/上下文驱动后续阶段」的语义，深拷贝亦无意义。 -->
-    <Match>
-        <Or>
-            <Class name="hyc.codegen.core.ddl.CreateTableOp"/>
-            <Class name="hyc.codegen.core.gen.GenerationContext"/>
-            <Class name="hyc.codegen.core.gen.GenerationContext$Builder"/>
-            <Class name="hyc.codegen.core.gen.TableContext"/>
-            <Class name="hyc.codegen.core.model.Column"/>
-            <Class name="hyc.codegen.core.model.Index"/>
-            <Class name="hyc.codegen.core.model.Table"/>
-            <Class name="hyc.codegen.core.naming.NamingService"/>
-        </Or>
-        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
-        <Justification>管线内部对象按引用传递是设计（操作携带模型、上下文持配置/模型、Meta 开放读写），防御性拷贝破坏语义</Justification>
-    </Match>
-
 </FindBugsFilter>

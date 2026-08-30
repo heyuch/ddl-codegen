@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -13,6 +14,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * 名称约定：主键名为 {@code PRIMARY}（对应 MySQL information_schema 惯例）；
  * {@code unique} 为真表示主键或唯一键；{@code columns} 为索引列名（按索引定义顺序）。
  */
+// EI 抑制：Meta 是开放读写容器（javadoc 契约）：注解处理器 getMeta().put() 写入、生成器读取，拷贝则写入丢失
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public final class Index {
 
     /** 主键索引名（MySQL 惯例）。 */

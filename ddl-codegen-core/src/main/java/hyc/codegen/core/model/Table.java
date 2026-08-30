@@ -3,6 +3,7 @@ package hyc.codegen.core.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -11,6 +12,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * 由 DDL 的 create table 产生，被 alter/drop 语句就地修改：
  * 列与索引保持 DDL 定义顺序（代码生成依赖列序），同名替换、删除均保持其余位置不变。
  */
+// EI 抑制：Meta 是开放读写容器（javadoc 契约）：注解处理器 getMeta().put() 写入、生成器读取，拷贝则写入丢失
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public final class Table {
 
     private String name;
