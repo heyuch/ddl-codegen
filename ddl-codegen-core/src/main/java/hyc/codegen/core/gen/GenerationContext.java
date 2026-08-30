@@ -14,6 +14,7 @@ import hyc.codegen.core.io.ChangeReport;
 import hyc.codegen.core.model.Table;
 import hyc.codegen.core.naming.NamingService;
 import hyc.codegen.core.types.TypeMapper;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
 /**
  * 一次代码生成执行的全局上下文：配置、共享服务、拦截器注册表、变更报告。
@@ -125,7 +126,12 @@ public final class GenerationContext {
     public String artifactFqn(String tableName, String artifactName) {
         ArtifactConfig artifactConfig = config.artifact(artifactName)
                 .orElseThrow(() -> new IllegalStateException("未配置产物: " + artifactName));
-        return artifactConfig.getPkg() + "." + naming.artifactClassName(tableName, artifactName);
+        String pkg = artifactConfig.getPkg();
+        if (pkg == null) {
+            throw new IllegalStateException(
+                    "产物 '" + artifactName + "' 缺少 package 配置（Java 类产物必须配置 package）");
+        }
+        return pkg + "." + naming.artifactClassName(tableName, artifactName);
     }
 
     /**
@@ -155,6 +161,7 @@ public final class GenerationContext {
                 + defaultGenerator + "' 的实例数 = " + matches.size() + "（多实例/无实例时必须显式配置 " + refKey + "）");
     }
 
+    @Nullable
     private String refOf(ArtifactConfig owner, String refKey) {
         if ("source".equals(refKey)) {
             return owner.getSource();
@@ -212,17 +219,24 @@ public final class GenerationContext {
         return new Builder();
     }
 
-    /** 构造器。 */
+    /**
+     * 构造器。
+     * 可修改构建对象：字段由 builder 方法在 build() 前设置，初始化时序检查不适用。
+     */
     public static final class Builder {
 
         private final Map<String, ArtifactGenerator> generators = new LinkedHashMap<>();
 
+        @MonotonicNonNull
         private DdlConfig config;
 
+        @MonotonicNonNull
         private NamingService naming;
 
+        @MonotonicNonNull
         private TypeMapper typeMapper;
 
+        @MonotonicNonNull
         private AnnotationRegistry annotationRegistry;
 
         private ArtifactRegistry artifactRegistry = new ArtifactRegistry();
@@ -265,8 +279,23 @@ public final class GenerationContext {
         }
 
         public GenerationContext build() {
-            return new GenerationContext(config, naming, typeMapper,
-                    annotationRegistry, artifactRegistry, generators, report);
+            DdlConfig c = config;
+            if (c == null) {
+                throw new IllegalStateException("GenerationContext 构建缺失必填字段 config");
+            }
+            NamingService n = naming;
+            if (n == null) {
+                throw new IllegalStateException("GenerationContext 构建缺失必填字段 naming");
+            }
+            TypeMapper tm = typeMapper;
+            if (tm == null) {
+                throw new IllegalStateException("GenerationContext 构建缺失必填字段 typeMapper");
+            }
+            AnnotationRegistry ar = annotationRegistry;
+            if (ar == null) {
+                throw new IllegalStateException("GenerationContext 构建缺失必填字段 annotationRegistry");
+            }
+            return new GenerationContext(c, n, tm, ar, artifactRegistry, generators, report);
         }
 
     }

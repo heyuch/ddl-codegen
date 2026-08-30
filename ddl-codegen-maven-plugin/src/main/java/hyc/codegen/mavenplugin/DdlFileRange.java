@@ -33,15 +33,21 @@ public final class DdlFileRange {
         if (!matcher.matches()) {
             return null;
         }
-        int start = Integer.parseInt(matcher.group(2));
-        int end = Integer.parseInt(matcher.group(3));
+        String path = matcher.group(1);
+        String startStr = matcher.group(2);
+        String endStr = matcher.group(3);
+        if (path == null || startStr == null || endStr == null) {
+            throw new IllegalArgumentException("行范围格式非法: " + value);
+        }
+        int start = Integer.parseInt(startStr);
+        int end = Integer.parseInt(endStr);
         if (start < 1) {
             throw new IllegalArgumentException("行范围起始必须 ≥1: " + value);
         }
         if (start > end) {
             throw new IllegalArgumentException("行范围起始大于结束: " + value);
         }
-        return new DdlFileRange(matcher.group(1), start, end);
+        return new DdlFileRange(path, start, end);
     }
 
     public String getPath() {

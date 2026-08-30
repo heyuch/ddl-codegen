@@ -1,6 +1,7 @@
 package hyc.codegen.core.annotation;
 
 import java.util.Set;
+import javax.annotation.Nullable;
 
 import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Meta;
@@ -26,7 +27,7 @@ public interface DdlAnnotationHandler {
      * @param meta  目标节点（表/列/索引）的开放元数据
      * @param value 注解值；无值的注解（如 {@code @ignore}）为 {@code null}
      */
-    void parse(Meta meta, String value);
+    void parse(Meta meta, @Nullable String value);
 
     /**
      * 类型解析钩子（默认透传）：自定义注解可在类型映射阶段改写列的默认 Java 类型。

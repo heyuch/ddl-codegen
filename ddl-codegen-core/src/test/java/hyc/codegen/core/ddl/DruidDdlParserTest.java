@@ -49,34 +49,48 @@ class DruidDdlParserTest {
         assertEquals(Arrays.asList("id", "name", "gender", "credits", "ext_info", "secret", "create_time"),
                 names(table.getColumns()));
         Column id = table.getColumn("id");
+        assertNotNull(id);
         assertEquals("bigint", id.getSqlType());
         assertFalse(id.isNullable());
         assertTrue(id.isUnsigned());
         assertTrue(id.isAutoIncrement());
 
         Column name = table.getColumn("name");
+        assertNotNull(name);
         assertEquals("varchar", name.getSqlType());
         assertEquals(50, name.getLength());
         assertEquals("", name.getDefaultValue());
 
         Column gender = table.getColumn("gender");
+        assertNotNull(gender);
         assertTrue(gender.isEnum());
         assertEquals(Arrays.asList("male", "female"), gender.getEnumValues());
 
         Column credits = table.getColumn("credits");
+        assertNotNull(credits);
         assertEquals(10, credits.getPrecision());
         assertEquals(2, credits.getScale());
 
         // 注解元数据
-        assertEquals("UserExtInfo", table.getColumn("ext_info").getMeta().getString("type"));
-        assertTrue(table.getColumn("secret").getMeta().isTrue("ignore"));
+        Column extInfo = table.getColumn("ext_info");
+        assertNotNull(extInfo);
+        assertEquals("UserExtInfo", extInfo.getMeta().getString("type"));
+        Column secret = table.getColumn("secret");
+        assertNotNull(secret);
+        assertTrue(secret.getMeta().isTrue("ignore"));
 
         // 索引
         assertEquals(3, table.getIndexes().size());
-        assertTrue(table.getIndex("PRIMARY").isUnique());
-        assertEquals(Arrays.asList("id"), table.getIndex("PRIMARY").getColumns());
-        assertTrue(table.getIndex("uk_name").isUnique());
-        assertFalse(table.getIndex("idx_credits").isUnique());
+        Index primary = table.getIndex("PRIMARY");
+        assertNotNull(primary);
+        assertTrue(primary.isUnique());
+        assertEquals(Arrays.asList("id"), primary.getColumns());
+        Index ukName = table.getIndex("uk_name");
+        assertNotNull(ukName);
+        assertTrue(ukName.isUnique());
+        Index idxCredits = table.getIndex("idx_credits");
+        assertNotNull(idxCredits);
+        assertFalse(idxCredits.isUnique());
     }
 
     @Test
@@ -94,7 +108,9 @@ class DruidDdlParserTest {
 
         Table table = ((CreateTableOp)parser.parse(ddl).get(0)).getTable();
 
-        assertNull(table.getColumn("id").getMeta().getString("type"));
+        Column id = table.getColumn("id");
+        assertNotNull(id);
+        assertNull(id.getMeta().getString("type"));
         assertEquals("t_x", table.getName());
     }
 

@@ -36,7 +36,11 @@ public final class AnnotationRegistry {
         return handlers.get(name);
     }
 
-    /** 已注册的注解名集合。 */
+    /**
+     * 已注册的注解名集合。
+     * KeyFor 抑制：keySet 返回值仅作名称遍历，不需要 @KeyFor("handlers") 关联语义。
+     */
+    @SuppressWarnings("keyfor")
     public Set<String> names() {
         return handlers.keySet();
     }

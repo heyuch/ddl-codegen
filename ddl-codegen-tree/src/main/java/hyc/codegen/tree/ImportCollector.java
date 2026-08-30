@@ -2,6 +2,7 @@ package hyc.codegen.tree;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 import com.sun.source.tree.Tree;
 
@@ -35,7 +36,7 @@ final class ImportCollector {
         return imports;
     }
 
-    private static void addTypeImports(List<Import> imports, Tree type) {
+    private static void addTypeImports(List<Import> imports, @Nullable Tree type) {
         if (type instanceof TypeReference) {
             TypeReference tr = (TypeReference)type;
             if (tr.getPkg() != null) {

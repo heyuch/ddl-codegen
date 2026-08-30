@@ -1,6 +1,7 @@
 package hyc.codegen.core.io;
 
 import java.nio.file.Path;
+import javax.annotation.Nullable;
 
 /**
  * 生成文件路径解析：项目根 + module（根下一级子目录，空=根）+ package 路径 / 资源路径。
@@ -19,7 +20,7 @@ public final class PathResolver {
      * @param pkg       Java 包名（点分隔）
      * @param className 类名
      */
-    public static Path javaFile(Path root, String module, String pkg, String className) {
+    public static Path javaFile(Path root, @Nullable String module, String pkg, String className) {
         return modulePath(root, module).resolve(pkg.replace('.', '/')).resolve(className + ".java");
     }
 
@@ -31,11 +32,11 @@ public final class PathResolver {
      * @param resourcePath 相对资源路径（如 {@code src/main/resources/mapper}）
      * @param fileName     文件名（含扩展名）
      */
-    public static Path xmlFile(Path root, String module, String resourcePath, String fileName) {
+    public static Path xmlFile(Path root, @Nullable String module, String resourcePath, String fileName) {
         return modulePath(root, module).resolve(resourcePath).resolve(fileName);
     }
 
-    private static Path modulePath(Path root, String module) {
+    private static Path modulePath(Path root, @Nullable String module) {
         if (module == null || module.isEmpty()) {
             return root;
         }

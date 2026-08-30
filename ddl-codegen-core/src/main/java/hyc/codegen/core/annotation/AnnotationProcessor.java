@@ -1,5 +1,7 @@
 package hyc.codegen.core.annotation;
 
+import javax.annotation.Nullable;
+
 import hyc.codegen.core.model.Meta;
 
 /**
@@ -31,7 +33,7 @@ public final class AnnotationProcessor {
      * @param target  注解出现位置（表/列/索引）
      * @param meta    目标节点元数据，注解结果写入这里
      */
-    public void process(String comment, MetaTarget target, Meta meta) {
+    public void process(@Nullable String comment, MetaTarget target, Meta meta) {
         if (comment == null || comment.isEmpty()) {
             return;
         }

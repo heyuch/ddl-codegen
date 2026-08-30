@@ -2,6 +2,7 @@ package hyc.codegen.tree;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 
@@ -11,21 +12,30 @@ import com.sun.source.tree.ModifiersTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.tree.VariableTree;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
+// 可修改 AST 节点（AGENTS.md「自研可修改 Java AST」）：字段由静态工厂/builder 在构造后设置，
 public final class Variable implements VariableTree {
 
+    @Nullable
     private DocComment javadoc;
 
+    @Nullable
     private VariableKind kind;
 
+    @MonotonicNonNull
     private ModifiersTree modifiers;
 
+    @MonotonicNonNull
     private Name name;
 
+    @Nullable
     private ExpressionTree nameExpr;
 
+    @MonotonicNonNull
     private Tree type;
 
+    @Nullable
     private ExpressionTree initExpr;
 
     /** 是否为可变参数（仅方法参数有意义，JDK 11 无 Modifier.VARARGS，由转换器从 javac toString 检测） */
@@ -38,6 +48,7 @@ public final class Variable implements VariableTree {
     /**
      * 返回变量 javadoc 注释。
      */
+    @Nullable
     public DocComment getJavadoc() {
         return javadoc;
     }
@@ -59,13 +70,14 @@ public final class Variable implements VariableTree {
     /**
      * 设置变量 javadoc 注释。
      */
-    public void setJavadoc(DocComment javadoc) {
+    public void setJavadoc(@Nullable DocComment javadoc) {
         this.javadoc = javadoc;
     }
 
     /**
      * 返回变量种类（字段/参数/枚举常量）。
      */
+    @Nullable
     public VariableKind getVariableKind() {
         return kind;
     }
@@ -94,7 +106,7 @@ public final class Variable implements VariableTree {
     /**
      * 设置接收者名称表达式。
      */
-    public void setNameExpr(ExpressionTree nameExpr) {
+    public void setNameExpr(@Nullable ExpressionTree nameExpr) {
         this.nameExpr = nameExpr;
     }
 
@@ -129,20 +141,32 @@ public final class Variable implements VariableTree {
 
     @Override
     public Name getName() {
+        if (name == null) {
+            throw new IllegalStateException("name 未初始化（构建器/转换器未设置）");
+        }
         return name;
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：非注解参数变量 getNameExpression 返回 null
+    @SuppressWarnings("override.return")
     public ExpressionTree getNameExpression() {
         return nameExpr;
     }
 
     @Override
     public Tree getType() {
+        if (type == null) {
+            throw new IllegalStateException("type 未初始化（构建器/转换器未设置）");
+        }
         return type;
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：无初始化值的变量 getInitializer 返回 null
+    @SuppressWarnings("override.return")
     public ExpressionTree getInitializer() {
         return initExpr;
     }

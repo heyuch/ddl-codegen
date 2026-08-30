@@ -2,6 +2,7 @@ package hyc.codegen.tree;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 
@@ -15,32 +16,42 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.tree.TypeParameterTree;
 import com.sun.source.tree.VariableTree;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
+// 可修改 AST 节点（AGENTS.md「自研可修改 Java AST」）：字段由静态工厂/builder 在构造后设置，
 public final class Method implements MethodTree {
 
+    @Nullable
     private DocCommentTree javadoc;
 
+    @MonotonicNonNull
     private ModifiersTree modifiers;
 
+    @MonotonicNonNull
     private Name name;
 
+    @Nullable
     private Tree returnType;
 
     private List<TypeParameterTree> typeParameters = new ArrayList<>();
 
     private List<VariableTree> parameters = new ArrayList<>();
 
+    @Nullable
     private VariableTree receiverParameter;
 
     private List<ExpressionTree> throwsList = new ArrayList<>();
 
+    @Nullable
     private BlockTree body;
 
+    @Nullable
     private Tree defaultValue;
 
     /**
      * 返回方法 javadoc 注释。
      */
+    @Nullable
     public DocCommentTree getJavadoc() {
         return javadoc;
     }
@@ -48,7 +59,7 @@ public final class Method implements MethodTree {
     /**
      * 设置方法 javadoc 注释。
      */
-    public void setJavadoc(DocCommentTree javadoc) {
+    public void setJavadoc(@Nullable DocCommentTree javadoc) {
         this.javadoc = javadoc;
     }
 
@@ -90,7 +101,7 @@ public final class Method implements MethodTree {
     /**
      * 设置接收者参数。
      */
-    public void setReceiverParameter(VariableTree receiverParameter) {
+    public void setReceiverParameter(@Nullable VariableTree receiverParameter) {
         this.receiverParameter = receiverParameter;
     }
 
@@ -104,7 +115,7 @@ public final class Method implements MethodTree {
     /**
      * 设置注解类型元素的默认值。
      */
-    public void setDefaultValue(Tree defaultValue) {
+    public void setDefaultValue(@Nullable Tree defaultValue) {
         this.defaultValue = defaultValue;
     }
 
@@ -114,15 +125,24 @@ public final class Method implements MethodTree {
 
     @Override
     public ModifiersTree getModifiers() {
+        if (modifiers == null) {
+            throw new IllegalStateException("modifiers 未初始化（构建器/转换器未设置）");
+        }
         return modifiers;
     }
 
     @Override
     public Name getName() {
+        if (name == null) {
+            throw new IllegalStateException("name 未初始化（构建器/转换器未设置）");
+        }
         return name;
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：构造器/抽象方法可无返回类型/方法体（MethodTree.getReturnType 对构造器返回 null）
+    @SuppressWarnings("override.return")
     public Tree getReturnType() {
         return returnType;
     }
@@ -138,6 +158,9 @@ public final class Method implements MethodTree {
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：无 receiver 参数时 getReceiverParameter 返回 null
+    @SuppressWarnings("override.return")
     public VariableTree getReceiverParameter() {
         return receiverParameter;
     }
@@ -155,11 +178,17 @@ public final class Method implements MethodTree {
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：接口/抽象方法无方法体（MethodTree.getBody 对抽象方法返回 null）
+    @SuppressWarnings("override.return")
     public BlockTree getBody() {
         return body;
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：注解方法无默认值时 getDefaultValue 返回 null
+    @SuppressWarnings("override.return")
     public Tree getDefaultValue() {
         return defaultValue;
     }
@@ -181,12 +210,13 @@ public final class Method implements MethodTree {
             imports.addAll(((Modifiers)modifiers).getImports());
         }
 
-        if (returnType instanceof TypeReference) {
-            if (((TypeReference)returnType).getPkg() != null) {
-                imports.add(((TypeReference)returnType).getImport());
+        Tree rt = returnType;
+        if (rt instanceof TypeReference) {
+            if (((TypeReference)rt).getPkg() != null) {
+                imports.add(((TypeReference)rt).getImport());
             }
-        } else if (returnType instanceof ParameterizedType) {
-            imports.addAll(((ParameterizedType)returnType).getImports());
+        } else if (rt instanceof ParameterizedType) {
+            imports.addAll(((ParameterizedType)rt).getImports());
         }
 
         for (VariableTree p : parameters) {
@@ -224,6 +254,7 @@ public final class Method implements MethodTree {
 
         public Builder() {
             this.m = new Method();
+            m.modifiers = new Modifiers();
         }
 
         public Builder javadoc(DocComment doc) {

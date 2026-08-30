@@ -1,0 +1,19 @@
+// Checker Framework stub：声明 JUnit 断言的 null 契约。
+// assertNotNull(x) 断言后 x 非 null（@EnsuresNonNull），参数本身接受 null。
+// 路径引用见根 pom.xml maven-compiler-plugin 的 -Astubs 参数。
+package org.junit.jupiter.api;
+
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
+class Assertions {
+
+    @EnsuresNonNull("#1")
+    static void assertNotNull(@Nullable Object actual) {}
+
+    @EnsuresNonNull("#1")
+    static void assertNotNull(@Nullable Object actual, String message) {}
+
+    @EnsuresNonNull("#1")
+    static void assertNotNull(@Nullable Object actual, java.util.function.Supplier<String> messageSupplier) {}
+}

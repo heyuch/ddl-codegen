@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -58,7 +59,9 @@ class StatementApplierTest {
 
         assertFalse(schema.contains("t_user"));
         assertTrue(schema.contains("t_account"));
-        assertEquals("t_account", schema.getTable("t_account").getName());
+        hyc.codegen.core.model.Table renamed = schema.getTable("t_account");
+        assertNotNull(renamed);
+        assertEquals("t_account", renamed.getName());
 
         assertEquals(1, result.getTableRenames().size());
         ApplyResult.TableRename rename = result.getTableRenames().get(0);
@@ -78,9 +81,11 @@ class StatementApplierTest {
                 + "RENAME INDEX idx_a TO idx_b";
         ApplyResult result = applier.apply(schema, parser.parse(ddl));
 
-        assertTrue(schema.getTable("t_user").hasColumn("created_at"));
-        assertNull(schema.getTable("t_user").getColumn("create_time"));
-        assertTrue(schema.getTable("t_user").hasIndex("idx_b"));
+        hyc.codegen.core.model.Table tUser = schema.getTable("t_user");
+        assertNotNull(tUser);
+        assertTrue(tUser.hasColumn("created_at"));
+        assertNull(tUser.getColumn("create_time"));
+        assertTrue(tUser.hasIndex("idx_b"));
 
         assertEquals(1, result.getColumnRenames().size());
         assertEquals("create_time", result.getColumnRenames().get(0).getFrom());
@@ -100,7 +105,11 @@ class StatementApplierTest {
 
     private List<String> tableColumns(Schema schema, String tableName) {
         List<String> result = new java.util.ArrayList<>();
-        for (hyc.codegen.core.model.Column column : schema.getTable(tableName).getColumns()) {
+        hyc.codegen.core.model.Table table = schema.getTable(tableName);
+        if (table == null) {
+            throw new AssertionError("表 " + tableName + " 应存在");
+        }
+        for (hyc.codegen.core.model.Column column : table.getColumns()) {
             result.add(column.getName());
         }
         return result;

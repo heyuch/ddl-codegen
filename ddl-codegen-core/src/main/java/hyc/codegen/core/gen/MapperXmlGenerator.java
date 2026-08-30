@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 import hyc.codegen.core.io.ChangeStatus;
 import hyc.codegen.core.io.FileWriter;
@@ -56,7 +57,12 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
         String poType = gctx.refFqn(ctx.getTable().getName(), target);
 
         String xml = build(ctx, gctx.getNaming(), poType, namespace);
-        Path file = ctx.xmlFile(gctx.getProjectRoot(), ctx.getArtifactConfig().getPath(), mapperName + ".xml");
+        String path = ctx.getArtifactConfig().getPath();
+        if (path == null) {
+            throw new IllegalStateException(
+                    "mybatisXml 产物 '" + ctx.getArtifactName() + "' 缺少 path 配置（XML 产物必须配置 path）");
+        }
+        Path file = ctx.xmlFile(gctx.getProjectRoot(), path, mapperName + ".xml");
         try {
             ChangeStatus status = FileWriter.writeIfChanged(file, xml);
             gctx.getReport().add(file, status, "mybatisXml " + mapperName);
@@ -107,7 +113,8 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
         return sb.toString();
     }
 
-    private void resultMap(TableContext ctx, List<Column> columns, Column id, String poType, StringBuilder sb) {
+    private void resultMap(TableContext ctx, List<Column> columns, @Nullable Column id, String poType,
+            StringBuilder sb) {
         sb.append("    <resultMap id=\"BaseResultMap\" type=\"").append(poType).append("\">\n");
         for (Column column : columns) {
             boolean isId = column == id;
@@ -134,11 +141,12 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
         sb.append("    </sql>\n\n");
     }
 
-    private String insertXml(TableContext ctx, String tableName, List<Column> columns, Column id, String poType) {
+    private String insertXml(TableContext ctx, String tableName, List<Column> columns, @Nullable Column id,
+            String poType) {
         boolean generated = id != null && id.isAutoIncrement();
         StringBuilder sb = new StringBuilder();
         sb.append("    <insert id=\"insert\"");
-        if (generated) {
+        if (generated && id != null) {
             sb.append("\n            keyColumn=\"")
                     .append(id.getName())
                     .append("\"\n            keyProperty=\"")
@@ -229,6 +237,10 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
         sb.append("        WHERE\n");
         for (int i = 0; i < whereColumns.length; i++) {
             Column column = ctx.getTable().getColumn(whereColumns[i]);
+            if (column == null) {
+                throw new IllegalStateException("索引列 '" + whereColumns[i] + "' 在表 '" + ctx.getTable().getName()
+                        + "' 中不存在（DDL 索引引用了未定义的列）");
+            }
             sb.append("        t.")
                     .append(column.getName())
                     .append(" = #{")
@@ -243,6 +255,7 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
     }
 
     /** 主键列（PRIMARY 索引首列；无则 null）。 */
+    @Nullable
     private Column idColumn(TableContext ctx) {
         for (Index index : ctx.indexes()) {
             if (index.isUnique() && "PRIMARY".equalsIgnoreCase(index.getName())) {

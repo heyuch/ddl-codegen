@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+
 /**
  * 表的索引模型（含 PRIMARY KEY / UNIQUE KEY / 普通 INDEX）。
  * <p>
@@ -24,6 +26,9 @@ public final class Index {
     private final Meta meta = new Meta();
 
     private Index(Builder b) {
+        if (b.name == null) {
+            throw new IllegalStateException("Index 构建缺失必填字段 name");
+        }
         this.name = b.name;
         this.unique = b.unique;
         this.columns = Collections.unmodifiableList(new ArrayList<>(b.columns));
@@ -70,9 +75,13 @@ public final class Index {
         return new Builder();
     }
 
-    /** {@link Index} 构建器。 */
+    /**
+     * {@link Index} 构建器。
+     * 可修改构建对象：字段由 builder 方法在 build() 前设置，初始化时序检查不适用。
+     */
     public static final class Builder {
 
+        @MonotonicNonNull
         private String name;
         private boolean unique;
         private final List<String> columns = new ArrayList<>();

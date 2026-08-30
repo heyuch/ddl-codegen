@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+
 /**
  * 表的列模型。
  * <p>
@@ -29,6 +31,9 @@ public final class Column {
     private final Meta meta = new Meta();
 
     private Column(Builder b) {
+        if (b.name == null || b.sqlType == null) {
+            throw new IllegalStateException("Column 构建缺失必填字段（name/sqlType）");
+        }
         this.name = b.name;
         this.sqlType = b.sqlType;
         this.length = b.length;
@@ -125,10 +130,15 @@ public final class Column {
         return new Builder();
     }
 
-    /** {@link Column} 构建器。 */
+    /**
+     * {@link Column} 构建器。
+     * 可修改构建对象：字段由 builder 方法在 build() 前设置，初始化时序检查不适用。
+     */
     public static final class Builder {
 
+        @MonotonicNonNull
         private String name;
+        @MonotonicNonNull
         private String sqlType;
         private int length;
         private int precision;

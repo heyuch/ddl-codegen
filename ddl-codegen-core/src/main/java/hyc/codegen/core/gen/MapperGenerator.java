@@ -1,5 +1,7 @@
 package hyc.codegen.core.gen;
 
+import javax.annotation.Nullable;
+
 import com.sun.source.tree.Tree.Kind;
 import hyc.codegen.core.config.ArtifactConfig;
 import hyc.codegen.core.model.Column;
@@ -54,6 +56,7 @@ public final class MapperGenerator extends AbstractJavaArtifactGenerator {
     }
 
     /** 主键列：PRIMARY KEY 索引首列；无主键返回 null（不生成按 id 删除）。 */
+    @Nullable
     static Column primaryKey(TableContext ctx) {
         for (Index index : ctx.indexes()) {
             if (index.isUnique() && "PRIMARY".equalsIgnoreCase(index.getName())) {
@@ -107,6 +110,10 @@ public final class MapperGenerator extends AbstractJavaArtifactGenerator {
         }
         for (String columnName : spec.getColumns()) {
             Column column = ctx.getTable().getColumn(columnName);
+            if (column == null) {
+                throw new IllegalStateException("索引列 '" + columnName + "' 在表 '" + ctx.getTable().getName()
+                        + "' 中不存在（DDL 索引引用了未定义的列）");
+            }
             String fieldName = ctx.fieldName(column);
             builder.parameter(Variable.builder()
                     .annotation(Annotation.of(PARAM, "\"" + fieldName + "\""))

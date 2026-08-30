@@ -40,7 +40,11 @@ public final class PropertiesConfigLoader implements ConfigLoader {
         }
 
         DdlConfig config = new DdlConfig();
-        config.setRoot(configFile.toAbsolutePath().getParent());
+        Path root = configFile.toAbsolutePath().getParent();
+        if (root == null) {
+            throw new IllegalArgumentException("配置文件必须位于目录中（无法确定项目根）: " + configFile);
+        }
+        config.setRoot(root);
 
         loadArtifacts(props, config, configFile);
         loadNaming(props, config);
@@ -74,7 +78,10 @@ public final class PropertiesConfigLoader implements ConfigLoader {
             int dot = key.indexOf('.');
             String prop = key.substring(dot + 1);
             ArtifactConfig artifact = byName.computeIfAbsent(name, ArtifactConfig::new);
-            applyArtifactProperty(artifact, prop, props.getProperty(key));
+            String value = props.getProperty(key);
+            if (value != null) {
+                applyArtifactProperty(artifact, prop, value);
+            }
         }
 
         for (ArtifactConfig artifact : byName.values()) {
@@ -201,6 +208,8 @@ public final class PropertiesConfigLoader implements ConfigLoader {
         return result;
     }
 
+    /** 空/空白字符串 → null（属性值可缺省语义）；已为 null 原样返回。 */
+    @Nullable
     private static String emptyToNull(String value) {
         if (value == null) {
             return null;

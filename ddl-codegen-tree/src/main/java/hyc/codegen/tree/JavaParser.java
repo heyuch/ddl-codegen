@@ -22,8 +22,6 @@ public final class JavaParser {
 
     private final StandardJavaFileManager fileManager;
 
-    private final JavaTreeConverter treeConverter = new JavaTreeConverter();
-
     public JavaParser() {
         this.compiler = ToolProvider.getSystemJavaCompiler();
         this.fileManager = compiler.getStandardFileManager(null, Locale.ROOT, StandardCharsets.UTF_8);
@@ -46,8 +44,9 @@ public final class JavaParser {
         Iterable<? extends CompilationUnitTree> units = task.parse();
 
         List<CompileUnit> result = new ArrayList<>();
+        JavaTreeConverter treeConverter = new JavaTreeConverter(docTrees);
         for (CompilationUnitTree unit : units) {
-            result.add(treeConverter.convert(unit, docTrees));
+            result.add(treeConverter.convert(unit));
         }
 
         return result;

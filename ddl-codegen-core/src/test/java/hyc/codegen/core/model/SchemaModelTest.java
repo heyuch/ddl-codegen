@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -26,7 +27,9 @@ class SchemaModelTest {
         schema.addTable(new Table("account", null));
 
         assertTrue(schema.contains("user"));
-        assertEquals("用户表", schema.getTable("user").getComment());
+        Table user = schema.getTable("user");
+        assertNotNull(user);
+        assertEquals("用户表", user.getComment());
         assertNull(schema.getTable("missing"));
         assertEquals(Arrays.asList("user", "account"), schema.tableNames());
 
@@ -42,7 +45,9 @@ class SchemaModelTest {
         schema.renameTable("a", "c");
 
         assertFalse(schema.contains("a"));
-        assertEquals("c", schema.getTable("c").getName());
+        Table c = schema.getTable("c");
+        assertNotNull(c);
+        assertEquals("c", c.getName());
         // LinkedHashMap 改名采用移除后追加语义
         assertEquals(Arrays.asList("b", "c"), schema.tableNames());
     }
@@ -75,6 +80,7 @@ class SchemaModelTest {
         table.renameColumn("name", "userName");
 
         Column renamed = table.getColumn("userName");
+        assertNotNull(renamed);
         assertEquals("userName", renamed.getName());
         assertEquals(50, renamed.getLength());
         assertEquals("java.lang.String", renamed.getMeta().getString("type"));
@@ -101,12 +107,18 @@ class SchemaModelTest {
         table.addIndex(Index.builder().name("uk_name").unique(true).columns(Arrays.asList("name")).build());
         table.addIndex(Index.builder().name("idx_status").columns(Arrays.asList("status")).build());
 
-        assertTrue(table.getIndex("uk_name").isUnique());
-        assertFalse(table.getIndex("idx_status").isUnique());
+        Index ukName = table.getIndex("uk_name");
+        assertNotNull(ukName);
+        assertTrue(ukName.isUnique());
+        Index idxStatus = table.getIndex("idx_status");
+        assertNotNull(idxStatus);
+        assertFalse(idxStatus.isUnique());
 
         table.renameIndex("idx_status", "idx_state");
         assertNull(table.getIndex("idx_status"));
-        assertEquals(Arrays.asList("status"), table.getIndex("idx_state").getColumns());
+        Index idxState = table.getIndex("idx_state");
+        assertNotNull(idxState);
+        assertEquals(Arrays.asList("status"), idxState.getColumns());
 
         table.removeIndex("uk_name");
         assertFalse(table.hasIndex("uk_name"));

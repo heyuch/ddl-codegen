@@ -16,7 +16,9 @@
 - 作者已主动禁用的规则（注释掉）：`RegexpHeader`（无文件头要求）、`JavadocPackage`（与 spotless 冲突）、
   `HideUtilityClassConstructor`、`IllegalCatch`
 - spotless：eclipse 格式器 + import order + sortPom（apply 绑 validate，自动格式化，无冲突面）
-- 编译期处理器：error-prone（-Xplugin，经 pom 注入）、checkerframework NullnessChecker（`-Awarns`，warning 级）、lombok
+- 编译期处理器：error-prone（-Xplugin，经 pom 注入）、checkerframework NullnessChecker（**error 级**，强制修复或带理由抑制；`-AsuppressWarnings=keyfor` 已移除，KeyFor 局部抑制到 10 个报错类）、lombok
+- spotbugs：字节码级分析（effort=Max、threshold=Low、check 绑 process-classes，`spotbugs-exclude.xml` 收录经实证的误报/接受项）
+- checkerframework stub：`checker/junit-assertions.astub`（JUnit 断言契约，`@EnsuresNonNull`）
 - maven-dependency-plugin analyze（`failOnWarning=true`：未使用/未声明依赖即失败）
 - 结构类别：文件级（FileLength 2000 / LineLength 120 / FileTabCharacter）、
   类设计（DesignForExtension / FinalClass / VisibilityModifier / HiddenField / ThrowsCount / MutableException）、
@@ -72,6 +74,9 @@
 | M0.1 | `VariableDeclarationUsageDistance` | 未触发 | 合理（用户已确认） | — |
 | M0.1 | spotless 配置 | Demo.java 夹具被排除格式化 | 合理（构建配置） | 夹具字节稳定性由 round-trip 断言依赖，排除属合理工程决策，用户可否决 |
 | M2 | `ClassMemberImpliedModifier` vs `RedundantModifier` | 嵌套 enum：加 static 被后者报"多余"，不加被前者报"应显式"——**两条规则在嵌套 enum 上互相矛盾** | 规则矛盾 | 规避：顶层 enum（ChangeStatus），同时被 FileWriter/ChangeReport 共用；记录待用户决策（候选：ClassMemberImpliedModifier 加 exclude，或接受矛盾改代码风格） |
+| M5 | `CyclomaticComplexity`（DruidDdlParser） | convertAlter 判空改造后 25（阈值 20）：分支数 ≈ ALTER 子句类型数（11）+ 畸形 DDL 判空跳过（spotbugs 严格空指针修复引入） | 已决策：类级 @SuppressWarnings（与 ClassFanOutComplexity 同依据，§6） | 分发器类别，元素驱动；记录于变更 2026-08-30-opt-spotbugs |
+| M5 | spotbugs 引入实证 | 首轮 67 项：空指针类 ~40（checkerframework -Awarns 存量警告 + 注解真相不一致）、死代码/未读字段/暴露/equals 类 ~27（checkerframework 不覆盖） | 合理（工具互补实证） | spotbugs-exclude.xml 收录 17 项误报/接受项（均带 Justification）；见变更 2026-08-30-opt-spotbugs |
+| M5 | checkerframework 升级 error 级实证 | 存量空指针全部由 @Nullable/@MonotonicNonNull 标注或显式判空修复；initialization 检查触发 `initialization.field.uninitialized`（可修改 AST 字段、builder 字段、@TempDir/@Parameter 注入字段）——**用户决策：全部注解化而非抑制**（真可空 @Nullable / 构建后必有 @MonotonicNonNull + 读取端判空 throw / JUnit-Maven 注入字段 @Nullable + getter 校验） | 已决策：注解化（用户拍板） | **initialization 类抑制零残留**；KeyFor 子检查（NullnessChecker 伴生，不可关闭）对 JDK 泛型通配符误报 → 局部 @SuppressWarnings("keyfor") 10 个类 |
 
 
 ## 4. 用户决策区（调整项待定）

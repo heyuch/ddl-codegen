@@ -75,9 +75,14 @@ public final class TableContext {
         return naming.artifactClassName(table.getName(), artifactName);
     }
 
-    /** 包名（artifact 配置）。 */
+    /** 包名（artifact 配置；Java 类产物必须配置，缺失即配置错误）。 */
     public String packageName() {
-        return artifactConfig.getPkg();
+        String pkg = artifactConfig.getPkg();
+        if (pkg == null) {
+            throw new IllegalStateException(
+                    "产物 '" + artifactConfig.getName() + "' 缺少 package 配置（Java 类产物必须配置 package）");
+        }
+        return pkg;
     }
 
     /** Java 类文件路径：根 + module + package 路径 + 类名。 */

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    SpotBugs 排除清单：仅收录「经实证确认的误报」或「有意接受的风险」。
+    每条 Match 必须带 <Justification> 说明理由；新条目必须经首轮 triage 实证后加入，
+    禁止未经跑批就预填（抑制准则见 docs/static-rules-review.md）。
+-->
+<FindBugsFilter>
+    <!-- EI_EXPOSE_REP / EI_EXPOSE_REP2：tree 包是「可修改 AST」，节点与构建器按设计共享内部
+         可变对象（javadoc 注释树、输出 Writer、构建器持有的待构建节点）。防御性修复需深拷贝
+         整棵注释树，对内部 AST 属过度工程；集合 getter（getImports 等）已按库约定浅拷贝防御。 -->
+    <Match>
+        <Package name="~hyc\.codegen\.tree(\..*)?"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Justification>可修改 AST 设计：节点/构建器共享内部可变对象是语义要求，深拷贝为过度工程</Justification>
+    </Match>
+
+    <!-- RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE：lombok @EqualsAndHashCode 生成的 equals/hashCode
+         空安全比较（this.x == null ? ...），与 checkerframework 写入字节码的默认 @NonNull 冲突。
+         lombok 生成逻辑不可控，纯误报（源码侧无注解，字段实际构造器必填）。 -->
+    <Match>
+        <Or>
+            <Class name="hyc.codegen.tree.Identifier"/>
+            <Class name="hyc.codegen.tree.Package"/>
+            <Class name="hyc.codegen.tree.TypeReference"/>
+        </Or>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+        <Justification>lombok 生成的空安全比较与 checkerframework 字节码默认 @NonNull 冲突，误报</Justification>
+    </Match>
+
+    <!-- EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC：TypeReference 继承 Identifier 复用代码，
+         @EqualsAndHashCode(callSuper=false) 使子类 equals 与父类不对称。
+         工具流程中 Identifier 与 TypeReference 从不跨类型比较，值类型独立相等是有意设计。 -->
+    <Match>
+        <Class name="hyc.codegen.tree.TypeReference"/>
+        <Bug pattern="EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC"/>
+        <Justification>值类型独立相等是有意设计（callSuper=false），跨类型 equals 不对称无实际影响</Justification>
+    </Match>
+
+    <!-- EI_EXPOSE_REP / EI_EXPOSE_REP2：core 管线内部对象按引用共享（DDL 操作携带完整 Table 模型、
+         生成上下文/表上下文/规格对象持有可变的模型与配置、模型类的 Meta 容器设计为开放读写、
+         服务对象（NamingService/TypeMapper）持有 config 与处理器列表）。
+         拷贝会破坏「操作/上下文驱动后续阶段」的语义，深拷贝亦无意义。 -->
+    <Match>
+        <Or>
+            <Class name="hyc.codegen.core.ddl.CreateTableOp"/>
+            <Class name="hyc.codegen.core.gen.GenerationContext"/>
+            <Class name="hyc.codegen.core.gen.GenerationContext$Builder"/>
+            <Class name="hyc.codegen.core.gen.TableContext"/>
+            <Class name="hyc.codegen.core.gen.QueryMethods$Spec"/>
+            <Class name="hyc.codegen.core.model.Column"/>
+            <Class name="hyc.codegen.core.model.Index"/>
+            <Class name="hyc.codegen.core.model.Table"/>
+            <Class name="hyc.codegen.core.naming.NamingService"/>
+            <Class name="hyc.codegen.core.types.TypeMapper"/>
+        </Or>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Justification>管线内部对象按引用传递是设计（操作携带模型、上下文持配置/模型、Meta 开放读写），防御性拷贝破坏语义</Justification>
+    </Match>
+
+    <!-- RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE：MapperXmlGenerator.build 里 id 判空
+         （id != null && id.isAutoIncrement() 短路保护 insertXml 内的 id.getName()），
+         spotbugs 跨方法未识别短路保护，误报。 -->
+    <Match>
+        <Class name="hyc.codegen.core.gen.MapperXmlGenerator"/>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>
+        <Justification>insertXml 内 id.getName() 受 id != null 短路保护，spotbugs 跨方法分析误报</Justification>
+    </Match>
+
+    <!-- NP_METHOD_PARAMETER_TIGHTENS_ANNOTATION：接口与实现的 parse 参数在源码与字节码中均为
+         @Nullable（javap 实证：参数级 javax.annotation.Nullable + type-use checkerframework @Nullable
+         两者一致），spotbugs 4.8.x 对双注解形式的 override 对比缺陷，纯误报。 -->
+    <Match>
+        <Or>
+            <Class name="hyc.codegen.core.annotation.AsHandler"/>
+            <Class name="hyc.codegen.core.annotation.IgnoreHandler"/>
+            <Class name="hyc.codegen.core.annotation.TypeHandler"/>
+        </Or>
+        <Bug pattern="NP_METHOD_PARAMETER_TIGHTENS_ANNOTATION"/>
+        <Justification>接口/实现字节码注解一致（javap 实证），spotbugs 双注解 override 对比误报</Justification>
+    </Match>
+</FindBugsFilter>

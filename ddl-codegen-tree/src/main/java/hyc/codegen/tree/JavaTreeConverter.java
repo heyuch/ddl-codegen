@@ -2,7 +2,6 @@ package hyc.codegen.tree;
 
 import java.util.HashSet;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.lang.model.element.Name;
 
 import com.sun.source.tree.ArrayTypeTree;
@@ -20,11 +19,15 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
 
     final JavadocTreeConverter javadocConverter = new JavadocTreeConverter();
 
-    DocTrees docs;
+    private final DocTrees docs;
+
+    JavaTreeConverter(DocTrees docs) {
+        this.docs = docs;
+    }
 
     /** 把 javac 的 ModifiersTree 统一转为可变模型（保留注解与修饰符；已是模型则原样返回）。 */
-    private static Modifiers toModelModifiers(@Nullable ModifiersTree node) {
-        if (node == null || node instanceof Modifiers) {
+    private static Modifiers toModelModifiers(ModifiersTree node) {
+        if (node instanceof Modifiers) {
             return (Modifiers)node;
         }
         Modifiers mods = new Modifiers(new HashSet<>(node.getFlags()));
@@ -32,8 +35,7 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
         return mods;
     }
 
-    CompileUnit convert(CompilationUnitTree unit, DocTrees docs) {
-        this.docs = docs;
+    CompileUnit convert(CompilationUnitTree unit) {
         TreePath path = new TreePath(unit);
 
         return (CompileUnit)visitCompilationUnit(unit, path);

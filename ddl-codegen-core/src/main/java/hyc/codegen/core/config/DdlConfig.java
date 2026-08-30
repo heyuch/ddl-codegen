@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * 项目配置模型，对应项目根目录下的 properties 配置文件。
@@ -15,7 +16,8 @@ import java.util.Optional;
  */
 public final class DdlConfig {
 
-    /** 项目根 = 配置文件所在目录。 */
+    /** 项目根 = 配置文件所在目录（加载前为 null；经 getRoot 的 requireNonNull 强制非空）。 */
+    @Nullable
     private Path root;
 
     /** artifact 按配置出现顺序保存。 */
@@ -45,6 +47,9 @@ public final class DdlConfig {
     }
 
     public Path getRoot() {
+        if (root == null) {
+            throw new IllegalStateException("项目根未设置（需先经 PropertiesConfigLoader 加载或 setRoot）");
+        }
         return root;
     }
 

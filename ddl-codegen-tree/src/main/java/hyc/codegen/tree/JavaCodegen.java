@@ -39,7 +39,8 @@ import hyc.codegen.tree.utils.CodePrinter;
 // 扇出抑制依据（元素驱动而非逻辑混杂，见 docs/static-rules-review.md §6）：
 // 本类是 TreeScanner 分发器，每个节点类型对应一个 visit 方法，引用类型数 ≈ 节点类型数；
 // 已抽取 import 管理（ImportManager）后残余扇出仍 39，实证为结构性不可降；单方法引用类型 ≤3。
-@SuppressWarnings("ClassFanOutComplexity")
+// keyfor 抑制：foreachWith 泛型通配符的 KeyFor 推断缺陷（与 Map 无关，见各 Doc 模型类同款注释）。
+@SuppressWarnings({"ClassFanOutComplexity", "keyfor"})
 public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
     /**
@@ -74,9 +75,12 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     }
 
     @Override
+    @Nullable
+    // TreeScanner 契约：返回 null 表示「无替换结果」（javac 语义，调用方忽略返回值）
+    @SuppressWarnings("override.return")
     public Boolean scan(Tree tree, CodePrinter p) {
         if (tree == null) {
-            return null;
+            return Boolean.FALSE;
         }
         if (!isHandled(tree)) {
             // 兜底：未显式建模的节点直接内联输出 javac 源码文本（toString 忠实于源码）
@@ -262,7 +266,8 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> List<T> collectMembers(ClassTree node, java.lang.Class<T> expected, Predicate<T> filter) {
+    private static <T> List<T> collectMembers(ClassTree node, java.lang.Class<T> expected,
+            @Nullable Predicate<T> filter) {
         List<? extends Tree> members = node.getMembers();
         List<T> result = new ArrayList<>();
 

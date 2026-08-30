@@ -20,6 +20,9 @@ import hyc.codegen.tree.utils.CodePrinter;
  * <p>
  * 从 JavaCodegen 拆出，让打印器只负责节点分发，import 策略收敛到单一职责类。
  */
+// KeyFor（Map key）子检查对 JDK 泛型通配符（List<? extends DocTree> 的 capture）推断缺陷，
+// 与 Map 无关的误报；仅本类抑制，其余代码 KeyFor 检查保留。
+@SuppressWarnings("keyfor")
 final class ImportManager {
 
     private static final List<String> GROUP_PREFIXES = Arrays.asList("java");
@@ -167,13 +170,7 @@ final class ImportManager {
 
     private static int compare(ImportTree o1, ImportTree o2) {
         String s1 = o1.toString();
-        if (s1 == null) {
-            return 1;
-        }
         String s2 = o2.toString();
-        if (s2 == null) {
-            return -1;
-        }
         return s1.compareTo(s2);
     }
 

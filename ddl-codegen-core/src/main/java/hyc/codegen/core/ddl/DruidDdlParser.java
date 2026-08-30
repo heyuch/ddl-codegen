@@ -33,7 +33,6 @@ import com.alibaba.druid.sql.dialect.mysql.ast.MySqlUnique;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlAlterTableChangeColumn;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlAlterTableModifyColumn;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlRenameTableStatement;
-import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlTableIndex;
 import hyc.codegen.core.annotation.AnnotationProcessor;
 import hyc.codegen.core.annotation.AnnotationRegistry;
 import hyc.codegen.core.annotation.MetaTarget;
@@ -41,11 +40,12 @@ import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Index;
 import hyc.codegen.core.model.Table;
 
-// 扇出/抽象耦合抑制依据（元素驱动而非逻辑混杂，见 docs/static-rules-review.md §6）：
+// 扇出/抽象耦合/圈复杂度抑制依据（元素驱动而非逻辑混杂，见 docs/static-rules-review.md §6）：
 // 本类是 Druid AST → 模型操作的转换器，引用类型数 ≈ 需处理的节点类型数（列/索引/各类
-// ALTER 子项与操作类型），每种节点对应一个转换分支，单方法引用类型 ≤4；已做抽取
-// （DruidAst）后残余指标仍结构性偏高，与 JavaTreeConverter 同属"分发器"类别。
-@SuppressWarnings({"ClassFanOutComplexity", "ClassDataAbstractionCoupling"})
+// ALTER 子项与操作类型），每种节点对应一个转换分支，单方法引用类型 ≤4；convertAlter 的
+// 分支数 ≈ ALTER 子句类型数（11 类）+ 畸形 DDL 判空跳过（SpotBugs 严格空指针修复引入），
+// 已做抽取（DruidAst）后残余指标仍结构性偏高，与 JavaTreeConverter 同属"分发器"类别。
+@SuppressWarnings({"ClassFanOutComplexity", "ClassDataAbstractionCoupling", "CyclomaticComplexity"})
 public final class DruidDdlParser implements DdlParser {
 
     private static final System.Logger LOG = System.getLogger(DruidDdlParser.class.getName());
@@ -187,24 +187,6 @@ public final class DruidDdlParser implements DdlParser {
     }
 
     @Nullable
-    private Index convertMySqlIndex(MySqlTableIndex index) {
-        String type = index.getIndexDefinition() == null ? null : index.getIndexDefinition().getType();
-        boolean unique = "UNIQUE".equalsIgnoreCase(type);
-        List<String> columns = DruidAst.columnNames(index.getColumns());
-        if (columns.isEmpty()) {
-            LOG.log(System.Logger.Level.WARNING, "索引缺少列定义，已跳过: {0}", index.getName());
-            return null;
-        }
-        Index model = Index.builder()
-                .name(indexName(DruidAst.nameOf(index.getName()), unique, columns))
-                .unique(unique)
-                .columns(columns)
-                .comment(DruidAst.commentOf(index.getComment()))
-                .build();
-        annotationProcessor.process(model.getComment(), MetaTarget.INDEX, model.getMeta());
-        return model;
-    }
-
     private Index convertConstraint(SQLUniqueConstraint constraint, boolean unique, @Nullable String forcedName) {
         List<String> columns = DruidAst.columnNames(constraint.getColumns());
         if (columns.isEmpty()) {
@@ -238,12 +220,18 @@ public final class DruidDdlParser implements DdlParser {
                 }
             } else if (item instanceof SQLAlterTableDropColumnItem) {
                 for (SQLName column : ((SQLAlterTableDropColumnItem)item).getColumns()) {
-                    operations.add(new DropColumnOp(tableName, DruidAst.nameOf(column)));
+                    String name = DruidAst.nameOf(column);
+                    if (name != null) {
+                        operations.add(new DropColumnOp(tableName, name));
+                    }
                 }
             } else if (item instanceof MySqlAlterTableChangeColumn) {
                 MySqlAlterTableChangeColumn change = (MySqlAlterTableChangeColumn)item;
-                operations.add(new ChangeColumnOp(tableName,
-                        DruidAst.nameOf(change.getColumnName()), convertColumn(change.getNewColumnDefinition())));
+                String oldName = DruidAst.nameOf(change.getColumnName());
+                if (oldName != null) {
+                    operations.add(
+                            new ChangeColumnOp(tableName, oldName, convertColumn(change.getNewColumnDefinition())));
+                }
             } else if (item instanceof MySqlAlterTableModifyColumn) {
                 MySqlAlterTableModifyColumn modify = (MySqlAlterTableModifyColumn)item;
                 Column column = convertColumn(modify.getNewColumnDefinition());
@@ -255,21 +243,31 @@ public final class DruidDdlParser implements DdlParser {
                     operations.add(new AddIndexOp(tableName, index));
                 }
             } else if (item instanceof SQLAlterTableDropIndex) {
-                operations.add(new DropIndexOp(tableName,
-                        DruidAst.nameOf(((SQLAlterTableDropIndex)item).getIndexName())));
+                String indexName = DruidAst.nameOf(((SQLAlterTableDropIndex)item).getIndexName());
+                if (indexName != null) {
+                    operations.add(new DropIndexOp(tableName, indexName));
+                }
             } else if (item instanceof SQLAlterTableDropPrimaryKey) {
                 operations.add(new DropIndexOp(tableName, Index.PRIMARY));
             } else if (item instanceof SQLAlterTableRename) {
-                SQLName to = ((SQLAlterTableRename)item).getToName();
-                operations.add(new RenameTableOp(tableName, DruidAst.nameOf(to)));
+                String toName = DruidAst.nameOf(((SQLAlterTableRename)item).getToName());
+                if (toName != null) {
+                    operations.add(new RenameTableOp(tableName, toName));
+                }
             } else if (item instanceof SQLAlterTableRenameIndex) {
                 SQLAlterTableRenameIndex rename = (SQLAlterTableRenameIndex)item;
-                operations.add(new RenameIndexOp(tableName,
-                        DruidAst.nameOf(rename.getName()), DruidAst.nameOf(rename.getTo())));
+                String from = DruidAst.nameOf(rename.getName());
+                String to = DruidAst.nameOf(rename.getTo());
+                if (from != null && to != null) {
+                    operations.add(new RenameIndexOp(tableName, from, to));
+                }
             } else if (item instanceof SQLAlterTableRenameColumn) {
                 SQLAlterTableRenameColumn rename = (SQLAlterTableRenameColumn)item;
-                operations.add(new RenameColumnOp(tableName,
-                        DruidAst.nameOf(rename.getColumn()), DruidAst.nameOf(rename.getTo())));
+                String from = DruidAst.nameOf(rename.getColumn());
+                String to = DruidAst.nameOf(rename.getTo());
+                if (from != null && to != null) {
+                    operations.add(new RenameColumnOp(tableName, from, to));
+                }
             } else if (item instanceof SQLAlterTableAlterColumn) {
                 LOG.log(System.Logger.Level.WARNING,
                         "不支持的 alter 子句（列默认值/可空变更）: {0}，已跳过", item.getClass().getSimpleName());

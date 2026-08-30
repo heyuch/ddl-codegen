@@ -21,6 +21,7 @@
 
 - **2026-08：移除 OpenSpec，采用轻量工作流**。删除了 openspec 残留（含 add-ddl-codegen-framework 提案）；新工作流见 AGENTS.md「开发工作流」：先分析设计后实现，决策记入本节，复杂设计写 docs/changes/（模板 TEMPLATE.md）；顶层架构与数据流常驻 AGENTS.md「项目架构」节，随变更同步
 - ClassFanOutComplexity：阈值 20 保留；分发器类针对性 @SuppressWarnings + 实证注释（见 docs/static-rules-review.md §5/§6）
+- **2026-08-30：引入 SpotBugs（字节码级静态检查）**。锁 spotbugs-maven-plugin 4.8.6.8（Java 11 运行环境，4.9+ 需 Java 17）；check 绑 process-classes（沿用 `mvn clean test` 验证命令）；effort=Max + threshold=Low 全量检出，误报/接受项进 spotbugs-exclude.xml（每条带 Justification）。首轮实证：checkerframework -Awarns 存量警告 + 字节码默认注解真相不一致是检出主力，附带死代码/未读字段/equals 暴露等 checkerframework 不覆盖类别。详情见 docs/changes/2026-08-30-opt-spotbugs/design.md
 - **Expr/Block 助手简化**（M0c 并入 M2）：助手为纯字符串组合，不做 import 魔法；方法体引用类型的 import 由生成器显式 addImport（避免状态化 import-sink API，更清晰）。M0c 拆入 M2（对着真实生成上下文构建，避免空想 API）。
 - 其余开放问题按 docs/design.md §17 默认值
 
@@ -54,3 +55,4 @@
 - merge 时删除成员不清理其 import（保守策略：不删可能被用户代码引用的 import）
 - ALTER COLUMN SET/DROP DEFAULT、FK/CHECK、分区、FULLTEXT/SPATIAL 索引 → warning 跳过（M1a 已记录）
 - 方法体引用类型的 import 由生成器显式登记（Expr 助手无状态，见 PROGRESS 决策）
+- **2026-08-30：checkerframework 升级 error 级 + 注解化治理（随 opt-spotbugs 变更）**。移除 `-Awarns`：所有空指针问题强制修复或带理由抑制。处理原则（用户拍板）：① 真可空字段 → `@Nullable`（javadoc/extend/pkg/root/注解值等）；② 构建后必有字段 → `@MonotonicNonNull` + 读取端判空 throw（tree 可修改 AST 的 name/kind/modifiers、builder 字段，**builder 构造器/build 判空 fail-fast 顺带修复真实缺陷**：Class/Method.Builder 缺 modifiers 默认值）；③ 框架注入字段（JUnit @TempDir/@BeforeEach、Maven @Parameter）→ 不假设注入，标 `@Nullable` + getter/使用点显式校验（tempDir()/config()/rootPath()）；④ KeyFor 子检查（NullnessChecker 伴生不可关闭）对 JDK 泛型通配符误报 → 局部 `@SuppressWarnings("keyfor")` 10 个类（非全局抑制）；⑤ initialization 检查抑制零残留。JUnit 断言契约经 `checker/junit-assertions.astub`（@EnsuresNonNull）声明。

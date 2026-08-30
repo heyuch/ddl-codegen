@@ -63,8 +63,9 @@ public final class TypeReference extends Identifier {
     public String getQualifiedName() {
         StringBuilder sb = new StringBuilder();
 
-        if (pkg != null && pkg.getPath() != null && !pkg.getPath().isEmpty()) {
-            sb.append(pkg.getPath())
+        Package p = pkg;
+        if (p != null && !p.getPath().isEmpty()) {
+            sb.append(p.getPath())
                     .append(".");
         }
         sb.append(name);

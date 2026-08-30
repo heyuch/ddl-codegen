@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 
 import hyc.codegen.core.config.ArtifactConfig;
@@ -32,8 +33,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class ReconcileLifecycleTest {
 
+    // JUnit @TempDir 注入，语法层不保证非 null：标 @Nullable，使用点经 tempDir() 显式校验。
     @TempDir
+    @Nullable
     Path temp;
+
+    /** @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    private Path tempDir() {
+        Path dir = temp;
+        if (dir == null) {
+            throw new AssertionError("JUnit 未注入 @TempDir");
+        }
+        return dir;
+    }
 
     /** 测试生成器：每列一个 private 字段 + 一个由表名驱动的 describe() 方法（覆盖方法级 reconcile）。 */
     static final class TestGenerator extends AbstractJavaArtifactGenerator {
@@ -64,7 +76,7 @@ class ReconcileLifecycleTest {
 
     private DdlConfig config() {
         DdlConfig config = new DdlConfig();
-        config.setRoot(temp);
+        config.setRoot(tempDir());
         ArtifactConfig artifact = new ArtifactConfig("test");
         artifact.setGenerator("test");
         artifact.setModule("");
@@ -81,11 +93,11 @@ class ReconcileLifecycleTest {
     }
 
     private String content() throws Exception {
-        return new String(Files.readAllBytes(temp.resolve("com/test/User.java")), StandardCharsets.UTF_8);
+        return new String(Files.readAllBytes(tempDir().resolve("com/test/User.java")), StandardCharsets.UTF_8);
     }
 
     private boolean fileExists() {
-        return Files.isRegularFile(temp.resolve("com/test/User.java"));
+        return Files.isRegularFile(tempDir().resolve("com/test/User.java"));
     }
 
     @Test
@@ -146,7 +158,7 @@ class ReconcileLifecycleTest {
         generate(config, schema, "create table user (id bigint primary key)");
 
         // 用户手写一个方法（模拟用户编辑：插入到类结尾前）
-        Path file = temp.resolve("com/test/User.java");
+        Path file = tempDir().resolve("com/test/User.java");
         String userMethod = "\n    /** 用户手写方法 */\n    public String hello() {\n        return \"hi\";\n    }\n";
         String existing = content();
         int lastBrace = existing.lastIndexOf('}');
@@ -170,7 +182,7 @@ class ReconcileLifecycleTest {
 
         generate(config, schema, "alter table user rename to account");
         assertFalse(fileExists());
-        assertTrue(Files.isRegularFile(temp.resolve("com/test/Account.java")));
+        assertTrue(Files.isRegularFile(tempDir().resolve("com/test/Account.java")));
     }
 
 }

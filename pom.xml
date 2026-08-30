@@ -40,6 +40,8 @@
         <jsr305.version>3.0.2</jsr305.version>
         <archunit.version>1.4.0</archunit.version>
         <error-prone.version>2.31.0</error-prone.version>
+        <!-- SpotBugs 4.9+ 运行需 Java 17，本项目构建于 Java 11 → 锁 4.8.x 线 -->
+        <spotbugs-maven-plugin.version>4.8.6.8</spotbugs-maven-plugin.version>
 
         <!-- 工具-->
         <lombok.version>1.18.46</lombok.version>
@@ -132,7 +134,10 @@
                             <arg>-Xplugin:ErrorProne</arg>
                             <arg>-processor</arg>
                             <arg>org.checkerframework.checker.nullness.NullnessChecker,lombok.launch.AnnotationProcessorHider$AnnotationProcessor</arg>
-                            <arg>-Awarns</arg>
+                            <!-- Demo.java 是 round-trip 字节全等夹具（见 RoundTripSmokeTest），加注解会破坏字节；跳过其定义检查 -->
+                            <arg>-AskipDefs=hyc\.codegen\.tree\.Demo</arg>
+                            <!-- JUnit 断言契约 stub：assertNotNull 断言后参数非 null（checkerframework 不识别 JUnit 断言副作用） -->
+                            <arg>-Astubs=${maven.multiModuleProjectDirectory}/checker/junit-assertions.astub</arg>
                         </compilerArgs>
                     </configuration>
                 </plugin>
@@ -276,6 +281,17 @@
                         </dependency>
                     </dependencies>
                 </plugin>
+                <!-- SpotBugs 字节码级静态检查（effort=Max 全量检出，误报进 spotbugs-exclude.xml 带理由） -->
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${spotbugs-maven-plugin.version}</version>
+                    <configuration>
+                        <effort>Max</effort>
+                        <threshold>Low</threshold>
+                        <excludeFilterFile>${maven.multiModuleProjectDirectory}/spotbugs-exclude.xml</excludeFilterFile>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -305,6 +321,20 @@
                             <goal>check</goal>
                         </goals>
                         <phase>validate</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- SpotBugs 字节码级静态检查（绑 process-classes：跑在 mvn clean test 生命周期内） -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>spotbugs-check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>process-classes</phase>
                     </execution>
                 </executions>
             </plugin>

@@ -47,7 +47,7 @@ public final class CodeGenerator {
     public ChangeReport generate(DdlConfig config, Schema schema, ApplyResult result,
             List<DdlAnnotationHandler> customHandlers) {
         NamingService naming = new NamingService(config);
-        TypeMapper typeMapper = new TypeMapper(naming, customHandlers);
+        TypeMapper typeMapper = new TypeMapper(customHandlers);
         ChangeReport report = new ChangeReport();
 
         AnnotationRegistry annotationRegistry = AnnotationRegistry.builtin();
@@ -125,21 +125,22 @@ public final class CodeGenerator {
             hyc.codegen.core.config.ArtifactConfig artifactConfig = gctx.getConfig()
                     .artifact(name)
                     .orElseThrow(() -> new IllegalStateException("未配置产物: " + name));
-            if (artifactConfig.getGenerator() == null || !generators.containsKey(artifactConfig.getGenerator())) {
+            String generator = artifactConfig.getGenerator();
+            if (generator == null || !generators.containsKey(generator)) {
                 continue;
             }
             TableContext ctx = gctx.tableContext(syntheticTable(tableName), name);
             Path file;
-            if (ctx.getArtifactConfig().getPath() != null) {
+            String path = ctx.getArtifactConfig().getPath();
+            if (path != null) {
                 // XML 产物：文件名为其 mapper 引用的产物类名
                 hyc.codegen.core.config.ArtifactConfig mapper = gctx.resolveReference(
                         name, "mapper", MapperGenerator.NAME);
-                file = PathResolver.xmlFile(root, ctx.getArtifactConfig().getModule(),
-                        ctx.getArtifactConfig().getPath(),
+                file = PathResolver.xmlFile(root, ctx.getArtifactConfig().getModule(), path,
                         gctx.getNaming().artifactClassName(tableName, mapper.getName()) + ".xml");
             } else {
                 file = PathResolver.javaFile(root, ctx.getArtifactConfig().getModule(),
-                        ctx.getArtifactConfig().getPkg(), ctx.className());
+                        ctx.packageName(), ctx.className());
             }
             try {
                 if (FileWriter.deleteIfExists(file)) {

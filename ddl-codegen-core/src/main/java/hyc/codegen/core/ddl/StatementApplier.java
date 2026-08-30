@@ -53,45 +53,52 @@ public final class StatementApplier {
             result.tableRenamed(rename.getFrom(), rename.getTo());
         } else if (operation instanceof AddColumnOp) {
             AddColumnOp add = (AddColumnOp)operation;
-            if (schema.contains(add.tableName())) {
-                schema.getTable(add.tableName()).addColumn(add.getColumn());
+            Table table = schema.getTable(add.tableName());
+            if (table != null) {
+                table.addColumn(add.getColumn());
                 result.affect(add.tableName());
             }
         } else if (operation instanceof DropColumnOp) {
             DropColumnOp drop = (DropColumnOp)operation;
-            if (schema.contains(drop.tableName())) {
-                schema.getTable(drop.tableName()).removeColumn(drop.getColumnName());
+            Table table = schema.getTable(drop.tableName());
+            if (table != null) {
+                table.removeColumn(drop.getColumnName());
                 result.affect(drop.tableName());
             }
         } else if (operation instanceof ChangeColumnOp) {
             ChangeColumnOp change = (ChangeColumnOp)operation;
-            if (schema.contains(change.tableName())) {
-                schema.getTable(change.tableName()).replaceColumn(change.getOldName(), change.getNewColumn());
+            Table table = schema.getTable(change.tableName());
+            if (table != null) {
+                table.replaceColumn(change.getOldName(), change.getNewColumn());
                 result.affect(change.tableName());
             }
         } else if (operation instanceof RenameColumnOp) {
             RenameColumnOp rename = (RenameColumnOp)operation;
-            if (schema.contains(rename.tableName())) {
-                schema.getTable(rename.tableName()).renameColumn(rename.getFrom(), rename.getTo());
+            Table table = schema.getTable(rename.tableName());
+            if (table != null) {
+                table.renameColumn(rename.getFrom(), rename.getTo());
                 result.affect(rename.tableName());
                 result.columnRenamed(rename.tableName(), rename.getFrom(), rename.getTo());
             }
         } else if (operation instanceof AddIndexOp) {
             AddIndexOp add = (AddIndexOp)operation;
-            if (schema.contains(add.tableName())) {
-                schema.getTable(add.tableName()).addIndex(add.getIndex());
+            Table table = schema.getTable(add.tableName());
+            if (table != null) {
+                table.addIndex(add.getIndex());
                 result.affect(add.tableName());
             }
         } else if (operation instanceof DropIndexOp) {
             DropIndexOp drop = (DropIndexOp)operation;
-            if (schema.contains(drop.tableName())) {
-                schema.getTable(drop.tableName()).removeIndex(drop.getIndexName());
+            Table table = schema.getTable(drop.tableName());
+            if (table != null) {
+                table.removeIndex(drop.getIndexName());
                 result.affect(drop.tableName());
             }
         } else if (operation instanceof RenameIndexOp) {
             RenameIndexOp rename = (RenameIndexOp)operation;
-            if (schema.contains(rename.tableName())) {
-                schema.getTable(rename.tableName()).renameIndex(rename.getFrom(), rename.getTo());
+            Table table = schema.getTable(rename.tableName());
+            if (table != null) {
+                table.renameIndex(rename.getFrom(), rename.getTo());
                 result.affect(rename.tableName());
                 result.indexRenamed(rename.tableName(), rename.getFrom(), rename.getTo());
             }

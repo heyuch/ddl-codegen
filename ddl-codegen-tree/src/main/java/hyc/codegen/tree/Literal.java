@@ -1,15 +1,18 @@
 package hyc.codegen.tree;
 
+import javax.annotation.Nullable;
+
 import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.TreeVisitor;
 
 public final class Literal implements LiteralTree {
 
+    @Nullable
     private Object value;
 
     private Kind kind;
 
-    public Literal(Object value, Kind kind) {
+    public Literal(@Nullable Object value, Kind kind) {
         this.value = value;
         this.kind = kind;
     }
@@ -47,6 +50,9 @@ public final class Literal implements LiteralTree {
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：NULL_LITERAL 的 getValue() 返回 null
+    @SuppressWarnings("override.return")
     public Object getValue() {
         return value;
     }

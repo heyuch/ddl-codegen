@@ -16,8 +16,10 @@ import com.sun.source.tree.PackageTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.TreeVisitor;
 
+// 可修改 AST 节点（AGENTS.md「自研可修改 Java AST」）：字段由 setter/转换器在构造后设置，
 public final class CompileUnit implements CompilationUnitTree {
 
+    @Nullable
     private PackageTree pkg;
 
     private List<AnnotationTree> pkgAnnotations = new ArrayList<>();
@@ -32,12 +34,18 @@ public final class CompileUnit implements CompilationUnitTree {
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：无 package 声明的编译单元 getPackageName 返回 null
+    @SuppressWarnings("override.return")
     public ExpressionTree getPackageName() {
         PackageTree p = pkg;
-        return p.getPackageName();
+        return p == null ? null : p.getPackageName();
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：无 package 声明的编译单元 getPackage 返回 null
+    @SuppressWarnings("override.return")
     public PackageTree getPackage() {
         return pkg;
     }
@@ -85,11 +93,17 @@ public final class CompileUnit implements CompilationUnitTree {
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：本库不追踪源码位置（生成的 AST 无源文件/行号）
+    @SuppressWarnings("override.return")
     public JavaFileObject getSourceFile() {
         return null;
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：本库不追踪源码位置（生成的 AST 无源文件/行号）
+    @SuppressWarnings("override.return")
     public LineMap getLineMap() {
         return null;
     }

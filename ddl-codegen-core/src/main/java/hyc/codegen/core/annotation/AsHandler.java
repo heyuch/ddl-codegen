@@ -2,6 +2,7 @@ package hyc.codegen.core.annotation;
 
 import java.util.EnumSet;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 import hyc.codegen.core.model.Meta;
 
@@ -28,7 +29,7 @@ public final class AsHandler implements DdlAnnotationHandler {
     }
 
     @Override
-    public void parse(Meta meta, String value) {
+    public void parse(Meta meta, @Nullable String value) {
         meta.put(NAME, value);
     }
 

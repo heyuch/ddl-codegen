@@ -4,12 +4,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import javax.annotation.Nullable;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,11 +23,15 @@ class ConfigTest {
 
     private final PropertiesConfigLoader loader = new PropertiesConfigLoader();
 
+    // JUnit @TempDir 注入，语法层不保证非 null：标 @Nullable，使用点显式判空。
     @TempDir
+    @Nullable
     Path tmpDir;
 
     private DdlConfig load(String content) throws Exception {
-        Path file = tmpDir.resolve("ddlgen.properties");
+        Path dir = tmpDir;
+        assertNotNull(dir);
+        Path file = dir.resolve("ddlgen.properties");
         Files.write(file, content.getBytes(StandardCharsets.UTF_8));
         return loader.load(file);
     }
@@ -57,7 +63,9 @@ class ConfigTest {
                 "naming.enum.style=tableColumn",
                 "annotations.custom=com.myapp.MyHandler"));
 
-        assertEquals(tmpDir.toAbsolutePath(), config.getRoot());
+        Path rootDir = tmpDir;
+        assertNotNull(rootDir);
+        assertEquals(rootDir.toAbsolutePath(), config.getRoot());
 
         ArtifactConfig entity = config.artifact("entity").orElseThrow();
         assertEquals("pojo", entity.getGenerator());
@@ -123,7 +131,9 @@ class ConfigTest {
     void missingPackageThrows() throws Exception {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> load("entity.generator=pojo\nentity.module=core"));
-        assertTrue(e.getMessage().contains("entity"));
+        String message = e.getMessage();
+        assertNotNull(message);
+        assertTrue(message.contains("entity"));
     }
 
     @Test

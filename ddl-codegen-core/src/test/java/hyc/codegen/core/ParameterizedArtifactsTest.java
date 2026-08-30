@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 import hyc.codegen.core.config.ArtifactConfig;
 import hyc.codegen.core.config.DdlConfig;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,11 +39,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class ParameterizedArtifactsTest {
 
+    // JUnit @TempDir 注入，语法层不保证非 null：标 @Nullable，使用点经 tempDir() 显式校验。
     @TempDir
+    @Nullable
     Path temp;
 
+    /** @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    private Path tempDir() {
+        Path dir = temp;
+        if (dir == null) {
+            throw new AssertionError("JUnit 未注入 @TempDir");
+        }
+        return dir;
+    }
+
+    @Nullable
     private DdlConfig config;
 
+    @Nullable
     private CodeGenerator generator;
 
     private static final String DDL = "create table user (\n"
@@ -50,11 +65,27 @@ class ParameterizedArtifactsTest {
             + "    gender enum('male','female') comment '性别'\n"
             + ")";
 
+    /** setUp 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    private DdlConfig config() {
+        if (config == null) {
+            throw new AssertionError("setUp 未初始化 config");
+        }
+        return config;
+    }
+
+    /** setUp 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    private CodeGenerator generator() {
+        if (generator == null) {
+            throw new AssertionError("setUp 未初始化 generator");
+        }
+        return generator;
+    }
+
     private void setUp(ArtifactConfig... artifacts) {
         config = new DdlConfig();
-        config.setRoot(temp);
+        config().setRoot(tempDir());
         for (ArtifactConfig artifact : artifacts) {
-            config.addArtifact(artifact);
+            config().addArtifact(artifact);
         }
         List<ArtifactGenerator> generators = Arrays.asList(
                 new PojoGenerator(),
@@ -71,12 +102,12 @@ class ParameterizedArtifactsTest {
         DdlParser parser = new DruidDdlParser();
         Schema schema = new Schema();
         ApplyResult result = new StatementApplier().apply(schema, parser.parse(DDL));
-        ChangeReport report = generator.generate(config, schema, result, Collections.emptyList());
+        ChangeReport report = generator().generate(config(), schema, result, Collections.emptyList());
         assertTrue(report.hasChanges(), "应产生变更: " + report.summary());
     }
 
     private String read(String relative) throws Exception {
-        return new String(Files.readAllBytes(temp.resolve(relative)), StandardCharsets.UTF_8);
+        return new String(Files.readAllBytes(tempDir().resolve(relative)), StandardCharsets.UTF_8);
     }
 
     private ArtifactConfig enumArtifact() {
@@ -196,8 +227,10 @@ class ParameterizedArtifactsTest {
         setUp(entity, enumArtifact(), po, mapper, converter, repository, impl);
 
         IllegalStateException e = assertThrows(IllegalStateException.class, this::generate);
-        assertTrue(e.getMessage().contains("source"), e.getMessage());
-        assertTrue(e.getMessage().contains("mapper"), e.getMessage());
+        String message = e.getMessage();
+        assertNotNull(message);
+        assertTrue(message.contains("source"), message);
+        assertTrue(message.contains("mapper"), message);
     }
 
     @Test
@@ -246,7 +279,7 @@ class ParameterizedArtifactsTest {
                 + "    ext_info varchar(100) comment '扩展 @type:com.example.UserExtInfo'\n"
                 + ")";
         ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
-        ChangeReport report = generator.generate(config, schema, result, Collections.emptyList());
+        ChangeReport report = generator().generate(config(), schema, result, Collections.emptyList());
         assertTrue(report.hasChanges());
 
         String entityCode = read("com/demo/entity/User.java");

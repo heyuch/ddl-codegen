@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 import hyc.codegen.core.config.ArtifactConfig;
 import hyc.codegen.core.config.DdlConfig;
@@ -36,40 +37,69 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class EndToEndTest {
 
+    // JUnit @TempDir 注入，语法层不保证非 null：标 @Nullable，使用点经 tempDir() 显式校验。
     @TempDir
+    @Nullable
     Path temp;
 
+    /** @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    private Path tempDir() {
+        Path dir = temp;
+        if (dir == null) {
+            throw new AssertionError("JUnit 未注入 @TempDir");
+        }
+        return dir;
+    }
+
+    @Nullable
     private DdlConfig config;
 
+    @Nullable
     private CodeGenerator generator;
+
+    /** @BeforeEach 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    private DdlConfig config() {
+        if (config == null) {
+            throw new AssertionError("@BeforeEach 未初始化 config");
+        }
+        return config;
+    }
+
+    /** @BeforeEach 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    private CodeGenerator generator() {
+        if (generator == null) {
+            throw new AssertionError("@BeforeEach 未初始化 generator");
+        }
+        return generator;
+    }
 
     @BeforeEach
     void setUp() {
         config = new DdlConfig();
-        config.setRoot(temp);
-        config.addTableStripPrefix("t_");
-        config.setTableStripShardSuffix(true);
+        config().setRoot(tempDir());
+        config().addTableStripPrefix("t_");
+        config().setTableStripShardSuffix(true);
 
         add("entity", "pojo", "com.demo.entity", "", "");
-        config.artifact("entity").get().putOption("lombok", "true");
-        config.artifact("entity").get().putOption("jsr303", "true");
-        config.artifact("entity").get().putOption("enums", "true");
+        config().artifact("entity").get().putOption("lombok", "true");
+        config().artifact("entity").get().putOption("jsr303", "true");
+        config().artifact("entity").get().putOption("enums", "true");
         add("enum", "enum", "com.demo.enums", "", "");
         add("po", "pojo", "com.demo.pojo", "Po", "");
         add("mapper", "mybatisMapper", "com.demo.mapper", "Mapper", "");
-        config.artifact("mapper").get().setTarget("po");
+        config().artifact("mapper").get().setTarget("po");
         add("xml", "mybatisXml", null, null, "");
-        config.artifact("xml").get().setPath("src/main/resources/mapper");
-        config.artifact("xml").get().setTarget("po");
+        config().artifact("xml").get().setPath("src/main/resources/mapper");
+        config().artifact("xml").get().setTarget("po");
         add("repository", "repository", "com.demo.repository", "Repository", "");
-        config.artifact("repository").get().setTarget("entity");
+        config().artifact("repository").get().setTarget("entity");
         add("repositoryImpl", "mybatisRepositoryImpl", "com.demo.repository.impl", "RepositoryImpl", "");
-        config.artifact("repositoryImpl").get().setTarget("entity");
-        config.artifact("repositoryImpl").get().putOption("mapper", "mapper");
-        config.artifact("repositoryImpl").get().putOption("converter", "entityConverter");
+        config().artifact("repositoryImpl").get().setTarget("entity");
+        config().artifact("repositoryImpl").get().putOption("mapper", "mapper");
+        config().artifact("repositoryImpl").get().putOption("converter", "entityConverter");
         add("entityConverter", "converter", "com.demo.converter", "Converter", "");
-        config.artifact("entityConverter").get().setSource("po");
-        config.artifact("entityConverter").get().setTarget("entity");
+        config().artifact("entityConverter").get().setSource("po");
+        config().artifact("entityConverter").get().setTarget("entity");
 
         List<ArtifactGenerator> generators = Arrays.asList(
                 new PojoGenerator(),
@@ -82,25 +112,25 @@ class EndToEndTest {
         generator = new CodeGenerator(generators);
     }
 
-    private void add(String name, String generator, String pkg, String suffix, String use) {
+    private void add(String name, String generator, @Nullable String pkg, @Nullable String suffix, String use) {
         ArtifactConfig artifact = new ArtifactConfig(name);
         artifact.setGenerator(generator);
         artifact.setModule("");
         artifact.setPkg(pkg);
         artifact.setSuffix(suffix);
-        config.addArtifact(artifact);
+        config().addArtifact(artifact);
     }
 
     private void generate(String ddl) {
         DdlParser parser = new DruidDdlParser();
         Schema schema = new Schema();
         ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
-        ChangeReport report = generator.generate(config, schema, result, Collections.emptyList());
+        ChangeReport report = generator().generate(config(), schema, result, Collections.emptyList());
         assertTrue(report.hasChanges(), "应产生变更: " + report.summary());
     }
 
     private String read(String relative) throws Exception {
-        return new String(Files.readAllBytes(temp.resolve(relative)), StandardCharsets.UTF_8);
+        return new String(Files.readAllBytes(tempDir().resolve(relative)), StandardCharsets.UTF_8);
     }
 
     private static final String DDL = "create table t_user (\n"

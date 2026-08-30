@@ -2,6 +2,7 @@ package hyc.codegen.core.gen;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 
 import hyc.codegen.core.config.ArtifactConfig;
@@ -57,7 +58,7 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGe
         builder.implement(new TypeReference(repositoryFqn));
 
         String mapperField = decapitalize(simpleName(mapperFqn));
-        String converterField = bridge.convert ? decapitalize(simpleName(bridge.converterFqn)) : null;
+        String converterField = bridge.convert ? decapitalize(simpleName(bridge.converterFqn())) : null;
 
         if ("constructor".equals(ctx.getArtifactConfig().getOption("di"))) {
             Method.Builder ctor = Method.builder()
@@ -66,15 +67,21 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGe
                     .parameter(Variable.builder().type(new TypeReference(mapperFqn)).name(mapperField).build());
             String body = "this." + mapperField + " = " + mapperField + ";";
             if (bridge.convert) {
+                if (converterField == null) {
+                    throw new IllegalStateException("内部不一致：convert=true 但 converterField 为空");
+                }
                 ctor.parameter(
-                        Variable.builder().type(new TypeReference(bridge.converterFqn)).name(converterField).build());
+                        Variable.builder().type(new TypeReference(bridge.converterFqn())).name(converterField).build());
                 body += "\nthis." + converterField + " = " + converterField + ";";
             }
             builder.method(ctor.body(body).build());
         } else {
             builder.field(field(mapperFqn, mapperField));
             if (bridge.convert) {
-                builder.field(field(bridge.converterFqn, converterField));
+                if (converterField == null) {
+                    throw new IllegalStateException("内部不一致：convert=true 但 converterField 为空");
+                }
+                builder.field(field(bridge.converterFqn(), converterField));
             }
         }
 
@@ -119,6 +126,10 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGe
 
         for (String columnName : spec.getColumns()) {
             Column column = ctx.getTable().getColumn(columnName);
+            if (column == null) {
+                throw new IllegalStateException("索引列 '" + columnName + "' 在表 '" + ctx.getTable().getName()
+                        + "' 中不存在（DDL 索引引用了未定义的列）");
+            }
             String fieldName = ctx.fieldName(column);
             builder.parameter(Variable.builder()
                     .type(JavaTypes.typeTree(ctx.typeOf(column)))
@@ -132,8 +143,8 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGe
         String body;
         if (bridge.convert) {
             String listSuffix = spec.isUniqueFull() ? "" : "List";
-            body = "return " + decapitalize(simpleName(bridge.converterFqn)) + "."
-                    + bridge.convertMethod + listSuffix + "(" + call + ");";
+            body = "return " + decapitalize(simpleName(bridge.converterFqn())) + "."
+                    + bridge.convertMethod() + listSuffix + "(" + call + ");";
         } else {
             body = "return " + call + ";";
         }
@@ -196,15 +207,33 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGe
 
         final boolean convert;
 
+        @Nullable
         final String converterFqn;
 
+        @Nullable
         final String convertMethod;
 
-        Bridge(String mapperField, boolean convert, String converterFqn, String convertMethod) {
+        Bridge(String mapperField, boolean convert, @Nullable String converterFqn, @Nullable String convertMethod) {
             this.mapperField = mapperField;
             this.convert = convert;
             this.converterFqn = converterFqn;
             this.convertMethod = convertMethod;
+        }
+
+        /** converter 全限定名（convert=true 时必有值，由 resolveBridge 保证）。 */
+        String converterFqn() {
+            if (converterFqn == null) {
+                throw new IllegalStateException("内部不一致：convert=true 但 converterFqn 为空");
+            }
+            return converterFqn;
+        }
+
+        /** converter 转换方法名（convert=true 时必有值，由 resolveBridge 保证）。 */
+        String convertMethod() {
+            if (convertMethod == null) {
+                throw new IllegalStateException("内部不一致：convert=true 但 convertMethod 为空");
+            }
+            return convertMethod;
         }
 
     }

@@ -11,34 +11,32 @@ import com.sun.source.tree.TypeParameterTree;
 
 public final class TypeParameter implements TypeParameterTree {
 
-    private Name name;
+    private final Name name;
 
-    private List<Tree> bounds = new ArrayList<>();
+    private final List<Tree> bounds = new ArrayList<>();
 
-    private List<Annotation> annotations = new ArrayList<>();
+    private final List<Annotation> annotations = new ArrayList<>();
+
+    private TypeParameter(Name name) {
+        this.name = name;
+    }
 
     public static TypeParameter of(String name) {
-        TypeParameter p = new TypeParameter();
-        p.name = new StringName(name);
-        return p;
+        return new TypeParameter(new StringName(name));
     }
 
     public static TypeParameter wildcard() {
-        TypeParameter p = new TypeParameter();
-        p.name = new StringName("?");
-        return p;
+        return new TypeParameter(new StringName("?"));
     }
 
     public static TypeParameter wildcardExtends(TypeReference ext) {
-        TypeParameter p = new TypeParameter();
-        p.name = new StringName("? extends ");
+        TypeParameter p = new TypeParameter(new StringName("? extends "));
         p.bounds.add(ext);
         return p;
     }
 
     public static TypeParameter wildcardSuper(TypeReference sup) {
-        TypeParameter p = new TypeParameter();
-        p.name = new StringName("? super ");
+        TypeParameter p = new TypeParameter(new StringName("? super "));
         p.bounds.add(sup);
         return p;
     }

@@ -79,6 +79,9 @@ public final class Main {
     private static int execute(Path configFile, Path ddlPath, boolean dryRun) throws Exception {
         String ddl = readDdl(ddlPath);
         Path projectRoot = configFile.toAbsolutePath().getParent();
+        if (projectRoot == null) {
+            throw new IllegalArgumentException("配置文件必须位于目录中（无法确定项目根）: " + configFile);
+        }
         ChangeReport report = Codegen.run(configFile, projectRoot, ddl, dryRun);
 
         System.out.println((dryRun ? "[dry-run] " : "") + "变更摘要: " + report.summary());

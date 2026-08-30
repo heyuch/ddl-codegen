@@ -4,13 +4,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 import hyc.codegen.core.annotation.DdlAnnotationHandler;
 import hyc.codegen.core.annotation.MetaTarget;
 import hyc.codegen.core.config.DdlConfig;
 import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Meta;
-import hyc.codegen.core.naming.NamingService;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,9 +19,7 @@ class TypeMapperTest {
 
     private final DdlConfig config = new DdlConfig();
 
-    private final NamingService naming = new NamingService(config);
-
-    private final TypeMapper mapper = new TypeMapper(naming);
+    private final TypeMapper mapper = new TypeMapper();
 
     private Column column(String sqlType) {
         return Column.builder().name("c").sqlType(sqlType).build();
@@ -112,7 +110,7 @@ class TypeMapperTest {
             }
 
             @Override
-            public void parse(Meta meta, String value) {}
+            public void parse(Meta meta, @Nullable String value) {}
 
             @Override
             public String resolveType(Column column, String defaultType) {
@@ -120,7 +118,7 @@ class TypeMapperTest {
             }
 
         };
-        TypeMapper customMapper = new TypeMapper(naming, Collections.singletonList(handler));
+        TypeMapper customMapper = new TypeMapper(Collections.singletonList(handler));
         assertEquals("com.example.Money", customMapper.resolveType("user", column("amount")));
     }
 

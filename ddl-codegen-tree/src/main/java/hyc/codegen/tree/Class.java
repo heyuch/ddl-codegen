@@ -16,21 +16,29 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.tree.TypeParameterTree;
 import com.sun.source.tree.VariableTree;
 import hyc.codegen.tree.utils.Names;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
+// 可修改 AST 节点（AGENTS.md「自研可修改 Java AST」）：字段由静态工厂/builder 在构造后设置，
 public final class Class implements ClassTree {
 
+    @Nullable
     private DocComment javadoc;
 
+    @Nullable
     private Package pkg;
 
+    @MonotonicNonNull
     private ModifiersTree modifiers;
 
+    @MonotonicNonNull
     private Kind kind;
 
+    @MonotonicNonNull
     private Name name;
 
     private List<TypeParameterTree> typeParameters = new ArrayList<>();
 
+    @Nullable
     private Tree extend;
 
     private List<Tree> impls = new ArrayList<>();
@@ -44,6 +52,7 @@ public final class Class implements ClassTree {
     /**
      * 返回类 javadoc 注释。
      */
+    @Nullable
     public DocComment getJavadoc() {
         return javadoc;
     }
@@ -51,13 +60,14 @@ public final class Class implements ClassTree {
     /**
      * 设置类 javadoc 注释。
      */
-    public void setJavadoc(DocComment javadoc) {
+    public void setJavadoc(@Nullable DocComment javadoc) {
         this.javadoc = javadoc;
     }
 
     /**
      * 返回所属包。
      */
+    @Nullable
     public Package getPkg() {
         return pkg;
     }
@@ -65,7 +75,7 @@ public final class Class implements ClassTree {
     /**
      * 设置所属包。
      */
-    public void setPkg(Package pkg) {
+    public void setPkg(@Nullable Package pkg) {
         this.pkg = pkg;
     }
 
@@ -100,7 +110,7 @@ public final class Class implements ClassTree {
     /**
      * 设置父类。
      */
-    public void setExtendsClause(Tree extend) {
+    public void setExtendsClause(@Nullable Tree extend) {
         this.extend = extend;
     }
 
@@ -113,11 +123,17 @@ public final class Class implements ClassTree {
 
     @Override
     public ModifiersTree getModifiers() {
+        if (modifiers == null) {
+            throw new IllegalStateException("modifiers 未初始化（构建器/转换器未设置）");
+        }
         return modifiers;
     }
 
     @Override
     public Name getSimpleName() {
+        if (name == null) {
+            throw new IllegalStateException("name 未初始化（构建器/转换器未设置）");
+        }
         return name;
     }
 
@@ -127,6 +143,9 @@ public final class Class implements ClassTree {
     }
 
     @Override
+    @Nullable
+    // javac tree API 语义：无继承子句时 getExtendsClause 返回 null
+    @SuppressWarnings("override.return")
     public Tree getExtendsClause() {
         return extend;
     }
@@ -177,6 +196,9 @@ public final class Class implements ClassTree {
 
     @Override
     public Kind getKind() {
+        if (kind == null) {
+            throw new IllegalStateException("kind 未初始化（构建器/转换器未设置）");
+        }
         return kind;
     }
 
@@ -280,6 +302,7 @@ public final class Class implements ClassTree {
         public Builder() {
             this.c = new Class();
             c.kind = Kind.CLASS;
+            c.modifiers = new Modifiers();
         }
 
         public Builder pkg(String path) {

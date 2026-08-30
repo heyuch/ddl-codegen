@@ -36,6 +36,10 @@ final class QueryMethodFactory {
         }
         for (String columnName : spec.getColumns()) {
             Column column = ctx.getTable().getColumn(columnName);
+            if (column == null) {
+                throw new IllegalStateException("索引列 '" + columnName + "' 在表 '" + ctx.getTable().getName()
+                        + "' 中不存在（DDL 索引引用了未定义的列）");
+            }
             String fieldName = ctx.fieldName(column);
             Variable.Builder param = Variable.builder()
                     .type(JavaTypes.typeTree(ctx.typeOf(column)))

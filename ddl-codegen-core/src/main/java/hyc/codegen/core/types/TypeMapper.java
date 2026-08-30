@@ -8,7 +8,6 @@ import java.util.Set;
 
 import hyc.codegen.core.annotation.DdlAnnotationHandler;
 import hyc.codegen.core.model.Column;
-import hyc.codegen.core.naming.NamingService;
 
 /**
  * 类型映射：列 → Java 类型（按 artifact 解析）、SQL 类型 → MyBatis jdbcType。
@@ -87,16 +86,13 @@ public final class TypeMapper {
             Map.entry("timestamp", "TIMESTAMP"),
             Map.entry("time", "TIME"));
 
-    private final NamingService naming;
-
     private final List<DdlAnnotationHandler> customHandlers;
 
-    public TypeMapper(NamingService naming) {
-        this(naming, Collections.emptyList());
+    public TypeMapper() {
+        this(Collections.emptyList());
     }
 
-    public TypeMapper(NamingService naming, List<DdlAnnotationHandler> customHandlers) {
-        this.naming = naming;
+    public TypeMapper(List<DdlAnnotationHandler> customHandlers) {
         this.customHandlers = customHandlers;
     }
 

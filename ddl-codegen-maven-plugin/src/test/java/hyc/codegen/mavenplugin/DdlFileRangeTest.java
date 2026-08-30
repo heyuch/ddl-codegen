@@ -3,6 +3,7 @@ package hyc.codegen.mavenplugin;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -11,6 +12,7 @@ class DdlFileRangeTest {
     @Test
     void parseValidRange() {
         DdlFileRange range = DdlFileRange.parse("create-user.sql:66-120");
+        assertNotNull(range);
         assertEquals("create-user.sql", range.getPath());
         assertEquals(66, range.getStartLine());
         assertEquals(120, range.getEndLine());

@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import javax.annotation.Nullable;
 
 import hyc.codegen.core.Codegen;
 import hyc.codegen.core.io.ChangeReport;
@@ -22,22 +24,28 @@ import org.apache.maven.plugins.annotations.Parameter;
  * ddl（内联，与 ddlFile 互斥）/ ddlFile（支持 {@code path:start-end} 行范围，相对 projectRoot 解析）/
  * dryRun / skip。不绑定生命周期（显式调用）。
  */
+// Maven 插件字段由 @Parameter 注入，语法层不保证非 null（用户可不配置）：字段标 @Nullable，
+// 使用点显式判空（configFile/ddl/ddlFile 已有判空；projectRoot 经 rootPath() 兜底当前目录）。
 @Mojo(name = "generate")
 public class GenerateMojo extends AbstractMojo {
 
-    /** 项目根，覆盖 config 推导的根。 */
+    /** 项目根，覆盖 config 推导的根（Maven 注入；未注入时兜底当前目录）。 */
+    @Nullable
     @Parameter(defaultValue = "${project.basedir}", property = "ddlCodegen.projectRoot")
     private java.io.File projectRoot;
 
-    /** 配置文件；缺省 = projectRoot/ddl-codegen.properties。 */
+    /** 配置文件；缺省 = projectRoot/ddl-codegen.properties（可不配置）。 */
+    @Nullable
     @Parameter(property = "ddlCodegen.configFile")
     private java.io.File configFile;
 
-    /** 内联 DDL 字符串（与 ddlFile 互斥）。 */
+    /** 内联 DDL 字符串（与 ddlFile 互斥；可不配置）。 */
+    @Nullable
     @Parameter(property = "ddlCodegen.ddl")
     private String ddl;
 
-    /** DDL 文件（支持 {@code path:start-end} 行范围；相对 projectRoot 解析）。 */
+    /** DDL 文件（支持 {@code path:start-end} 行范围；相对 projectRoot 解析；可不配置）。 */
+    @Nullable
     @Parameter(property = "ddlCodegen.ddlFile")
     private String ddlFile;
 
@@ -62,7 +70,7 @@ public class GenerateMojo extends AbstractMojo {
             return;
         }
 
-        Path root = projectRoot.toPath();
+        Path root = rootPath();
         Path config = configFile != null ? configFile.toPath() : root.resolve("ddl-codegen.properties");
         if (!Files.isRegularFile(config)) {
             throw new MojoExecutionException("配置文件不存在: " + config);
@@ -85,26 +93,32 @@ public class GenerateMojo extends AbstractMojo {
 
     /** 解析 DDL 文本：内联或文件（含行范围）；互斥校验。 */
     private String resolveDdl() throws MojoExecutionException {
-        boolean hasDdl = ddl != null && !ddl.isEmpty();
-        boolean hasFile = ddlFile != null && !ddlFile.isEmpty();
-        if (hasDdl && hasFile) {
+        if (ddl != null && !ddl.isEmpty() && ddlFile != null && !ddlFile.isEmpty()) {
             throw new MojoExecutionException("ddl 与 ddlFile 互斥，只能设置其中一个");
         }
-        if (hasDdl) {
+        if (ddl != null && !ddl.isEmpty()) {
             return ddl;
         }
-        if (hasFile) {
-            return readDdlFile();
+        if (ddlFile != null && !ddlFile.isEmpty()) {
+            return readDdlFile(ddlFile);
         }
         throw new MojoExecutionException("必须设置 ddl 或 ddlFile 之一");
     }
 
-    /** 读 DDL 文件：无范围 = 整文件；有范围 = 精确按行切片（越界钳制到文件边界 + warning）。 */
-    private String readDdlFile() throws MojoExecutionException {
+    /** 项目根：Maven 未注入 projectRoot 时兜底当前工作目录（Maven 执行目录即项目目录）。 */
+    private Path rootPath() {
+        return projectRoot == null ? Paths.get("").toAbsolutePath() : projectRoot.toPath();
+    }
+
+    /**
+     * 读 DDL 文件：无范围 = 整文件；有范围 = 精确按行切片（越界钳制到文件边界 + warning）。
+     * 调用方（resolveDdl）已校验 ddlFile 非空非空串，参数即非 null 契约。
+     */
+    private String readDdlFile(String ddlFile) throws MojoExecutionException {
         DdlFileRange range = DdlFileRange.parse(ddlFile);
         Path file = Path.of(range != null ? range.getPath() : ddlFile);
         if (!file.isAbsolute()) {
-            file = projectRoot.toPath().resolve(file);
+            file = rootPath().resolve(file);
         }
         if (!Files.isRegularFile(file)) {
             throw new MojoExecutionException("DDL 文件不存在: " + file);

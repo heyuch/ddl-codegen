@@ -33,6 +33,10 @@ public final class AnnotationParser {
         Matcher matcher = ANNOTATION.matcher(comment);
         while (matcher.find()) {
             String name = matcher.group(1);
+            if (name == null) {
+                // 正则保证必有（@name），防御：缺名字的匹配跳过
+                continue;
+            }
             String value = matcher.group(2);
             occurrences.add(new Occurrence(name, value));
         }

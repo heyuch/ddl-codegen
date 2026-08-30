@@ -16,11 +16,9 @@ public final class Docs {
         List<DocTree> list = new ArrayList<>();
 
         List<DocTree> as = new ArrayList<>();
-        if (attrs != null) {
-            attrs.forEach((k, v) -> {
-                as.add(new DocAttr(k, v));
-            });
-        }
+        attrs.forEach((k, v) -> {
+            as.add(new DocAttr(k, v));
+        });
         list.add(new DocElemStart(tag, false, as));
         list.add(new DocText(value));
         list.add(new DocElemEnd(tag));
@@ -29,7 +27,7 @@ public final class Docs {
     }
 
     public static List<DocTree> html(String tag, String value) {
-        return html(tag, value, null);
+        return html(tag, value, Map.of());
     }
 
     public static List<DocTree> ref(String s) {

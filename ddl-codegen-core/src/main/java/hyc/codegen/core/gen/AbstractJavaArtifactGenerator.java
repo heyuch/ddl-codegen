@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 
 import com.sun.source.tree.VariableTree;
@@ -206,6 +207,7 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
         return generated;
     }
 
+    @Nullable
     private Variable findField(List<Variable> fields, String name) {
         for (Variable field : fields) {
             if (name.equals(field.getName().toString())) {
@@ -215,6 +217,7 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
         return null;
     }
 
+    @Nullable
     private Method findMethod(List<Method> methods, String name) {
         for (Method method : methods) {
             if (name.equals(method.getName().toString())) {
@@ -232,17 +235,19 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
     /** 方法签名：返回类型 + 参数类型序列 + 方法体（空白归一化，体变更也能触发替换）。 */
     private String signature(Method method) {
         StringBuilder sb = new StringBuilder();
-        if (method.getReturnType() != null) {
-            sb.append(method.getReturnType());
+        com.sun.source.tree.Tree returnType = method.getReturnType();
+        if (returnType != null) {
+            sb.append(returnType);
         }
         sb.append('(');
         for (VariableTree p : method.getParameters()) {
             sb.append(p.getType()).append(',');
         }
         sb.append(')');
-        if (method.getBody() != null) {
+        com.sun.source.tree.BlockTree body = method.getBody();
+        if (body != null) {
             sb.append(':')
-                    .append(method.getBody().toString().replaceAll("\\s+", " "));
+                    .append(body.toString().replaceAll("\\s+", " "));
         }
         return sb.toString();
     }
@@ -258,6 +263,7 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
     }
 
     /** 解析现有文件；不存在或解析失败返回 null（解析失败已记警告）。 */
+    @Nullable
     private CompileUnit parse(File file) {
         if (!file.isFile()) {
             return null;
