@@ -1,5 +1,7 @@
 package hyc.codegen.core.ddl;
 
+import hyc.codegen.core.model.Schema;
+
 /**
  * 表改名的操作（{@code alter table a rename to b}）。
  * <p>
@@ -28,6 +30,14 @@ public final class RenameTableOp implements DdlOperation {
     @Override
     public String tableName() {
         return from;
+    }
+
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        schema.renameTable(from, to);
+        result.affect(from);
+        result.affect(to);
+        result.tableRenamed(from, to);
     }
 
 }

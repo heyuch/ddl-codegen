@@ -43,7 +43,7 @@ ddl-codegen-cli  →  ddl-codegen-core  →  ddl-codegen-tree
 ```
 DDL 文本
   → DruidDdlParser（→ DdlOperation[]）
-  → StatementApplier（应用到 Schema，产出 ApplyResult：受影响表/改名/删除记录）
+  → StatementApplier（多态分发：每种 DdlOperation 自实现 apply 到 Schema，产出 ApplyResult：受影响表/改名/删除记录）
   → CodeGenerator（按 config artifacts.* 启用顺序，逐表 × 逐 artifact 调用生成器）
   → AbstractJavaArtifactGenerator（定位文件 → 解析现有源码 → 只 reconcile @Generated 成员 → 拦截器 → 打印）
   → FileWriter（字节比对，无变化不写盘）

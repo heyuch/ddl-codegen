@@ -1,5 +1,8 @@
 package hyc.codegen.core.ddl;
 
+import hyc.codegen.core.model.Schema;
+import hyc.codegen.core.model.Table;
+
 /**
  * 删除列的操作（{@code alter table ... drop column}）。
  */
@@ -21,6 +24,15 @@ public final class DropColumnOp implements DdlOperation {
     @Override
     public String tableName() {
         return tableName;
+    }
+
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        Table table = schema.getTable(tableName);
+        if (table != null) {
+            table.removeColumn(columnName);
+            result.affect(tableName);
+        }
     }
 
 }

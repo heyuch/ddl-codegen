@@ -1,6 +1,8 @@
 package hyc.codegen.core.ddl;
 
 import hyc.codegen.core.model.Column;
+import hyc.codegen.core.model.Schema;
+import hyc.codegen.core.model.Table;
 
 /**
  * 列定义变更的操作（{@code modify column} 或 {@code change column}）。
@@ -33,6 +35,15 @@ public final class ChangeColumnOp implements DdlOperation {
     @Override
     public String tableName() {
         return tableName;
+    }
+
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        Table table = schema.getTable(tableName);
+        if (table != null) {
+            table.replaceColumn(oldName, newColumn);
+            result.affect(tableName);
+        }
     }
 
 }

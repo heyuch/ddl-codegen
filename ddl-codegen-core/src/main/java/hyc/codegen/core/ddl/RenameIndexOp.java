@@ -1,5 +1,8 @@
 package hyc.codegen.core.ddl;
 
+import hyc.codegen.core.model.Schema;
+import hyc.codegen.core.model.Table;
+
 /**
  * 索引改名的操作（{@code alter table ... rename index a to b}）。
  */
@@ -28,6 +31,16 @@ public final class RenameIndexOp implements DdlOperation {
     @Override
     public String tableName() {
         return tableName;
+    }
+
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        Table table = schema.getTable(tableName);
+        if (table != null) {
+            table.renameIndex(from, to);
+            result.affect(tableName);
+            result.indexRenamed(tableName, from, to);
+        }
     }
 
 }

@@ -1,6 +1,7 @@
 package hyc.codegen.core.ddl;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hyc.codegen.core.model.Schema;
 import hyc.codegen.core.model.Table;
 
 /**
@@ -24,6 +25,12 @@ public final class CreateTableOp implements DdlOperation {
     @Override
     public String tableName() {
         return table.getName();
+    }
+
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        schema.addTable(table);
+        result.affect(tableName());
     }
 
 }

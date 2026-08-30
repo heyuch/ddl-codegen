@@ -1,5 +1,7 @@
 package hyc.codegen.core.ddl;
 
+import hyc.codegen.core.model.Schema;
+
 /**
  * 规范化后的 DDL 模型操作：由 {@link DdlParser} 产出、被 {@link StatementApplier} 应用到
  * {@link hyc.codegen.core.model.Schema}。
@@ -11,5 +13,16 @@ public interface DdlOperation {
 
     /** 操作涉及的表名；rename 类操作为旧表名。 */
     String tableName();
+
+    /**
+     * 应用到 Schema（就地修改）并记录 {@link ApplyResult}。
+     * <p>
+     * 多态分发：每种操作知道自己的应用语义（OCP——新增操作类型只需新类实现本方法，
+     * 应用器无需修改）。列/索引级操作在目标表不存在时静默跳过。
+     *
+     * @param schema 目标模式（就地修改）
+     * @param result 变更记录（受影响表、改名/删除记录）
+     */
+    void apply(Schema schema, ApplyResult result);
 
 }

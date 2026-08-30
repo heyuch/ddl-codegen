@@ -38,73 +38,8 @@ public final class StatementApplier {
     }
 
     private void applyOne(Schema schema, DdlOperation operation, ApplyResult result) {
-        if (operation instanceof CreateTableOp) {
-            schema.addTable(((CreateTableOp)operation).getTable());
-            result.affect(operation.tableName());
-        } else if (operation instanceof DropTableOp) {
-            schema.removeTable(operation.tableName());
-            result.affect(operation.tableName());
-            result.dropped(operation.tableName());
-        } else if (operation instanceof RenameTableOp) {
-            RenameTableOp rename = (RenameTableOp)operation;
-            schema.renameTable(rename.getFrom(), rename.getTo());
-            result.affect(rename.getFrom());
-            result.affect(rename.getTo());
-            result.tableRenamed(rename.getFrom(), rename.getTo());
-        } else if (operation instanceof AddColumnOp) {
-            AddColumnOp add = (AddColumnOp)operation;
-            Table table = schema.getTable(add.tableName());
-            if (table != null) {
-                table.addColumn(add.getColumn());
-                result.affect(add.tableName());
-            }
-        } else if (operation instanceof DropColumnOp) {
-            DropColumnOp drop = (DropColumnOp)operation;
-            Table table = schema.getTable(drop.tableName());
-            if (table != null) {
-                table.removeColumn(drop.getColumnName());
-                result.affect(drop.tableName());
-            }
-        } else if (operation instanceof ChangeColumnOp) {
-            ChangeColumnOp change = (ChangeColumnOp)operation;
-            Table table = schema.getTable(change.tableName());
-            if (table != null) {
-                table.replaceColumn(change.getOldName(), change.getNewColumn());
-                result.affect(change.tableName());
-            }
-        } else if (operation instanceof RenameColumnOp) {
-            RenameColumnOp rename = (RenameColumnOp)operation;
-            Table table = schema.getTable(rename.tableName());
-            if (table != null) {
-                table.renameColumn(rename.getFrom(), rename.getTo());
-                result.affect(rename.tableName());
-                result.columnRenamed(rename.tableName(), rename.getFrom(), rename.getTo());
-            }
-        } else if (operation instanceof AddIndexOp) {
-            AddIndexOp add = (AddIndexOp)operation;
-            Table table = schema.getTable(add.tableName());
-            if (table != null) {
-                table.addIndex(add.getIndex());
-                result.affect(add.tableName());
-            }
-        } else if (operation instanceof DropIndexOp) {
-            DropIndexOp drop = (DropIndexOp)operation;
-            Table table = schema.getTable(drop.tableName());
-            if (table != null) {
-                table.removeIndex(drop.getIndexName());
-                result.affect(drop.tableName());
-            }
-        } else if (operation instanceof RenameIndexOp) {
-            RenameIndexOp rename = (RenameIndexOp)operation;
-            Table table = schema.getTable(rename.tableName());
-            if (table != null) {
-                table.renameIndex(rename.getFrom(), rename.getTo());
-                result.affect(rename.tableName());
-                result.indexRenamed(rename.tableName(), rename.getFrom(), rename.getTo());
-            }
-        } else {
-            throw new IllegalArgumentException("未知 DDL 操作类型: " + operation.getClass().getName());
-        }
+        // 多态分发：每种操作实现自己的 apply（见 DdlOperation#apply），此处无需理解具体类型
+        operation.apply(schema, result);
     }
 
     /**
