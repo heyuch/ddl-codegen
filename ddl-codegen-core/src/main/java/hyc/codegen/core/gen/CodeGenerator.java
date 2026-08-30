@@ -58,7 +58,7 @@ public final class CodeGenerator {
         handleRenames(result, gctx.getNaming(), config, gctx);
 
         // CREATE/MODIFY/RENAME 目标：逐 artifact 生成（跳过已删除的表）
-        generateAffectedTables(schema, result, gctx);
+        generateTables(schema, result, gctx);
 
         for (String warning : gctx.getWarnings()) {
             report.addWarning(warning);
@@ -96,8 +96,8 @@ public final class CodeGenerator {
         }
     }
 
-    /** CREATE/MODIFY/RENAME 目标：逐表 × 逐 artifact 生成（已删除的表跳过）。 */
-    private void generateAffectedTables(Schema schema, ApplyResult result, GenerationContext gctx) {
+    /** 为 result 指定的受影响表逐表 × 逐 artifact 生成（受影响表含已删除表，跳过；校验表在模型中）。 */
+    private void generateTables(Schema schema, ApplyResult result, GenerationContext gctx) {
         List<String> dropped = result.getDroppedTables();
         for (String tableName : result.getAffectedTables()) {
             if (dropped.contains(tableName)) {
