@@ -7,6 +7,7 @@ import java.util.Map;
 
 import hyc.codegen.core.annotation.AnnotationRegistry;
 import hyc.codegen.core.annotation.DdlAnnotationHandler;
+import hyc.codegen.core.config.ArtifactConfig;
 import hyc.codegen.core.config.DdlConfig;
 import hyc.codegen.core.ddl.ApplyResult;
 import hyc.codegen.core.io.ChangeReport;
@@ -136,9 +137,10 @@ public final class CodeGenerator {
     /** 对一张表执行全部启用的产物生成器（产物名 → config.generator → 注册生成器）。 */
     private void generateTable(Table table, GenerationContext gctx) {
         for (String name : gctx.getConfig().artifactNames()) {
-            hyc.codegen.core.config.ArtifactConfig artifactConfig = gctx.getConfig()
-                    .artifact(name)
-                    .orElseThrow(() -> new IllegalStateException("未配置产物: " + name));
+            ArtifactConfig artifactConfig = gctx.getConfig().artifact(name);
+            if (artifactConfig == null) {
+                throw new IllegalStateException("未配置产物: " + name);
+            }
             String generatorName = artifactConfig.getGenerator();
             if (generatorName == null) {
                 gctx.warning("产物 '" + name + "' 未配置 generator，跳过");
@@ -157,9 +159,10 @@ public final class CodeGenerator {
     /** 删除一张表在所有启用 artifact 路径下的文件（Java 类走 package 路径，XML 走资源路径）。 */
     private void deleteArtifacts(Path root, String tableName, GenerationContext gctx) {
         for (String name : gctx.getConfig().artifactNames()) {
-            hyc.codegen.core.config.ArtifactConfig artifactConfig = gctx.getConfig()
-                    .artifact(name)
-                    .orElseThrow(() -> new IllegalStateException("未配置产物: " + name));
+            ArtifactConfig artifactConfig = gctx.getConfig().artifact(name);
+            if (artifactConfig == null) {
+                throw new IllegalStateException("未配置产物: " + name);
+            }
             String generator = artifactConfig.getGenerator();
             if (generator == null || !generators.containsKey(generator)) {
                 continue;

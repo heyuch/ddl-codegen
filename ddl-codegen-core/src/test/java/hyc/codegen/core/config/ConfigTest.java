@@ -36,6 +36,15 @@ class ConfigTest {
         return loader.load(file);
     }
 
+    /** 按产物名取配置（测试约定产物已配置）。 */
+    private ArtifactConfig artifact(DdlConfig config, String name) {
+        ArtifactConfig artifactConfig = config.artifact(name);
+        if (artifactConfig == null) {
+            throw new AssertionError("产物未配置: " + name);
+        }
+        return artifactConfig;
+    }
+
     @Test
     void fullKeysParsed() throws Exception {
         DdlConfig config = load(String.join("\n",
@@ -67,7 +76,7 @@ class ConfigTest {
         assertNotNull(rootDir);
         assertEquals(rootDir.toAbsolutePath(), config.getRoot());
 
-        ArtifactConfig entity = config.artifact("entity").orElseThrow();
+        ArtifactConfig entity = artifact(config, "entity");
         assertEquals("pojo", entity.getGenerator());
         assertEquals("core", entity.getModule());
         assertEquals("com.myapp.core.entity", entity.getPkg());
@@ -75,14 +84,14 @@ class ConfigTest {
         assertEquals("true", entity.getOption("lombok"));
         assertEquals("true", entity.getOption("enums"));
 
-        ArtifactConfig xml = config.artifact("xml").orElseThrow();
+        ArtifactConfig xml = artifact(config, "xml");
         assertEquals("mybatisXml", xml.getGenerator());
         assertEquals("src/main/resources/mapper", xml.getPath());
         assertNull(xml.getPkg());
         assertFalse(xml.isJavaArtifact());
         assertEquals("po", xml.getTarget());
 
-        ArtifactConfig impl = config.artifact("repositoryImpl").orElseThrow();
+        ArtifactConfig impl = artifact(config, "repositoryImpl");
         assertEquals("mybatisRepositoryImpl", impl.getGenerator());
         assertEquals("entity", impl.getTarget());
         assertEquals("field", impl.getOptions().get("di"));
@@ -108,7 +117,7 @@ class ConfigTest {
         assertEquals("column", config.getEnumStyle());
         assertTrue(config.getCustomAnnotationHandlers().isEmpty());
 
-        ArtifactConfig entity = config.artifact("entity").orElseThrow();
+        ArtifactConfig entity = artifact(config, "entity");
         assertNull(entity.getModule());
         assertEquals("", entity.getSuffix());
         assertTrue(entity.getOptions().isEmpty());
@@ -140,14 +149,14 @@ class ConfigTest {
     void reservedNamespaceRejectedAsArtifact() throws Exception {
         // naming.* 是保留命名空间，不会被当作产物
         DdlConfig config = load("naming.table.stripPrefixes=t_\nentity.package=com.x.entity");
-        assertFalse(config.artifact("naming").isPresent());
-        assertTrue(config.artifact("entity").isPresent());
+        assertNull(config.artifact("naming"));
+        assertNotNull(config.artifact("entity"));
     }
 
     @Test
     void unknownKeysStoredAsOptions() throws Exception {
         DdlConfig config = load("entity.package=com.x.entity\nentity.customKey=customValue");
-        ArtifactConfig entity = config.artifact("entity").orElseThrow();
+        ArtifactConfig entity = artifact(config, "entity");
         assertEquals("customValue", entity.getOption("customKey"));
     }
 

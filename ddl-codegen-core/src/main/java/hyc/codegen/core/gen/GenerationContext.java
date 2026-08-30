@@ -84,10 +84,18 @@ public final class GenerationContext {
         return report;
     }
 
+    /** 按产物名取配置；未配置时明确报错（生成流程的配置契约）。 */
+    private ArtifactConfig requireArtifact(String artifactName) {
+        ArtifactConfig artifactConfig = config.artifact(artifactName);
+        if (artifactConfig == null) {
+            throw new IllegalStateException("未配置产物: " + artifactName);
+        }
+        return artifactConfig;
+    }
+
     /** 产物对应的生成器实例（config.generator → 注册表）。 */
     public ArtifactGenerator generatorFor(String artifactName) {
-        ArtifactConfig artifactConfig = config.artifact(artifactName)
-                .orElseThrow(() -> new IllegalStateException("未配置产物: " + artifactName));
+        ArtifactConfig artifactConfig = requireArtifact(artifactName);
         String generatorName = artifactConfig.getGenerator();
         if (generatorName == null) {
             throw new IllegalStateException("产物 '" + artifactName + "' 未配置 generator");
@@ -119,15 +127,13 @@ public final class GenerationContext {
 
     /** 产物 enums 特性开关。 */
     public boolean usesEnums(String artifactName) {
-        return config.artifact(artifactName)
-                .map(a -> Boolean.parseBoolean(a.getOption("enums")))
-                .orElse(false);
+        ArtifactConfig artifactConfig = config.artifact(artifactName);
+        return artifactConfig != null && Boolean.parseBoolean(artifactConfig.getOption("enums"));
     }
 
     /** 产物类的全限定名（包 + 类名；未启用报错）。 */
     public String artifactFqn(String tableName, String artifactName) {
-        ArtifactConfig artifactConfig = config.artifact(artifactName)
-                .orElseThrow(() -> new IllegalStateException("未配置产物: " + artifactName));
+        ArtifactConfig artifactConfig = requireArtifact(artifactName);
         String pkg = artifactConfig.getPkg();
         if (pkg == null) {
             throw new IllegalStateException(
@@ -142,13 +148,10 @@ public final class GenerationContext {
      * 无唯一实例/引用不存在 → 明确报错。
      */
     public ArtifactConfig resolveReference(String ownerName, String refKey, String defaultGenerator) {
-        ArtifactConfig owner = config.artifact(ownerName)
-                .orElseThrow(() -> new IllegalStateException("未配置产物: " + ownerName));
+        ArtifactConfig owner = requireArtifact(ownerName);
         String ref = refOf(owner, refKey);
         if (ref != null) {
-            return config.artifact(ref)
-                    .orElseThrow(() -> new IllegalStateException(
-                            "产物 '" + ownerName + "' 的 " + refKey + " 引用了不存在的产物: " + ref));
+            return requireArtifact(ref);
         }
         List<ArtifactConfig> matches = new ArrayList<>();
         for (ArtifactConfig a : config.getArtifacts().values()) {
@@ -199,8 +202,7 @@ public final class GenerationContext {
 
     /** 按产物配置创建表上下文。 */
     public TableContext tableContext(Table table, String artifactName) {
-        ArtifactConfig artifactConfig = config.artifact(artifactName)
-                .orElseThrow(() -> new IllegalStateException("未配置产物: " + artifactName));
+        ArtifactConfig artifactConfig = requireArtifact(artifactName);
         return new TableContext(table, artifactConfig, this);
     }
 

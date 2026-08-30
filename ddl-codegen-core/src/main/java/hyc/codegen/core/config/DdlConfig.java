@@ -5,8 +5,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -15,6 +16,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * {@code artifacts.*} 段即生成器启停开关：配置了哪些 artifact 就启用哪些；module 为项目根下的一级子目录。
  * 命名策略各键语义见 {@link hyc.codegen.core.naming.NamingService}。
  */
+@Getter
+@Setter
 public final class DdlConfig {
 
     /** 项目根 = 配置文件所在目录（加载前为 null；经 getRoot 的 requireNonNull 强制非空）。 */
@@ -38,14 +41,6 @@ public final class DdlConfig {
     /** {@code @Nullable} 注解全限定名（默认 checkerframework 的 Nullable，config {@code annotations.nullable} 可配）。 */
     private String nullableAnnotation = "org.checkerframework.checker.nullness.qual.Nullable";
 
-    public String getNullableAnnotation() {
-        return nullableAnnotation;
-    }
-
-    public void setNullableAnnotation(String nullableAnnotation) {
-        this.nullableAnnotation = nullableAnnotation;
-    }
-
     public Path getRoot() {
         if (root == null) {
             throw new IllegalStateException("项目根未设置（需先经 PropertiesConfigLoader 加载或 setRoot）");
@@ -53,17 +48,14 @@ public final class DdlConfig {
         return root;
     }
 
-    public void setRoot(Path root) {
-        this.root = root;
-    }
-
     public void addArtifact(ArtifactConfig artifact) {
         artifacts.put(artifact.getName(), artifact);
     }
 
-    /** 按产物名取配置。 */
-    public Optional<ArtifactConfig> artifact(String name) {
-        return Optional.ofNullable(artifacts.get(name));
+    /** 按产物名取配置；未配置时返回 {@code null}。 */
+    @Nullable
+    public ArtifactConfig artifact(String name) {
+        return artifacts.get(name);
     }
 
     /** 启用的生成器集合（配置出现顺序）。 */
@@ -82,55 +74,6 @@ public final class DdlConfig {
 
     public void addTableStripPrefix(String prefix) {
         tableStripPrefixes.add(prefix);
-    }
-
-    public boolean isTableStripShardSuffix() {
-        return tableStripShardSuffix;
-    }
-
-    public void setTableStripShardSuffix(boolean tableStripShardSuffix) {
-        this.tableStripShardSuffix = tableStripShardSuffix;
-    }
-
-    public String getTableShardPattern() {
-        return tableShardPattern;
-    }
-
-    public void setTableShardPattern(String tableShardPattern) {
-        this.tableShardPattern = tableShardPattern;
-    }
-
-    public boolean isColumnCamelCase() {
-        return columnCamelCase;
-    }
-
-    public void setColumnCamelCase(boolean columnCamelCase) {
-        this.columnCamelCase = columnCamelCase;
-    }
-
-    public String getColumnKeywordSuffix() {
-        return columnKeywordSuffix;
-    }
-
-    public void setColumnKeywordSuffix(String columnKeywordSuffix) {
-        this.columnKeywordSuffix = columnKeywordSuffix;
-    }
-
-    public String getMethodPrefix() {
-        return methodPrefix;
-    }
-
-    public void setMethodPrefix(String methodPrefix) {
-        this.methodPrefix = methodPrefix;
-    }
-
-    /** enum 类命名风格：column（Gender）/ tableColumn（UserGender）。 */
-    public String getEnumStyle() {
-        return enumStyle;
-    }
-
-    public void setEnumStyle(String enumStyle) {
-        this.enumStyle = enumStyle;
     }
 
     public List<String> getCustomAnnotationHandlers() {

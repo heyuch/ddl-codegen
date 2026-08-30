@@ -2,7 +2,8 @@ package hyc.codegen.core.gen;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 两阶段的 artifact 描述注册表：生成器可发布/查询跨 artifact 的元数据。
@@ -27,12 +28,9 @@ public final class ArtifactRegistry {
     }
 
     /** 按类型查询描述。 */
-    public <T> Optional<T> lookup(String kind, String table, Class<T> type) {
+    public @Nullable <T> T lookup(String kind, String table, Class<T> type) {
         Object info = entries.get(key(kind, table));
-        if (type.isInstance(info)) {
-            return Optional.of(type.cast(info));
-        }
-        return Optional.empty();
+        return type.isInstance(info) ? type.cast(info) : null;
     }
 
     private static String key(String kind, String table) {

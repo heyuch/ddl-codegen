@@ -65,6 +65,7 @@ public final class EnumGenerator extends AbstractJavaArtifactGenerator {
         for (String value : column.getEnumValues()) {
             builder.enumConstant(Variable.builder()
                     .name(constantName(value))
+                    .type(new TypeReference(enumName))
                     .init(new SourceExpr("\"" + escape(value) + "\""))
                     .build());
         }

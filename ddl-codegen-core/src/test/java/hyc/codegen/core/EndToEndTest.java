@@ -28,7 +28,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,12 +36,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class EndToEndTest {
 
-    // JUnit @TempDir 注入，语法层不保证非 null：标 @Nullable，使用点经 tempDir() 显式校验。
     @TempDir
     @Nullable
     Path temp;
 
-    /** @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    private @Nullable DdlConfig config;
+
+    private @Nullable CodeGenerator generator;
+
+    /**
+     * @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。
+     */
     private Path tempDir() {
         Path dir = temp;
         if (dir == null) {
@@ -51,11 +55,6 @@ class EndToEndTest {
         return dir;
     }
 
-    private @Nullable DdlConfig config;
-
-    private @Nullable CodeGenerator generator;
-
-    /** @BeforeEach 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
     private DdlConfig config() {
         if (config == null) {
             throw new AssertionError("@BeforeEach 未初始化 config");
@@ -63,12 +62,25 @@ class EndToEndTest {
         return config;
     }
 
-    /** @BeforeEach 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    /**
+     * @BeforeEach 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。
+     */
     private CodeGenerator generator() {
         if (generator == null) {
             throw new AssertionError("@BeforeEach 未初始化 generator");
         }
         return generator;
+    }
+
+    /**
+     * 按产物名取配置（测试约定产物已配置）。
+     */
+    private ArtifactConfig artifact(String name) {
+        ArtifactConfig artifactConfig = config().artifact(name);
+        if (artifactConfig == null) {
+            throw new AssertionError("产物未配置: " + name);
+        }
+        return artifactConfig;
     }
 
     @BeforeEach
@@ -79,25 +91,25 @@ class EndToEndTest {
         config().setTableStripShardSuffix(true);
 
         add("entity", "pojo", "com.demo.entity", "", "");
-        config().artifact("entity").get().putOption("lombok", "true");
-        config().artifact("entity").get().putOption("jsr303", "true");
-        config().artifact("entity").get().putOption("enums", "true");
+        artifact("entity").putOption("lombok", "true");
+        artifact("entity").putOption("jsr303", "true");
+        artifact("entity").putOption("enums", "true");
         add("enum", "enum", "com.demo.enums", "", "");
         add("po", "pojo", "com.demo.pojo", "Po", "");
         add("mapper", "mybatisMapper", "com.demo.mapper", "Mapper", "");
-        config().artifact("mapper").get().setTarget("po");
+        artifact("mapper").setTarget("po");
         add("xml", "mybatisXml", null, null, "");
-        config().artifact("xml").get().setPath("src/main/resources/mapper");
-        config().artifact("xml").get().setTarget("po");
+        artifact("xml").setPath("src/main/resources/mapper");
+        artifact("xml").setTarget("po");
         add("repository", "repository", "com.demo.repository", "Repository", "");
-        config().artifact("repository").get().setTarget("entity");
+        artifact("repository").setTarget("entity");
         add("repositoryImpl", "mybatisRepositoryImpl", "com.demo.repository.impl", "RepositoryImpl", "");
-        config().artifact("repositoryImpl").get().setTarget("entity");
-        config().artifact("repositoryImpl").get().putOption("mapper", "mapper");
-        config().artifact("repositoryImpl").get().putOption("converter", "entityConverter");
+        artifact("repositoryImpl").setTarget("entity");
+        artifact("repositoryImpl").putOption("mapper", "mapper");
+        artifact("repositoryImpl").putOption("converter", "entityConverter");
         add("entityConverter", "converter", "com.demo.converter", "Converter", "");
-        config().artifact("entityConverter").get().setSource("po");
-        config().artifact("entityConverter").get().setTarget("entity");
+        artifact("entityConverter").setSource("po");
+        artifact("entityConverter").setTarget("entity");
 
         List<ArtifactGenerator> generators = Arrays.asList(
                 new PojoGenerator(),
@@ -120,8 +132,13 @@ class EndToEndTest {
     }
 
     private void generate(String ddl) {
-        DdlParser parser = new DruidDdlParser();
-        Schema schema = new Schema();
+        generate(new DruidDdlParser(), new Schema(), ddl);
+    }
+
+    /**
+     * 在同一 schema 上连续应用 DDL（alter 流程测试用：create 后 alter 需复用模型状态）。
+     */
+    private void generate(DdlParser parser, Schema schema, String ddl) {
         ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
         ChangeReport report = generator().generate(config(), schema, result, Collections.emptyList());
         assertTrue(report.hasChanges(), "应产生变更: " + report.summary());
@@ -220,6 +237,33 @@ class EndToEndTest {
         assertTrue(
                 converter.contains("userPo.setGender(target.getGender() == null ? null : target.getGender().value());"),
                 converter);
+    }
+
+    @Test
+    void alterFlowUpdatesArtifacts() throws Exception {
+        DdlParser parser = new DruidDdlParser();
+        Schema schema = new Schema();
+        generate(parser, schema, DDL);
+
+        // rename column：create_time → created_at（非索引列，避免索引引用牵连）
+        generate(parser, schema, "alter table t_user rename column create_time to created_at");
+        String entity = read("com/demo/entity/User.java");
+        assertTrue(entity.contains("private LocalDateTime createdAt"), entity);
+        assertFalse(entity.contains("createTime"), "entity 不应残留旧字段名");
+        String xml = read("src/main/resources/mapper/UserMapper.xml");
+        assertTrue(xml.contains("created_at"), xml);
+        assertFalse(xml.contains("create_time"), "XML 不应残留旧列引用");
+
+        // add index（无 @ignore）→ mapper/XML 出现 findByStatus
+        generate(parser, schema, "alter table t_user add index idx_status (status)");
+        String mapper = read("com/demo/mapper/UserMapper.java");
+        assertTrue(mapper.contains("findByStatus"), mapper);
+        assertTrue(read("src/main/resources/mapper/UserMapper.xml").contains("<select id=\"findByStatus\""));
+
+        // drop index → findByStatus 消失（@Generated 方法随模型移除）
+        generate(parser, schema, "alter table t_user drop index idx_status");
+        assertFalse(read("com/demo/mapper/UserMapper.java").contains("findByStatus"));
+        assertFalse(read("src/main/resources/mapper/UserMapper.xml").contains("<select id=\"findByStatus\""));
     }
 
 }

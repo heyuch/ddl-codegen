@@ -2,6 +2,7 @@ package hyc.codegen.core.naming;
 
 import java.util.Arrays;
 
+import hyc.codegen.core.config.ArtifactConfig;
 import hyc.codegen.core.config.DdlConfig;
 import hyc.codegen.core.model.Index;
 import org.junit.jupiter.api.Test;
@@ -41,8 +42,9 @@ class NamingServiceTest {
     @Test
     void artifactClassNameAppendsSuffix() {
         DdlConfig config = config();
-        config.addArtifact(new hyc.codegen.core.config.ArtifactConfig("mapper"));
-        config.artifact("mapper").orElseThrow().setSuffix("Mapper");
+        ArtifactConfig mapper = new hyc.codegen.core.config.ArtifactConfig("mapper");
+        config.addArtifact(mapper);
+        mapper.setSuffix("Mapper");
 
         NamingService naming = new NamingService(config);
         assertEquals("UserMapper", naming.artifactClassName("t_user", "mapper"));

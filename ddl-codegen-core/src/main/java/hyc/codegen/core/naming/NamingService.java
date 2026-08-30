@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hyc.codegen.core.config.ArtifactConfig;
 import hyc.codegen.core.config.DdlConfig;
 import hyc.codegen.core.model.Index;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -68,9 +69,8 @@ public final class NamingService {
 
     /** 表名 → artifact 类名 = 基类名 + 该 artifact 配置的后缀。 */
     public String artifactClassName(String tableName, String artifactKind) {
-        String suffix = config.artifact(artifactKind)
-                .map(a -> a.getSuffix())
-                .orElse("");
+        ArtifactConfig artifactConfig = config.artifact(artifactKind);
+        String suffix = artifactConfig == null ? "" : artifactConfig.getSuffix();
         return tableClassName(tableName) + suffix;
     }
 
