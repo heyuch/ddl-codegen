@@ -41,6 +41,7 @@
         <error-prone.version>2.31.0</error-prone.version>
         <!-- SpotBugs 4.9+ 运行需 Java 17，本项目构建于 Java 11 → 锁 4.8.x 线 -->
         <spotbugs-maven-plugin.version>4.8.6.8</spotbugs-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
 
         <!-- 工具-->
         <lombok.version>1.18.46</lombok.version>
@@ -286,6 +287,12 @@
                         <excludeFilterFile>${maven.multiModuleProjectDirectory}/spotbugs-exclude.xml</excludeFilterFile>
                     </configuration>
                 </plugin>
+                <!-- JaCoCo 行/分支覆盖率（check 阈值按模块实证后填 rules） -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco-maven-plugin.version}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -329,6 +336,50 @@
                             <goal>check</goal>
                         </goals>
                         <phase>process-classes</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- JaCoCo 覆盖率（prepare-agent 插桩 → surefire 执行 → report/check 出报告与门槛） -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <rules>
+                        <rule>
+                            <element>BUNDLE</element>
+                            <limits>
+                                <limit>
+                                    <counter>LINE</counter>
+                                    <value>COVEREDRATIO</value>
+                                    <!-- 基线实证（见 docs/changes/2026-08-30-opt-jacoco/progress.md）：
+                                         core 87.4 / tree 78.9 / maven-plugin 87.0 / cli 补测后 ~75+ -->
+                                    <minimum>0.75</minimum>
+                                </limit>
+                            </limits>
+                        </rule>
+                    </rules>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                    </execution>
+                    <execution>
+                        <id>jacoco-report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <phase>test</phase>
+                    </execution>
+                    <execution>
+                        <id>jacoco-check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>test</phase>
                     </execution>
                 </executions>
             </plugin>
