@@ -386,4 +386,33 @@
         </plugins>
     </build>
 
+    <profiles>
+        <!-- 开发迭代加速（-Pquick）：跳过重量级静态分析（编译期分析器/spotbugs/jacoco/checkstyle），
+             保留 spotless 格式化与 surefire 测试。默认 build 不启用——全量门禁（含全部检查）不变，
+             提交/验收前必须跑无 profile 的全量构建。 -->
+        <profile>
+            <id>quick</id>
+            <properties>
+                <spotbugs.skip>true</spotbugs.skip>
+                <jacoco.skip>true</jacoco.skip>
+                <checkstyle.skip>true</checkstyle.skip>
+                <maven.compiler.showDeprecation>false</maven.compiler.showDeprecation>
+                <maven.compiler.showWarnings>false</maven.compiler.showWarnings>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <!-- 覆盖主 pom 的 compilerArgs：去掉 -Xplugin:ErrorProne 与
+                                 -processor NullnessChecker（javac 自动发现仍会跑 lombok，见实测） -->
+                            <compilerArgs combine.self="override"/>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>

@@ -94,6 +94,10 @@ mvn clean compile
 # Build with tests
 mvn clean test
 
+# 开发迭代加速（-Pquick）：跳过编译期分析器/spotbugs/jacoco/checkstyle，
+# 保留格式化与测试（37s → 11s）；提交/验收前必须跑无 profile 的全量构建（门禁不变）
+mvn -Pquick clean test
+
 # Build a specific module
 mvn -pl ddl-codegen-core clean compile
 ```
