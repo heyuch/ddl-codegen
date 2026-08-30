@@ -24,12 +24,10 @@
             <Class name="hyc.codegen.core.gen.GenerationContext"/>
             <Class name="hyc.codegen.core.gen.GenerationContext$Builder"/>
             <Class name="hyc.codegen.core.gen.TableContext"/>
-            <Class name="hyc.codegen.core.gen.QueryMethods$Spec"/>
             <Class name="hyc.codegen.core.model.Column"/>
             <Class name="hyc.codegen.core.model.Index"/>
             <Class name="hyc.codegen.core.model.Table"/>
             <Class name="hyc.codegen.core.naming.NamingService"/>
-            <Class name="hyc.codegen.core.types.TypeMapper"/>
         </Or>
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
         <Justification>管线内部对象按引用传递是设计（操作携带模型、上下文持配置/模型、Meta 开放读写），防御性拷贝破坏语义</Justification>
