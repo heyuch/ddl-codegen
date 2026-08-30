@@ -1,5 +1,6 @@
 package hyc.codegen.core.types;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -93,7 +94,7 @@ public final class TypeMapper {
     }
 
     public TypeMapper(List<DdlAnnotationHandler> customHandlers) {
-        this.customHandlers = customHandlers;
+        this.customHandlers = new ArrayList<>(customHandlers);
     }
 
     /**

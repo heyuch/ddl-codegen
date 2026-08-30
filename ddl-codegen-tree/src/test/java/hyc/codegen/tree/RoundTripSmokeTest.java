@@ -66,12 +66,14 @@ public class RoundTripSmokeTest {
         return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
     }
 
-    /** 剥离注释与全部空白，归一化 javac toString 的 token 差异：单参 lambda 括号、字符串内 \' 转义。 */
+    /** 剥离注释与全部空白，归一化 javac toString 的 token 差异：单参 lambda 括号、字符串内 \' 转义、无参注解空括号。 */
     private static String semantic(String code) {
         String s = BLOCK_COMMENT.matcher(LINE_COMMENT.matcher(code).replaceAll("")).replaceAll("");
         s = normalizeStringEscapes(s);
         s = s.replaceAll("\\s+", "");
         s = SINGLE_PARAM_LAMBDA.matcher(s).replaceAll("$1->");
+        // javac 打印 type-use 注解强制带空括号（@Foo() 与 @Foo 是 JLS 等价形式，无参注解括号可省略）
+        s = s.replaceAll("@([A-Za-z_$][A-Za-z0-9_$]*)\\(\\),?", "@$1");
         return s;
     }
 

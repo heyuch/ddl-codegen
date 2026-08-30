@@ -57,15 +57,6 @@
         <Justification>管线内部对象按引用传递是设计（操作携带模型、上下文持配置/模型、Meta 开放读写），防御性拷贝破坏语义</Justification>
     </Match>
 
-    <!-- RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE：MapperXmlGenerator.build 里 id 判空
-         （id != null && id.isAutoIncrement() 短路保护 insertXml 内的 id.getName()），
-         spotbugs 跨方法未识别短路保护，误报。 -->
-    <Match>
-        <Class name="hyc.codegen.core.gen.MapperXmlGenerator"/>
-        <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>
-        <Justification>insertXml 内 id.getName() 受 id != null 短路保护，spotbugs 跨方法分析误报</Justification>
-    </Match>
-
     <!-- NP_METHOD_PARAMETER_TIGHTENS_ANNOTATION：接口与实现的 parse 参数在源码与字节码中均为
          @Nullable（javap 实证：参数级 javax.annotation.Nullable + type-use checkerframework @Nullable
          两者一致），spotbugs 4.8.x 对双注解形式的 override 对比缺陷，纯误报。 -->

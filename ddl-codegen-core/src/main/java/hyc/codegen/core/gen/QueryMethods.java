@@ -48,7 +48,7 @@ public final class QueryMethods {
         }
 
         public List<String> getColumns() {
-            return columns;
+            return new ArrayList<>(columns);
         }
 
         /** 唯一键且覆盖全部索引列 → 最多一条（@Nullable 单值返回）。 */

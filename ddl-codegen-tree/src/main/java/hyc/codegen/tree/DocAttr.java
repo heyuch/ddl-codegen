@@ -8,10 +8,8 @@ import javax.lang.model.element.Name;
 import com.sun.source.doctree.AttributeTree;
 import com.sun.source.doctree.DocTree;
 import com.sun.source.doctree.DocTreeVisitor;
+import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
 
-// KeyFor（Map key）子检查对 JDK 泛型通配符（List<? extends DocTree> 的 capture）推断缺陷，
-// 与 Map 无关的误报；仅本类抑制，其余代码 KeyFor 检查保留。
-@SuppressWarnings("keyfor")
 public final class DocAttr implements AttributeTree {
 
     private String name;
@@ -31,7 +29,7 @@ public final class DocAttr implements AttributeTree {
     public DocAttr(String name, ValueKind valueKind, List<? extends DocTree> value) {
         this.name = name;
         this.valueKind = valueKind;
-        this.value = new ArrayList<>(value);
+        this.value = new ArrayList<@UnknownKeyFor DocTree>(value);
     }
 
     @Override
@@ -46,7 +44,7 @@ public final class DocAttr implements AttributeTree {
 
     @Override
     public List<? extends DocTree> getValue() {
-        return new ArrayList<>(value);
+        return new ArrayList<@UnknownKeyFor DocTree>(value);
     }
 
     @Override

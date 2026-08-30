@@ -7,10 +7,8 @@ import java.util.List;
 import com.sun.source.doctree.DocTree;
 import com.sun.source.doctree.DocTreeVisitor;
 import com.sun.source.doctree.ReturnTree;
+import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
 
-// KeyFor（Map key）子检查对 JDK 泛型通配符（List<? extends DocTree> 的 capture）推断缺陷，
-// 与 Map 无关的误报；仅本类抑制，其余代码 KeyFor 检查保留。
-@SuppressWarnings("keyfor")
 public final class DocTagReturn implements ReturnTree {
 
     private List<? extends DocTree> descs;
@@ -20,12 +18,12 @@ public final class DocTagReturn implements ReturnTree {
     }
 
     public DocTagReturn(List<? extends DocTree> descs) {
-        this.descs = new ArrayList<>(descs);
+        this.descs = new ArrayList<@UnknownKeyFor DocTree>(descs);
     }
 
     @Override
     public List<? extends DocTree> getDescription() {
-        return new ArrayList<>(descs);
+        return new ArrayList<@UnknownKeyFor DocTree>(descs);
     }
 
     @Override

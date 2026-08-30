@@ -14,15 +14,13 @@ import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.PackageTree;
 import com.sun.source.tree.Tree;
 import hyc.codegen.tree.utils.CodePrinter;
+import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
 
 /**
  * 生成 import 语句：过滤隐式导入（java.lang、同包）、去重、按前缀分组排序后输出。
  * <p>
  * 从 JavaCodegen 拆出，让打印器只负责节点分发，import 策略收敛到单一职责类。
  */
-// KeyFor（Map key）子检查对 JDK 泛型通配符（List<? extends DocTree> 的 capture）推断缺陷，
-// 与 Map 无关的误报；仅本类抑制，其余代码 KeyFor 检查保留。
-@SuppressWarnings("keyfor")
 final class ImportManager {
 
     private static final List<String> GROUP_PREFIXES = Arrays.asList("java");
@@ -59,7 +57,7 @@ final class ImportManager {
     private static List<? extends ImportTree> removeImplicit(List<? extends ImportTree> imports,
             @Nullable PackageTree pkg) {
         if (imports == null || imports.isEmpty()) {
-            return new ArrayList<>();
+            return new ArrayList<@UnknownKeyFor ImportTree>();
         }
 
         List<ImportTree> result = new ArrayList<>();
@@ -109,7 +107,7 @@ final class ImportManager {
 
     private static List<? extends ImportTree> removeDuplicates(List<? extends ImportTree> imports) {
         if (imports == null || imports.isEmpty()) {
-            return new ArrayList<>();
+            return new ArrayList<@UnknownKeyFor ImportTree>();
         }
 
         Map<String, ImportTree> map = new HashMap<>();
@@ -120,12 +118,12 @@ final class ImportManager {
             }
         }
 
-        return new ArrayList<>(map.values());
+        return new ArrayList<@UnknownKeyFor ImportTree>(map.values());
     }
 
     private static List<List<? extends ImportTree>> groupByPrefix(List<? extends ImportTree> imports) {
         if (imports == null || imports.isEmpty()) {
-            return Arrays.asList(new ArrayList<>());
+            return Arrays.asList(new ArrayList<@UnknownKeyFor ImportTree>());
         }
 
         Map<String, ImportTree> map = new HashMap<>();
@@ -134,11 +132,11 @@ final class ImportManager {
         }
 
         List<List<? extends ImportTree>> groups = new ArrayList<>();
-        List<? extends ImportTree> remains = new ArrayList<>(map.values());
+        List<? extends ImportTree> remains = new ArrayList<@UnknownKeyFor ImportTree>(map.values());
 
         for (String prefix : GROUP_PREFIXES) {
             List<ImportTree> group = new ArrayList<>();
-            for (ImportTree imp : new ArrayList<>(remains)) {
+            for (ImportTree imp : new ArrayList<@UnknownKeyFor ImportTree>(remains)) {
                 Tree qid = imp.getQualifiedIdentifier();
                 if (qid.toString().startsWith(prefix)) {
                     group.add(imp);
@@ -151,7 +149,7 @@ final class ImportManager {
         }
 
         if (!remains.isEmpty()) {
-            groups.add(new ArrayList<>(remains));
+            groups.add(new ArrayList<@UnknownKeyFor ImportTree>(remains));
         }
 
         return groups;
@@ -162,7 +160,7 @@ final class ImportManager {
             return imports;
         }
 
-        List<ImportTree> sorted = new ArrayList<>(imports);
+        List<ImportTree> sorted = new ArrayList<@UnknownKeyFor ImportTree>(imports);
         sorted.sort(ImportManager::compare);
 
         return sorted;

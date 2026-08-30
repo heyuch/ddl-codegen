@@ -35,12 +35,12 @@ import com.sun.source.tree.TypeParameterTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreeScanner;
 import hyc.codegen.tree.utils.CodePrinter;
+import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
 
 // 扇出抑制依据（元素驱动而非逻辑混杂，见 docs/static-rules-review.md §6）：
 // 本类是 TreeScanner 分发器，每个节点类型对应一个 visit 方法，引用类型数 ≈ 节点类型数；
 // 已抽取 import 管理（ImportManager）后残余扇出仍 39，实证为结构性不可降；单方法引用类型 ≤3。
-// keyfor 抑制：foreachWith 泛型通配符的 KeyFor 推断缺陷（与 Map 无关，见各 Doc 模型类同款注释）。
-@SuppressWarnings({"ClassFanOutComplexity", "keyfor"})
+@SuppressWarnings("ClassFanOutComplexity")
 public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
     /**
@@ -125,7 +125,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         return true;
     }
 
-    private <T> void foreachWith(Collection<T> items, Consumer<T> fn, Runnable separator) {
+    private <T> void foreachWith(Collection<? extends @UnknownKeyFor T> items, Consumer<T> fn, Runnable separator) {
         if (items == null || items.isEmpty()) {
             return;
         }

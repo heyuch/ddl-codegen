@@ -1,6 +1,7 @@
 package hyc.codegen.core.annotation;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -36,13 +37,9 @@ public final class AnnotationRegistry {
         return handlers.get(name);
     }
 
-    /**
-     * 已注册的注解名集合。
-     * KeyFor 抑制：keySet 返回值仅作名称遍历，不需要 @KeyFor("handlers") 关联语义。
-     */
-    @SuppressWarnings("keyfor")
+    /** 已注册的注解名集合（拷贝脱离 KeyFor 关联，调用方可安全遍历）。 */
     public Set<String> names() {
-        return handlers.keySet();
+        return new LinkedHashSet<>(handlers.keySet());
     }
 
 }
