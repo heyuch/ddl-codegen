@@ -11,7 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import javax.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 基于 JDK {@link Properties} 的配置加载器（零依赖）。
@@ -94,8 +95,7 @@ public final class PropertiesConfigLoader implements ConfigLoader {
     }
 
     /** 顶层键的产物名：非保留命名空间且有属性的键返回第一段，否则 null。 */
-    @Nullable
-    private static String artifactNameOf(String key) {
+    private static @Nullable String artifactNameOf(String key) {
         int dot = key.indexOf('.');
         if (dot <= 0) {
             return null;
@@ -108,8 +108,7 @@ public final class PropertiesConfigLoader implements ConfigLoader {
     }
 
     /** 提取属性行中的键（支持 {@code key=value} 与 {@code key: value}；注释/空行返回 null）。 */
-    @Nullable
-    private static String keyOfLine(String line) {
+    private static @Nullable String keyOfLine(String line) {
         String trimmed = line.trim();
         if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("!")) {
             return null;
@@ -209,8 +208,7 @@ public final class PropertiesConfigLoader implements ConfigLoader {
     }
 
     /** 空/空白字符串 → null（属性值可缺省语义）；已为 null 原样返回。 */
-    @Nullable
-    private static String emptyToNull(String value) {
+    private static @Nullable String emptyToNull(String value) {
         if (value == null) {
             return null;
         }

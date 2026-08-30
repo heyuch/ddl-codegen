@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 
 import hyc.codegen.core.config.ArtifactConfig;
@@ -19,6 +18,7 @@ import hyc.codegen.core.model.Schema;
 import hyc.codegen.tree.Class;
 import hyc.codegen.tree.TypeReference;
 import hyc.codegen.tree.Variable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

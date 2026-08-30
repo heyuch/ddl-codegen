@@ -7,13 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.function.BiConsumer;
-import javax.annotation.Nullable;
 
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.PackageTree;
 import com.sun.source.tree.Tree;
 import hyc.codegen.tree.utils.CodePrinter;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
 
 /**

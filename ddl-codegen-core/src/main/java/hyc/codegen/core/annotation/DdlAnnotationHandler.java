@@ -1,10 +1,10 @@
 package hyc.codegen.core.annotation;
 
 import java.util.Set;
-import javax.annotation.Nullable;
 
 import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Meta;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * DDL 注释注解处理器 SPI：把 {@code @name:value} 形式的注解解析为模型元数据。

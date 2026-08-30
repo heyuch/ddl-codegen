@@ -1,7 +1,5 @@
 package hyc.codegen.core.gen;
 
-import javax.annotation.Nullable;
-
 import com.sun.source.tree.Tree.Kind;
 import hyc.codegen.core.config.ArtifactConfig;
 import hyc.codegen.core.model.Column;
@@ -11,6 +9,7 @@ import hyc.codegen.tree.Class;
 import hyc.codegen.tree.Method;
 import hyc.codegen.tree.Types;
 import hyc.codegen.tree.Variable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * MyBatis Mapper 接口生成器（注册名 {@code mybatisMapper}）。
@@ -56,8 +55,7 @@ public final class MapperGenerator extends AbstractJavaArtifactGenerator {
     }
 
     /** 主键列：PRIMARY KEY 索引首列；无主键返回 null（不生成按 id 删除）。 */
-    @Nullable
-    static Column primaryKey(TableContext ctx) {
+    static @Nullable Column primaryKey(TableContext ctx) {
         for (Index index : ctx.indexes()) {
             if (index.isUnique() && "PRIMARY".equalsIgnoreCase(index.getName())) {
                 return ctx.getTable().getColumn(index.getColumns().get(0));

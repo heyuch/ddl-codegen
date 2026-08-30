@@ -2,7 +2,8 @@ package hyc.codegen.mavenplugin;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * DDL 文件行范围：{@code create-user.sql:66-120} → 文件 + 起始/结束行（1 起）。
@@ -27,8 +28,7 @@ public final class DdlFileRange {
     }
 
     /** 解析范围；无范围返回 null（整文件）。格式错误（start≥1 且 start≤end）抛异常。 */
-    @Nullable
-    public static DdlFileRange parse(String value) {
+    public static @Nullable DdlFileRange parse(String value) {
         Matcher matcher = RANGE.matcher(value);
         if (!matcher.matches()) {
             return null;

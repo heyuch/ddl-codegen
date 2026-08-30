@@ -2,7 +2,6 @@ package hyc.codegen.tree;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.lang.model.element.Name;
 import javax.tools.JavaFileObject;
 
@@ -15,12 +14,12 @@ import com.sun.source.tree.LineMap;
 import com.sun.source.tree.PackageTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.TreeVisitor;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 // 可修改 AST 节点（AGENTS.md「自研可修改 Java AST」）：字段由 setter/转换器在构造后设置，
 public final class CompileUnit implements CompilationUnitTree {
 
-    @Nullable
-    private PackageTree pkg;
+    private @Nullable PackageTree pkg;
 
     private List<AnnotationTree> pkgAnnotations = new ArrayList<>();
 
@@ -71,8 +70,7 @@ public final class CompileUnit implements CompilationUnitTree {
         return new ArrayList<>(classes);
     }
 
-    @Nullable
-    public Class getClass(CharSequence name) {
+    public @Nullable Class getClass(CharSequence name) {
         if (name == null) {
             return null;
         }

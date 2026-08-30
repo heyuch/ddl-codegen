@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nullable;
 
 import hyc.codegen.core.config.ArtifactConfig;
 import hyc.codegen.core.config.DdlConfig;
@@ -25,6 +24,7 @@ import hyc.codegen.core.gen.PojoGenerator;
 import hyc.codegen.core.gen.RepositoryGenerator;
 import hyc.codegen.core.io.ChangeReport;
 import hyc.codegen.core.model.Schema;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -51,11 +51,9 @@ class EndToEndTest {
         return dir;
     }
 
-    @Nullable
-    private DdlConfig config;
+    private @Nullable DdlConfig config;
 
-    @Nullable
-    private CodeGenerator generator;
+    private @Nullable CodeGenerator generator;
 
     /** @BeforeEach 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
     private DdlConfig config() {

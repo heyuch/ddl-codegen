@@ -3,7 +3,8 @@ package hyc.codegen.core.io;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 执行变更报告：逐文件变更摘要，供 CLI 输出与验收。
@@ -79,8 +80,7 @@ public final class ChangeReport {
 
         private final ChangeStatus status;
 
-        @Nullable
-        private final String detail;
+        private final @Nullable String detail;
 
         Entry(Path path, ChangeStatus status, @Nullable String detail) {
             this.path = path;
@@ -96,8 +96,7 @@ public final class ChangeReport {
             return status;
         }
 
-        @Nullable
-        public String getDetail() {
+        public @Nullable String getDetail() {
             return detail;
         }
 

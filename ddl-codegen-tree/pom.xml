@@ -18,11 +18,6 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <scope>provided</scope>
-        </dependency>
         <!-- lombok 生成 @SuppressFBWarnings（lombok.extern.findbugs.addSuppressFBWarnings）需要 -->
         <dependency>
             <groupId>com.github.spotbugs</groupId>

@@ -1,8 +1,7 @@
 package hyc.codegen.core.annotation;
 
-import javax.annotation.Nullable;
-
 import hyc.codegen.core.model.Meta;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 注解分发器：注释文本 → 按注册表分发给处理器。

@@ -32,7 +32,7 @@
 | 框架自身代码 | 不用 lombok/slf4j/guava | 生成的项目代码可以用 lombok——那是拦截器的职责 |
 | 测试 | JUnit 5（AGENTS.md 已定）+ golden-file | — |
 
-**运行时依赖：仅 druid 一个。** jsr305/lombok/checker-qual 均为 provided（构建期）。
+**运行时依赖：仅 druid 一个。** lombok/checker-qual 均为 provided（构建期）。
 
 ## 3. 模块划分（多模块）
 
@@ -262,7 +262,7 @@ public interface GeneratorInterceptor {
   `INDEX idx_status_type(status, type)` → findByStatusAndType + findByStatus（均 List）
 - 每个参数带 `@Param`；XML 参数占位 `#{name,jdbcType=VARCHAR}`
 - 索引注释含 `@ignore` → 不生成任何方法
-- `@Nullable` 注解包：config 可配（默认 `javax.annotation.Nullable`）
+- `@Nullable` 注解包：config 可配（默认 `org.checkerframework.checker.nullness.qual.Nullable`）
 
 ## 13. MapperXml 模板规格
 
@@ -348,6 +348,6 @@ public interface GeneratorInterceptor {
 
 ## 17. 开放问题（实现前拍板，或按默认走）
 
-- `@Nullable` 注解包默认值（javax/jakarta/spring）→ 默认 `javax.annotation.Nullable`，config 可配
+- `@Nullable` 注解包默认值（javax/jakarta/spring）→ 默认 `org.checkerframework.checker.nullness.qual.Nullable`，config 可配
 - 内置生成器默认启用集 → 默认全配（entity/enum/pojo/mapper/xml/repository/impl/converter）
 - mapper 直连 entity（无 pojo）时的类型映射细节 → 按 §8 规则走，映射到 entity

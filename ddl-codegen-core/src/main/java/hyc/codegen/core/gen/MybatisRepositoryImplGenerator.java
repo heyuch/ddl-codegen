@@ -2,7 +2,6 @@ package hyc.codegen.core.gen;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 
 import hyc.codegen.core.config.ArtifactConfig;
@@ -15,6 +14,7 @@ import hyc.codegen.tree.Method;
 import hyc.codegen.tree.TypeReference;
 import hyc.codegen.tree.Types;
 import hyc.codegen.tree.Variable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * MyBatis RepositoryImpl 生成器（注册名 {@code mybatisRepositoryImpl}）：桥接 Mapper → Converter → 目标产物。
@@ -207,11 +207,9 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGe
 
         final boolean convert;
 
-        @Nullable
-        final String converterFqn;
+        final @Nullable String converterFqn;
 
-        @Nullable
-        final String convertMethod;
+        final @Nullable String convertMethod;
 
         Bridge(String mapperField, boolean convert, @Nullable String converterFqn, @Nullable String convertMethod) {
             this.mapperField = mapperField;

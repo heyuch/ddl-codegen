@@ -2,9 +2,9 @@ package hyc.codegen.core.annotation;
 
 import java.util.EnumSet;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 import hyc.codegen.core.model.Meta;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 内置注解 {@code @ignore}：跳过生成。

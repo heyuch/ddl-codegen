@@ -1,11 +1,11 @@
 package hyc.codegen.tree;
 
 import java.util.List;
-import javax.annotation.Nullable;
 
 import com.sun.source.doctree.DocCommentTree;
 import com.sun.source.doctree.DocTree;
 import com.sun.source.util.DocTreeScanner;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 class JavadocTreeConverter extends DocTreeScanner<DocTree, Void> {
 

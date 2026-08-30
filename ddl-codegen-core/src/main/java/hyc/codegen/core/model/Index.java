@@ -3,9 +3,9 @@ package hyc.codegen.core.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nullable;
 
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 表的索引模型（含 PRIMARY KEY / UNIQUE KEY / 普通 INDEX）。
@@ -21,8 +21,7 @@ public final class Index {
     private final String name;
     private final boolean unique;
     private final List<String> columns;
-    @Nullable
-    private final String comment;
+    private final @Nullable String comment;
     private final Meta meta = new Meta();
 
     private Index(Builder b) {
@@ -49,8 +48,7 @@ public final class Index {
         return columns;
     }
 
-    @Nullable
-    public String getComment() {
+    public @Nullable String getComment() {
         return comment;
     }
 
@@ -85,8 +83,7 @@ public final class Index {
         private String name;
         private boolean unique;
         private final List<String> columns = new ArrayList<>();
-        @Nullable
-        private String comment;
+        private @Nullable String comment;
 
         public Builder name(String name) {
             this.name = name;

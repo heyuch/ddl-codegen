@@ -4,13 +4,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 import hyc.codegen.core.annotation.DdlAnnotationHandler;
 import hyc.codegen.core.annotation.MetaTarget;
 import hyc.codegen.core.config.DdlConfig;
 import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Meta;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

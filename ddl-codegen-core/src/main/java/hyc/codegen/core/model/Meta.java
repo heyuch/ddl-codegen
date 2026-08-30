@@ -2,7 +2,8 @@ package hyc.codegen.core.model;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 模型节点的开放元数据容器。
@@ -29,14 +30,12 @@ public final class Meta {
     }
 
     /** 读取原始值；不存在时返回 {@code null}。 */
-    @Nullable
-    public Object get(String key) {
+    public @Nullable Object get(String key) {
         return values.get(key);
     }
 
     /** 读取字符串值；不存在或非字符串时返回 {@code null}。 */
-    @Nullable
-    public String getString(String key) {
+    public @Nullable String getString(String key) {
         Object value = values.get(key);
         return value instanceof String ? (String)value : null;
     }

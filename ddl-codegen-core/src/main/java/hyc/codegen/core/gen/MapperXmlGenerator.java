@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 
 import hyc.codegen.core.io.ChangeStatus;
 import hyc.codegen.core.io.FileWriter;
 import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Index;
 import hyc.codegen.core.naming.NamingService;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * MyBatis Mapper XML 生成器（kind {@code mybatisXml}，整文件重生成，字符串模板）。
@@ -255,8 +255,7 @@ public final class MapperXmlGenerator implements ArtifactGenerator {
     }
 
     /** 主键列（PRIMARY 索引首列；无则 null）。 */
-    @Nullable
-    private Column idColumn(TableContext ctx) {
+    private @Nullable Column idColumn(TableContext ctx) {
         for (Index index : ctx.indexes()) {
             if (index.isUnique() && "PRIMARY".equalsIgnoreCase(index.getName())) {
                 return ctx.getTable().getColumn(index.getColumns().get(0));

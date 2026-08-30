@@ -3,9 +3,9 @@ package hyc.codegen.core.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nullable;
 
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 表的列模型。
@@ -23,10 +23,8 @@ public final class Column {
     private final boolean nullable;
     private final boolean unsigned;
     private final boolean autoIncrement;
-    @Nullable
-    private final String defaultValue;
-    @Nullable
-    private final String comment;
+    private final @Nullable String defaultValue;
+    private final @Nullable String comment;
     private final List<String> enumValues;
     private final Meta meta = new Meta();
 
@@ -82,13 +80,11 @@ public final class Column {
         return autoIncrement;
     }
 
-    @Nullable
-    public String getDefaultValue() {
+    public @Nullable String getDefaultValue() {
         return defaultValue;
     }
 
-    @Nullable
-    public String getComment() {
+    public @Nullable String getComment() {
         return comment;
     }
 
@@ -146,10 +142,8 @@ public final class Column {
         private boolean nullable = true;
         private boolean unsigned;
         private boolean autoIncrement;
-        @Nullable
-        private String defaultValue;
-        @Nullable
-        private String comment;
+        private @Nullable String defaultValue;
+        private @Nullable String comment;
         private final List<String> enumValues = new ArrayList<>();
 
         public Builder name(String name) {

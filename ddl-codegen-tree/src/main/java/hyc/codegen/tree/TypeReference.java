@@ -1,15 +1,14 @@
 package hyc.codegen.tree;
 
-import javax.annotation.Nullable;
 import javax.lang.model.element.Name;
 
 import lombok.EqualsAndHashCode;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 @EqualsAndHashCode(callSuper = true)
 public final class TypeReference extends Identifier {
 
-    @Nullable
-    private Package pkg;
+    private @Nullable Package pkg;
 
     private String className;
 
@@ -46,8 +45,7 @@ public final class TypeReference extends Identifier {
     /**
      * 返回所属包，简单名类型时为 {@code null}。
      */
-    @Nullable
-    public Package getPkg() {
+    public @Nullable Package getPkg() {
         return pkg;
     }
 
@@ -73,8 +71,7 @@ public final class TypeReference extends Identifier {
         return sb.toString();
     }
 
-    @Nullable
-    public String getPkgString() {
+    public @Nullable String getPkgString() {
         if (pkg == null) {
             return null;
         }

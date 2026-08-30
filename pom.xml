@@ -37,7 +37,6 @@
         <spotless-maven-plugin.version>2.45.0</spotless-maven-plugin.version>
         <checkstyle-maven-plugin.version>3.2.0</checkstyle-maven-plugin.version>
         <checkstyle.version>10.12.7</checkstyle.version>
-        <jsr305.version>3.0.2</jsr305.version>
         <archunit.version>1.4.0</archunit.version>
         <error-prone.version>2.31.0</error-prone.version>
         <!-- SpotBugs 4.9+ 运行需 Java 17，本项目构建于 Java 11 → 锁 4.8.x 线 -->
@@ -67,12 +66,6 @@
                 <artifactId>junit-jupiter</artifactId>
                 <version>${junit.version}</version>
                 <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.google.code.findbugs</groupId>
-                <artifactId>jsr305</artifactId>
-                <version>${jsr305.version}</version>
-                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.tngtech.archunit</groupId>

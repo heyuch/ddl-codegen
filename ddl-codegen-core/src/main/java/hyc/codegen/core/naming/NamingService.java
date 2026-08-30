@@ -7,10 +7,10 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 
 import hyc.codegen.core.config.DdlConfig;
 import hyc.codegen.core.model.Index;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 命名服务：表名→类名、列名→字段名、索引→查询方法名的全部转换。
@@ -40,8 +40,7 @@ public final class NamingService {
 
     private final DdlConfig config;
 
-    @Nullable
-    private final TableNameStrategy strategy;
+    private final @Nullable TableNameStrategy strategy;
 
     public NamingService(DdlConfig config) {
         this(config, null);

@@ -3,7 +3,6 @@ package hyc.codegen.core.ddl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import javax.annotation.Nullable;
 
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
@@ -39,6 +38,7 @@ import hyc.codegen.core.annotation.MetaTarget;
 import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Index;
 import hyc.codegen.core.model.Table;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 // 扇出/抽象耦合/圈复杂度抑制依据（元素驱动而非逻辑混杂，见 docs/static-rules-review.md §6）：
 // 本类是 Druid AST → 模型操作的转换器，引用类型数 ≈ 需处理的节点类型数（列/索引/各类
@@ -186,8 +186,8 @@ public final class DruidDdlParser implements DdlParser {
         return column;
     }
 
-    @Nullable
-    private Index convertConstraint(SQLUniqueConstraint constraint, boolean unique, @Nullable String forcedName) {
+    private @Nullable Index convertConstraint(SQLUniqueConstraint constraint, boolean unique,
+            @Nullable String forcedName) {
         List<String> columns = DruidAst.columnNames(constraint.getColumns());
         if (columns.isEmpty()) {
             LOG.log(System.Logger.Level.WARNING, "唯一约束缺少列定义，已跳过: {0}", constraint);
@@ -278,8 +278,7 @@ public final class DruidDdlParser implements DdlParser {
         }
     }
 
-    @Nullable
-    private Index convertAddIndex(SQLAlterTableAddIndex addIndex) {
+    private @Nullable Index convertAddIndex(SQLAlterTableAddIndex addIndex) {
         List<String> columns = DruidAst.columnNames(addIndex.getItems());
         if (columns.isEmpty()) {
             LOG.log(System.Logger.Level.WARNING, "add index 缺少列定义，已跳过: {0}", addIndex.getName());

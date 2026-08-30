@@ -3,7 +3,6 @@ package hyc.codegen.core.gen;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 
 import hyc.codegen.core.config.ArtifactConfig;
 import hyc.codegen.core.io.PathResolver;
@@ -12,6 +11,7 @@ import hyc.codegen.core.model.Index;
 import hyc.codegen.core.model.Table;
 import hyc.codegen.core.naming.NamingService;
 import hyc.codegen.core.types.TypeMapper;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 单表 × 单 artifact 的生成上下文：表、artifact 配置、命名与类型映射的便捷入口。
@@ -32,8 +32,7 @@ public final class TableContext {
 
     private final TypeMapper types;
 
-    @Nullable
-    private final String enumPackage;
+    private final @Nullable String enumPackage;
 
     private final String nullableAnnotation;
 
@@ -114,14 +113,12 @@ public final class TableContext {
     }
 
     /** enum 产物包（enums 特性开启时已校验存在）。 */
-    @Nullable
-    public String getEnumPackage() {
+    public @Nullable String getEnumPackage() {
         return enumPackage;
     }
 
     /** 按字段名反查列（字段名 = 命名策略转换后的列名）；未匹配返回 null。 */
-    @Nullable
-    public Column findColumn(String fieldName) {
+    public @Nullable Column findColumn(String fieldName) {
         for (Column column : table.getColumns()) {
             if (fieldName(column).equals(fieldName)) {
                 return column;
@@ -164,8 +161,7 @@ public final class TableContext {
         return new ArrayList<>(table.getIndexes());
     }
 
-    @Nullable
-    public String tableComment() {
+    public @Nullable String tableComment() {
         return table.getComment();
     }
 

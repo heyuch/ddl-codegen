@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 内存中的数据库模式：按表名注册，保持表创建顺序。
@@ -21,8 +22,7 @@ public final class Schema {
     }
 
     /** 按名取表；不存在时返回 {@code null}。 */
-    @Nullable
-    public Table getTable(String name) {
+    public @Nullable Table getTable(String name) {
         return tables.get(name);
     }
 

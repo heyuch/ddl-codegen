@@ -2,7 +2,8 @@ package hyc.codegen.core.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 数据表模型。
@@ -13,8 +14,7 @@ import javax.annotation.Nullable;
 public final class Table {
 
     private String name;
-    @Nullable
-    private final String comment;
+    private final @Nullable String comment;
     private final List<Column> columns = new ArrayList<>();
     private final List<Index> indexes = new ArrayList<>();
     private final Meta meta = new Meta();
@@ -28,8 +28,7 @@ public final class Table {
         return name;
     }
 
-    @Nullable
-    public String getComment() {
+    public @Nullable String getComment() {
         return comment;
     }
 
@@ -44,8 +43,7 @@ public final class Table {
     }
 
     /** 按名查列；不存在时返回 {@code null}。 */
-    @Nullable
-    public Column getColumn(String columnName) {
+    public @Nullable Column getColumn(String columnName) {
         for (Column column : columns) {
             if (column.getName().equals(columnName)) {
                 return column;
@@ -91,8 +89,7 @@ public final class Table {
     }
 
     /** 按名查索引；不存在时返回 {@code null}。 */
-    @Nullable
-    public Index getIndex(String indexName) {
+    public @Nullable Index getIndex(String indexName) {
         for (Index index : indexes) {
             if (index.getName().equals(indexName)) {
                 return index;

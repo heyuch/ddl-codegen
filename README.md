@@ -129,7 +129,7 @@ naming.enum.style=column                # gender → Gender；或 tableColumn �
 
 # 自定义注解处理器（实现 DdlAnnotationHandler，须有 public 无参构造）
 annotations.custom=com.myapp.MyHandler
-annotations.nullable=javax.annotation.Nullable
+annotations.nullable=org.checkerframework.checker.nullness.qual.Nullable
 ```
 
 

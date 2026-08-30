@@ -2,7 +2,6 @@ package hyc.codegen.tree;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 
@@ -13,15 +12,14 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.tree.VariableTree;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 // 可修改 AST 节点（AGENTS.md「自研可修改 Java AST」）：字段由静态工厂/builder 在构造后设置，
 public final class Variable implements VariableTree {
 
-    @Nullable
-    private DocComment javadoc;
+    private @Nullable DocComment javadoc;
 
-    @Nullable
-    private VariableKind kind;
+    private @Nullable VariableKind kind;
 
     @MonotonicNonNull
     private ModifiersTree modifiers;
@@ -29,14 +27,12 @@ public final class Variable implements VariableTree {
     @MonotonicNonNull
     private Name name;
 
-    @Nullable
-    private ExpressionTree nameExpr;
+    private @Nullable ExpressionTree nameExpr;
 
     @MonotonicNonNull
     private Tree type;
 
-    @Nullable
-    private ExpressionTree initExpr;
+    private @Nullable ExpressionTree initExpr;
 
     /** 是否为可变参数（仅方法参数有意义，JDK 11 无 Modifier.VARARGS，由转换器从 javac toString 检测） */
     private boolean varargs;
@@ -48,8 +44,7 @@ public final class Variable implements VariableTree {
     /**
      * 返回变量 javadoc 注释。
      */
-    @Nullable
-    public DocComment getJavadoc() {
+    public @Nullable DocComment getJavadoc() {
         return javadoc;
     }
 
@@ -77,8 +72,7 @@ public final class Variable implements VariableTree {
     /**
      * 返回变量种类（字段/参数/枚举常量）。
      */
-    @Nullable
-    public VariableKind getVariableKind() {
+    public @Nullable VariableKind getVariableKind() {
         return kind;
     }
 

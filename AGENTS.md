@@ -159,7 +159,7 @@ mvn versions:display-plugin-updates
 - Specify generic type parameters explicitly (no raw types)
 
 ### Null Handling
-- Use `@Nullable` annotation from `javax.annotation.Nullable` for nullable parameters and return values
+- Use `@Nullable` annotation from `org.checkerframework.checker.nullness.qual.Nullable` for nullable parameters and return values
 - Use `@Nullable` on method parameters that can be null
 - Consider using early returns to avoid deep nesting with null checks
 - Example:

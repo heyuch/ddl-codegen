@@ -1,14 +1,12 @@
 package hyc.codegen.tree;
 
-import javax.annotation.Nullable;
-
 import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.TreeVisitor;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public final class Literal implements LiteralTree {
 
-    @Nullable
-    private Object value;
+    private @Nullable Object value;
 
     private Kind kind;
 

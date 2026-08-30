@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 
 import com.sun.source.tree.VariableTree;
@@ -19,6 +18,7 @@ import hyc.codegen.tree.JavaCodegen;
 import hyc.codegen.tree.JavaParser;
 import hyc.codegen.tree.Method;
 import hyc.codegen.tree.Variable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Java artifact 生成器基类：定位 / 解析 / @Generated 成员级 reconcile / 拦截器 / 打印 / 写盘 的完整管线。
@@ -207,8 +207,7 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
         return generated;
     }
 
-    @Nullable
-    private Variable findField(List<Variable> fields, String name) {
+    private @Nullable Variable findField(List<Variable> fields, String name) {
         for (Variable field : fields) {
             if (name.equals(field.getName().toString())) {
                 return field;
@@ -217,8 +216,7 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
         return null;
     }
 
-    @Nullable
-    private Method findMethod(List<Method> methods, String name) {
+    private @Nullable Method findMethod(List<Method> methods, String name) {
         for (Method method : methods) {
             if (name.equals(method.getName().toString())) {
                 return method;
@@ -263,8 +261,7 @@ public abstract class AbstractJavaArtifactGenerator implements ArtifactGenerator
     }
 
     /** 解析现有文件；不存在或解析失败返回 null（解析失败已记警告）。 */
-    @Nullable
-    private CompileUnit parse(File file) {
+    private @Nullable CompileUnit parse(File file) {
         if (!file.isFile()) {
             return null;
         }

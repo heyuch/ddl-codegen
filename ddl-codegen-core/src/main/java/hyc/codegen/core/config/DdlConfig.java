@@ -6,7 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 项目配置模型，对应项目根目录下的 properties 配置文件。
@@ -17,8 +18,7 @@ import javax.annotation.Nullable;
 public final class DdlConfig {
 
     /** 项目根 = 配置文件所在目录（加载前为 null；经 getRoot 的 requireNonNull 强制非空）。 */
-    @Nullable
-    private Path root;
+    private @Nullable Path root;
 
     /** artifact 按配置出现顺序保存。 */
     private final Map<String, ArtifactConfig> artifacts = new LinkedHashMap<>();
@@ -35,8 +35,8 @@ public final class DdlConfig {
     // ---- 自定义注解处理器（annotations.custom）----
     private final List<String> customAnnotationHandlers = new ArrayList<>();
 
-    /** {@code @Nullable} 注解全限定名（默认 javax.annotation.Nullable，config {@code annotations.nullable} 可配）。 */
-    private String nullableAnnotation = "javax.annotation.Nullable";
+    /** {@code @Nullable} 注解全限定名（默认 checkerframework 的 Nullable，config {@code annotations.nullable} 可配）。 */
+    private String nullableAnnotation = "org.checkerframework.checker.nullness.qual.Nullable";
 
     public String getNullableAnnotation() {
         return nullableAnnotation;

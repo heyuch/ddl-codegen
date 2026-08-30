@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 严格语法 {@code @name[:value]} 的注解提取器。
@@ -47,8 +48,7 @@ public final class AnnotationParser {
     public static final class Occurrence {
 
         private final String name;
-        @Nullable
-        private final String value;
+        private final @Nullable String value;
 
         Occurrence(String name, @Nullable String value) {
             this.name = name;
@@ -59,8 +59,7 @@ public final class AnnotationParser {
             return name;
         }
 
-        @Nullable
-        public String value() {
+        public @Nullable String value() {
             return value;
         }
 

@@ -1,7 +1,8 @@
 package hyc.codegen.core.io;
 
 import java.nio.file.Path;
-import javax.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 生成文件路径解析：项目根 + module（根下一级子目录，空=根）+ package 路径 / 资源路径。

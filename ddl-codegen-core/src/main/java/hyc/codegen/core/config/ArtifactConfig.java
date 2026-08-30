@@ -2,7 +2,8 @@ package hyc.codegen.core.config;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 单个产物（artifact）的配置。
@@ -15,25 +16,19 @@ public final class ArtifactConfig {
 
     private final String name;
 
-    @Nullable
-    private String generator;
+    private @Nullable String generator;
 
-    @Nullable
-    private String module;
+    private @Nullable String module;
 
-    @Nullable
-    private String pkg;
+    private @Nullable String pkg;
 
     private String suffix = "";
 
-    @Nullable
-    private String path;
+    private @Nullable String path;
 
-    @Nullable
-    private String source;
+    private @Nullable String source;
 
-    @Nullable
-    private String target;
+    private @Nullable String target;
 
     private final Map<String, String> options = new LinkedHashMap<>();
 
@@ -47,8 +42,7 @@ public final class ArtifactConfig {
     }
 
     /** 注册的生成器名（如 pojo/converter/mybatisMapper）。 */
-    @Nullable
-    public String getGenerator() {
+    public @Nullable String getGenerator() {
         return generator;
     }
 
@@ -57,8 +51,7 @@ public final class ArtifactConfig {
     }
 
     /** 所属模块 = 项目根下的一级子目录；空表示项目根。 */
-    @Nullable
-    public String getModule() {
+    public @Nullable String getModule() {
         return module;
     }
 
@@ -67,8 +60,7 @@ public final class ArtifactConfig {
     }
 
     /** Java 包名；XML 类产物可省略（用 path）。 */
-    @Nullable
-    public String getPkg() {
+    public @Nullable String getPkg() {
         return pkg;
     }
 
@@ -86,8 +78,7 @@ public final class ArtifactConfig {
     }
 
     /** 资源路径（XML 用，相对 module）；Java 类产物走 package。 */
-    @Nullable
-    public String getPath() {
+    public @Nullable String getPath() {
         return path;
     }
 
@@ -96,8 +87,7 @@ public final class ArtifactConfig {
     }
 
     /** 源产物引用（converter 用，如 source=po）。 */
-    @Nullable
-    public String getSource() {
+    public @Nullable String getSource() {
         return source;
     }
 
@@ -106,8 +96,7 @@ public final class ArtifactConfig {
     }
 
     /** 目标产物引用（converter/mapper/repository 的返回类型，如 target=entity）。 */
-    @Nullable
-    public String getTarget() {
+    public @Nullable String getTarget() {
         return target;
     }
 
@@ -121,8 +110,7 @@ public final class ArtifactConfig {
     }
 
     /** 取一个额外选项；未配置返回 null。 */
-    @Nullable
-    public String getOption(String key) {
+    public @Nullable String getOption(String key) {
         return options.get(key);
     }
 

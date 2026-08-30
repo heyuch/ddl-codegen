@@ -94,7 +94,7 @@ public class JavaCodegenTest {
                         .tag(new DocTagParam("codes", "编码列表"))
                         .tag(new DocTagReturn("匹配的枚举值，匹配不到返回 null"))
                         .build())
-                .annotation(Annotation.of(new TypeReference("javax.annotation.Nullable")))
+                .annotation(Annotation.of(new TypeReference("org.checkerframework.checker.nullness.qual.Nullable")))
                 .modifiers(Modifier.PUBLIC, Modifier.STATIC)
                 .returnType(Types.listOf(new TypeReference("demo.TestEnum")))
                 .name("getByCodes")
@@ -155,7 +155,8 @@ public class JavaCodegenTest {
                                 .build())
                         .build())
                 .method(Method.builder()
-                        .annotation(Annotation.of(new TypeReference("javax.annotation.Nullable")))
+                        .annotation(
+                                Annotation.of(new TypeReference("org.checkerframework.checker.nullness.qual.Nullable")))
                         .returnType(new TypeReference("demo.Demo"))
                         .name("findById")
                         .parameter(Variable.builder()
@@ -250,7 +251,7 @@ public class JavaCodegenTest {
                                 .tag(new DocTagReturn("查询不到返回 null"))
                                 .build())
                         .annotation(Annotation.of("java.lang.Override"))
-                        .annotation(Annotation.of("javax.annotation.Nullable"))
+                        .annotation(Annotation.of("org.checkerframework.checker.nullness.qual.Nullable"))
                         .modifiers(Modifier.PUBLIC)
                         .returnType(new TypeReference("demo.Demo"))
                         .name("findById")
@@ -365,7 +366,8 @@ public class JavaCodegenTest {
                         .returnType(new TypeReference("demo.DemoStatus"))
                         .name("getByCode")
                         .parameter(Variable.builder()
-                                .annotation(Annotation.of(new TypeReference("javax.annotation.Nullable")))
+                                .annotation(Annotation
+                                        .of(new TypeReference("org.checkerframework.checker.nullness.qual.Nullable")))
                                 .type(Types.STRING)
                                 .name("code")
                                 .build())
@@ -383,9 +385,9 @@ public class JavaCodegenTest {
         StringJoiner a = new StringJoiner(System.lineSeparator());
         j.add("package demo;");
         j.add("");
-        j.add("import javax.annotation.Nullable;");
         j.add("import javax.validation.constraints.NotNull;");
         j.add("");
+        j.add("import org.checkerframework.checker.nullness.qual.Nullable;");
         j.add("import org.springframework.beans.factory.annotation.Autowired;");
         j.add("import org.springframework.stereotype.Repository;");
         j.add("");
@@ -433,7 +435,8 @@ public class JavaCodegenTest {
                                 .build())
                         .build())
                 .method(Method.builder()
-                        .annotation(Annotation.of(new TypeReference("javax.annotation.Nullable")))
+                        .annotation(
+                                Annotation.of(new TypeReference("org.checkerframework.checker.nullness.qual.Nullable")))
                         .returnType(new TypeReference("demo.Demo"))
                         .name("findById")
                         .parameter(Variable.builder()
@@ -460,7 +463,8 @@ public class JavaCodegenTest {
                         .name("mapper")
                         .build())
                 .method(Method.builder()
-                        .annotation(Annotation.of(new TypeReference("javax.annotation.Nullable")))
+                        .annotation(
+                                Annotation.of(new TypeReference("org.checkerframework.checker.nullness.qual.Nullable")))
                         .modifiers(Modifier.PUBLIC)
                         .returnType(new TypeReference("demo.Demo"))
                         .name("findById")

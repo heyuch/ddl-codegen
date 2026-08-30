@@ -2,9 +2,9 @@ package hyc.codegen.tree;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 
 import com.sun.source.tree.Tree;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 收集模型节点引用的 import，集中各节点 getImports 的公共逻辑。

@@ -1,12 +1,12 @@
 package hyc.codegen.mavenplugin;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import javax.annotation.Nullable;
 
 import hyc.codegen.core.Codegen;
 import hyc.codegen.core.io.ChangeReport;
@@ -15,6 +15,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * DDL 代码生成 Mojo（{@code mvn ddl-codegen:generate}）。
@@ -29,25 +30,23 @@ import org.apache.maven.plugins.annotations.Parameter;
 @Mojo(name = "generate")
 public class GenerateMojo extends AbstractMojo {
 
-    /** 项目根，覆盖 config 推导的根（Maven 注入；未注入时兜底当前目录）。 */
-    @Nullable
+    /**
+     * 项目根，覆盖 config 推导的根（Maven 注入；未注入时兜底当前目录）。
+     */
     @Parameter(defaultValue = "${project.basedir}", property = "ddlCodegen.projectRoot")
-    private java.io.File projectRoot;
+    private @Nullable File projectRoot;
 
     /** 配置文件；缺省 = projectRoot/ddl-codegen.properties（可不配置）。 */
-    @Nullable
     @Parameter(property = "ddlCodegen.configFile")
-    private java.io.File configFile;
+    private @Nullable File configFile;
 
     /** 内联 DDL 字符串（与 ddlFile 互斥；可不配置）。 */
-    @Nullable
     @Parameter(property = "ddlCodegen.ddl")
-    private String ddl;
+    private @Nullable String ddl;
 
     /** DDL 文件（支持 {@code path:start-end} 行范围；相对 projectRoot 解析；可不配置）。 */
-    @Nullable
     @Parameter(property = "ddlCodegen.ddlFile")
-    private String ddlFile;
+    private @Nullable String ddlFile;
 
     /** 只报告不写盘。 */
     @Parameter(property = "ddlCodegen.dryRun", defaultValue = "false")

@@ -3,7 +3,6 @@ package hyc.codegen.tree;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 
@@ -17,15 +16,14 @@ import com.sun.source.tree.TypeParameterTree;
 import com.sun.source.tree.VariableTree;
 import hyc.codegen.tree.utils.Names;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 // 可修改 AST 节点（AGENTS.md「自研可修改 Java AST」）：字段由静态工厂/builder 在构造后设置，
 public final class Class implements ClassTree {
 
-    @Nullable
-    private DocComment javadoc;
+    private @Nullable DocComment javadoc;
 
-    @Nullable
-    private Package pkg;
+    private @Nullable Package pkg;
 
     @MonotonicNonNull
     private ModifiersTree modifiers;
@@ -38,8 +36,7 @@ public final class Class implements ClassTree {
 
     private List<TypeParameterTree> typeParameters = new ArrayList<>();
 
-    @Nullable
-    private Tree extend;
+    private @Nullable Tree extend;
 
     private List<Tree> impls = new ArrayList<>();
 
@@ -52,8 +49,7 @@ public final class Class implements ClassTree {
     /**
      * 返回类 javadoc 注释。
      */
-    @Nullable
-    public DocComment getJavadoc() {
+    public @Nullable DocComment getJavadoc() {
         return javadoc;
     }
 
@@ -67,8 +63,7 @@ public final class Class implements ClassTree {
     /**
      * 返回所属包。
      */
-    @Nullable
-    public Package getPkg() {
+    public @Nullable Package getPkg() {
         return pkg;
     }
 

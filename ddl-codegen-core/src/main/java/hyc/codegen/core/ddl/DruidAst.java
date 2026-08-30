@@ -2,7 +2,6 @@ package hyc.codegen.core.ddl;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 
 import com.alibaba.druid.sql.ast.SQLDataType;
 import com.alibaba.druid.sql.ast.SQLDataTypeImpl;
@@ -13,6 +12,7 @@ import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.expr.SQLIntegerExpr;
 import com.alibaba.druid.sql.ast.statement.SQLColumnDefinition;
 import com.alibaba.druid.sql.ast.statement.SQLSelectOrderByItem;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Druid AST 的取值辅助：从名称/注释/类型参数/排序列中提取模型需要的字符串与整数。
@@ -25,8 +25,7 @@ final class DruidAst {
     private DruidAst() {}
 
     /** 提取名称（去掉反引号与库名前缀，如 {@code db.t_user} → {@code t_user}）。 */
-    @Nullable
-    static String nameOf(@Nullable SQLName name) {
+    static @Nullable String nameOf(@Nullable SQLName name) {
         if (name == null) {
             return null;
         }
@@ -39,14 +38,12 @@ final class DruidAst {
     }
 
     /** 提取注释文本（SQLCharExpr 取原生值，其余回退 toString 去引号）。 */
-    @Nullable
-    static String commentOf(@Nullable SQLExpr comment) {
+    static @Nullable String commentOf(@Nullable SQLExpr comment) {
         return textOf(comment);
     }
 
     /** 提取字面量文本（SQLCharExpr 取原生值，其余回退 toString）。 */
-    @Nullable
-    static String textOf(@Nullable SQLExpr expr) {
+    static @Nullable String textOf(@Nullable SQLExpr expr) {
         if (expr == null) {
             return null;
         }
@@ -88,8 +85,7 @@ final class DruidAst {
     }
 
     /** 提取类型参数中指定下标的字符串（如 enum('male') 的 male）。越界或非字符时回退 toString。 */
-    @Nullable
-    static String stringArgument(SQLDataType dataType, int index) {
+    static @Nullable String stringArgument(SQLDataType dataType, int index) {
         List<SQLExpr> arguments = dataType.getArguments();
         if (arguments == null || index >= arguments.size()) {
             return null;

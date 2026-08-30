@@ -2,7 +2,6 @@ package hyc.codegen.tree;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 
@@ -17,12 +16,12 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.tree.TypeParameterTree;
 import com.sun.source.tree.VariableTree;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 // 可修改 AST 节点（AGENTS.md「自研可修改 Java AST」）：字段由静态工厂/builder 在构造后设置，
 public final class Method implements MethodTree {
 
-    @Nullable
-    private DocCommentTree javadoc;
+    private @Nullable DocCommentTree javadoc;
 
     @MonotonicNonNull
     private ModifiersTree modifiers;
@@ -30,29 +29,24 @@ public final class Method implements MethodTree {
     @MonotonicNonNull
     private Name name;
 
-    @Nullable
-    private Tree returnType;
+    private @Nullable Tree returnType;
 
     private List<TypeParameterTree> typeParameters = new ArrayList<>();
 
     private List<VariableTree> parameters = new ArrayList<>();
 
-    @Nullable
-    private VariableTree receiverParameter;
+    private @Nullable VariableTree receiverParameter;
 
     private List<ExpressionTree> throwsList = new ArrayList<>();
 
-    @Nullable
-    private BlockTree body;
+    private @Nullable BlockTree body;
 
-    @Nullable
-    private Tree defaultValue;
+    private @Nullable Tree defaultValue;
 
     /**
      * 返回方法 javadoc 注释。
      */
-    @Nullable
-    public DocCommentTree getJavadoc() {
+    public @Nullable DocCommentTree getJavadoc() {
         return javadoc;
     }
 

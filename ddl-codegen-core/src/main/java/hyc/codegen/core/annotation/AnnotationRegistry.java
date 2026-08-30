@@ -4,7 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 注解处理器注册表：按注解名查找处理器。
@@ -32,8 +33,7 @@ public final class AnnotationRegistry {
     }
 
     /** 按名查处理器；不存在时返回 {@code null}。 */
-    @Nullable
-    public DdlAnnotationHandler get(String name) {
+    public @Nullable DdlAnnotationHandler get(String name) {
         return handlers.get(name);
     }
 

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 import hyc.codegen.core.annotation.AnnotationRegistry;
 import hyc.codegen.core.config.ArtifactConfig;
@@ -15,6 +14,7 @@ import hyc.codegen.core.model.Table;
 import hyc.codegen.core.naming.NamingService;
 import hyc.codegen.core.types.TypeMapper;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * 一次代码生成执行的全局上下文：配置、共享服务、拦截器注册表、变更报告。
@@ -97,8 +97,7 @@ public final class GenerationContext {
     }
 
     /** enum 产物包（enums 特性开启时：唯一 enum 生成器产物，缺省/多实例报错）。 */
-    @Nullable
-    public String enumPackageFor(String artifactName) {
+    public @Nullable String enumPackageFor(String artifactName) {
         if (!usesEnums(artifactName)) {
             return null;
         }
@@ -161,8 +160,7 @@ public final class GenerationContext {
                 + defaultGenerator + "' 的实例数 = " + matches.size() + "（多实例/无实例时必须显式配置 " + refKey + "）");
     }
 
-    @Nullable
-    private String refOf(ArtifactConfig owner, String refKey) {
+    private @Nullable String refOf(ArtifactConfig owner, String refKey) {
         if ("source".equals(refKey)) {
             return owner.getSource();
         }
@@ -173,8 +171,7 @@ public final class GenerationContext {
     }
 
     /** enum 产物包（唯一 enum 实例；未配置返回 null，多实例报错）。 */
-    @Nullable
-    public String enumPackage() {
+    public @Nullable String enumPackage() {
         List<ArtifactConfig> matches = new ArrayList<>();
         for (ArtifactConfig a : config.getArtifacts().values()) {
             if ("enum".equals(a.getGenerator())) {
