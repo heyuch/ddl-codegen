@@ -29,7 +29,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * reconcile 语义（DESIGN §1/§4）：模型有而文件无 → 增；有而模型无 → 删；类型/签名变 → 替换；一致 → 跳过。
  * 只动 {@code @Generated} 成员，用户手写成员永不触碰；解析失败 → 记警告跳过（不覆盖）。
  */
-public abstract class AbstractJavaArtifactGenerator implements Generator {
+public abstract class AbstractJavaGenerator implements Generator {
 
     private final JavaParser parser = new JavaParser();
 

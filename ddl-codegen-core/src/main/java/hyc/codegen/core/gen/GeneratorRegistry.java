@@ -11,7 +11,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * 内置生成器不依赖它（类名/包名均由命名推导），它只作用户扩展互相传信息的兜底
  * （DESIGN §10：95% 由命名推导覆盖，registry 不做依赖图）。
  */
-public final class ArtifactRegistry {
+public final class GeneratorRegistry {
 
     /** kind#table → 描述对象。 */
     private final Map<String, Object> entries = new LinkedHashMap<>();

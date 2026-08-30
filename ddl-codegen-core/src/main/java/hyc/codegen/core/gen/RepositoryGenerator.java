@@ -8,7 +8,7 @@ import hyc.codegen.tree.Class;
 /**
  * Repository 接口生成器（注册名 {@code repository}）：索引派生 findBy*（Entity 视图，use 含 enums 时 enum 参数用枚举类）。
  */
-public final class RepositoryGenerator extends AbstractJavaArtifactGenerator {
+public final class RepositoryGenerator extends AbstractJavaGenerator {
 
     /** 生成器注册名。 */
     public static final String NAME = "repository";

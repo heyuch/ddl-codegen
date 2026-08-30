@@ -20,7 +20,7 @@ import hyc.codegen.tree.Variable;
  * <li>{@code enums/type} → 字段类型视图（在 {@link Generator#fieldType} 基类实现）</li>
  * </ul>
  */
-public final class PojoGenerator extends AbstractJavaArtifactGenerator {
+public final class PojoGenerator extends AbstractJavaGenerator {
 
     /** 生成器注册名。 */
     public static final String NAME = "pojo";

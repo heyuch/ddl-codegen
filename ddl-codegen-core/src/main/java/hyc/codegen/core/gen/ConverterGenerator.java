@@ -20,7 +20,7 @@ import hyc.codegen.tree.gen.Expr;
  * source/target 为产物引用（可缺省为唯一 pojo 实例）；enum 转换方向由两端产物的
  * {@code use: enums} 决定（一端枚举类一端 String 时转换：fromValue / .value()）。
  */
-public final class ConverterGenerator extends AbstractJavaArtifactGenerator {
+public final class ConverterGenerator extends AbstractJavaGenerator {
 
     /** 生成器注册名。 */
     public static final String NAME = "converter";

@@ -158,7 +158,7 @@ annotations.nullable=org.checkerframework.checker.nullness.qual.Nullable
 
 | SPI | 位置 | 用途 |
 |---|---|---|
-| `Generator` | `hyc.codegen.core.gen` | 自定义 artifact（继承 `AbstractJavaArtifactGenerator` 只写成员构建） |
+| `Generator` | `hyc.codegen.core.gen` | 自定义 artifact（继承 `AbstractJavaGenerator` 只写成员构建） |
 | `GeneratorInterceptor` | `hyc.codegen.core.interceptor` | AST 装饰（内置 lombok/jsr303；`artifacts.X.use` 引用） |
 | `DdlAnnotationHandler` | `hyc.codegen.core.annotation` | DDL 注解解析 + 类型钩子（`annotations.custom` 注册） |
 

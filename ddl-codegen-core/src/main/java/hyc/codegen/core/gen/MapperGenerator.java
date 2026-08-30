@@ -18,7 +18,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * 返回类型产物 = {@code target}（缺省 = 唯一 pojo 实例；无 po 时配 {@code target=entity}）。
  * 参数视图由产物 use 决定（默认无 enums → enum 列 String）。
  */
-public final class MapperGenerator extends AbstractJavaArtifactGenerator {
+public final class MapperGenerator extends AbstractJavaGenerator {
 
     /** 生成器注册名。 */
     public static final String NAME = "mybatisMapper";

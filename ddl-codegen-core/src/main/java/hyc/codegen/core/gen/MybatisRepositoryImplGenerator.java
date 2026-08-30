@@ -25,7 +25,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * 持有 {@code @Resource Mapper} 与 {@code @Resource Converter}（di=field；config
  * {@code di=constructor} 可选）。
  */
-public final class MybatisRepositoryImplGenerator extends AbstractJavaArtifactGenerator {
+public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator {
 
     /** 生成器注册名。 */
     public static final String NAME = "mybatisRepositoryImpl";

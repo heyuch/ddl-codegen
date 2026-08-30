@@ -48,7 +48,7 @@ class ReconcileLifecycleTest {
     }
 
     /** 测试生成器：每列一个 private 字段 + 一个由表名驱动的 describe() 方法（覆盖方法级 reconcile）。 */
-    static final class TestGenerator extends AbstractJavaArtifactGenerator {
+    static final class TestGenerator extends AbstractJavaGenerator {
 
         @Override
         public String kind() {

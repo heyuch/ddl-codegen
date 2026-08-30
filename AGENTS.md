@@ -45,7 +45,7 @@ DDL 文本
   → DruidDdlParser（→ DdlOperation[]）
   → StatementApplier（多态分发：每种 DdlOperation 自实现 apply 到 Schema，产出 ApplyResult：受影响表/改名/删除记录）
   → CodeGenerator（按 config artifacts.* 启用顺序，逐表 × 逐 artifact 调用生成器）
-  → AbstractJavaArtifactGenerator（定位文件 → 解析现有源码 → 只 reconcile @Generated 成员 → 拦截器 → 打印）
+  → AbstractJavaGenerator（定位文件 → 解析现有源码 → 只 reconcile @Generated 成员 → 拦截器 → 打印）
   → FileWriter（字节比对，无变化不写盘）
   → 文件 + ChangeReport
 ```
@@ -60,7 +60,7 @@ DDL 文本
 
 | SPI | 位置 | 用途 |
 |---|---|---|
-| `Generator` | `hyc.codegen.core.gen` | 唯一扩展点；自定义生成器拿全模型，Java 类继承 `AbstractJavaArtifactGenerator` 自动获得 @Generated 增量同步 |
+| `Generator` | `hyc.codegen.core.gen` | 唯一扩展点；自定义生成器拿全模型，Java 类继承 `AbstractJavaGenerator` 自动获得 @Generated 增量同步 |
 | 特性开关 | 产物配置选项（如 `entity.lombok=true`） | 生成器内部应用；无需扩展代码 |
 | DDL 注解 | `@name:value` 解析存 meta | `@ignore` 模型剪枝；`@type` 由 pojo 的 `type` 特性处理；其余留给自定义生成器 |
 

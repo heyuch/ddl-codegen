@@ -199,11 +199,11 @@ public interface Generator {
 }
 ```
 
-- **`AbstractJavaArtifactGenerator` 基类**：封装 reconcile 循环（找 `@Generated` 成员 vs 模型期望：
+- **`AbstractJavaGenerator` 基类**：封装 reconcile 循环（找 `@Generated` 成员 vs 模型期望：
   缺→增、签名/类型不符→替换、多余→删），用户生成器只写"成员构建器"
 - **两阶段**：阶段 A 生成器发布 typed 描述（仅依赖模型+config），阶段 B 消费描述产出文件 →
   跨 artifact 依赖天然无环。95% 由命名推导覆盖（类名 = table + naming + config，各生成器独立算出同一结果）；
-  `ArtifactRegistry`（发布/查找元数据）仅作用户扩展兜底，不做依赖图
+  `GeneratorRegistry`（发布/查找元数据）仅作用户扩展兜底，不做依赖图
 - **生成侧 = 字符串方法体 + Expr/Block 助手函数**（不用表达式 AST，见 §14）
 - 内置生成器（7 个）：entity / enum / pojo / mybatisMapper / mybatisXml / repository / repositoryImpl / converter
 
