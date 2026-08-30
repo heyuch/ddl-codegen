@@ -74,6 +74,7 @@ DDL 文本
 | `docs/design.md` | 完整技术方案（边界契约/模块/管线/SPI/风险取舍） |
 | `docs/progress.md` | 项目级进度 + 关键决策记录 + 已知限制 |
 | `docs/static-rules-review.md` | 静态检查规则考察（阈值基线/实证/抑制准则） |
+| `docs/glossary.md` | 词汇表：术语中英对照统一（写作与讨论默认词汇） |
 | `docs/tasks.md` | 历史任务列表（M0-M4 已完成） |
 | `docs/changes/` | 变更目录：`{YYYY-MM-DD}-{feat/opt/fix/chore}-{标题}/`，内含 `design.md` + `progress.md` |
 
