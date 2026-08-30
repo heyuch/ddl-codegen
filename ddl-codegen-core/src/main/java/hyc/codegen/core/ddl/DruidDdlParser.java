@@ -167,7 +167,7 @@ public final class DruidDdlParser implements DdlParser {
         if (dataType != null) {
             if ("enum".equals(typeName)) {
                 List<String> values = new ArrayList<>();
-                String value = DruidAst.stringArgument(dataType, values.size());
+                String value = DruidAst.stringArgument(dataType, 0);
                 while (value != null) {
                     values.add(value);
                     value = DruidAst.stringArgument(dataType, values.size());

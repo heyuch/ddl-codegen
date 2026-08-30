@@ -14,15 +14,6 @@
         <Justification>可修改 AST 设计：节点/构建器共享内部可变对象是语义要求，深拷贝为过度工程</Justification>
     </Match>
 
-    <!-- EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC：TypeReference 继承 Identifier 复用代码，
-         @EqualsAndHashCode(callSuper=false) 使子类 equals 与父类不对称。
-         工具流程中 Identifier 与 TypeReference 从不跨类型比较，值类型独立相等是有意设计。 -->
-    <Match>
-        <Class name="hyc.codegen.tree.TypeReference"/>
-        <Bug pattern="EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC"/>
-        <Justification>值类型独立相等是有意设计（callSuper=false），跨类型 equals 不对称无实际影响</Justification>
-    </Match>
-
     <!-- EI_EXPOSE_REP / EI_EXPOSE_REP2：core 管线内部对象按引用共享（DDL 操作携带完整 Table 模型、
          生成上下文/表上下文/规格对象持有可变的模型与配置、模型类的 Meta 容器设计为开放读写、
          服务对象（NamingService/TypeMapper）持有 config 与处理器列表）。

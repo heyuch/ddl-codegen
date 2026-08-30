@@ -5,13 +5,13 @@ import javax.lang.model.element.Name;
 
 import lombok.EqualsAndHashCode;
 
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 public final class TypeReference extends Identifier {
 
     @Nullable
     private Package pkg;
 
-    private String name;
+    private String className;
 
     public TypeReference(String qname) {
         super(qname);
@@ -19,28 +19,28 @@ public final class TypeReference extends Identifier {
         int i = qname.lastIndexOf('.');
         if (i != -1) {
             this.pkg = Package.of(qname.substring(0, i));
-            this.name = qname.substring(i + 1);
+            this.className = qname.substring(i + 1);
         } else {
             this.pkg = null;
-            this.name = qname;
+            this.className = qname;
         }
     }
 
     public TypeReference(String pkg, String name) {
-        super(name);
+        super(pkg + "." + name);
         this.pkg = Package.of(pkg);
-        this.name = name;
+        this.className = name;
     }
 
     public TypeReference(Package pkg, String name) {
-        super(name);
+        super(pkg == null ? name : pkg.getPath() + "." + name);
         this.pkg = pkg;
-        this.name = name;
+        this.className = name;
     }
 
     @Override
     public Name getName() {
-        return new StringName(name);
+        return new StringName(className);
     }
 
     /**
@@ -68,7 +68,7 @@ public final class TypeReference extends Identifier {
             sb.append(p.getPath())
                     .append(".");
         }
-        sb.append(name);
+        sb.append(className);
 
         return sb.toString();
     }
