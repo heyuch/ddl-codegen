@@ -23,6 +23,13 @@
             <artifactId>jsr305</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- lombok 生成 @SuppressFBWarnings（lombok.extern.findbugs.addSuppressFBWarnings）需要 -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>4.8.6</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>checker-qual</artifactId>

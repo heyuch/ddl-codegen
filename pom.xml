@@ -156,6 +156,7 @@
                                 <scriptableOutput>true</scriptableOutput>
                                 <ignoredUnusedDeclaredDependencies>
                                     <ignoredUnusedDeclaredDependency>org.projectlombok:lombok::</ignoredUnusedDeclaredDependency>
+                                    <ignoredUnusedDeclaredDependency>com.github.spotbugs:spotbugs-annotations::</ignoredUnusedDeclaredDependency>
                                 </ignoredUnusedDeclaredDependencies>
                             </configuration>
                         </execution>

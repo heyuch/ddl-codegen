@@ -14,19 +14,6 @@
         <Justification>可修改 AST 设计：节点/构建器共享内部可变对象是语义要求，深拷贝为过度工程</Justification>
     </Match>
 
-    <!-- RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE：lombok @EqualsAndHashCode 生成的 equals/hashCode
-         空安全比较（this.x == null ? ...），与 checkerframework 写入字节码的默认 @NonNull 冲突。
-         lombok 生成逻辑不可控，纯误报（源码侧无注解，字段实际构造器必填）。 -->
-    <Match>
-        <Or>
-            <Class name="hyc.codegen.tree.Identifier"/>
-            <Class name="hyc.codegen.tree.Package"/>
-            <Class name="hyc.codegen.tree.TypeReference"/>
-        </Or>
-        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
-        <Justification>lombok 生成的空安全比较与 checkerframework 字节码默认 @NonNull 冲突，误报</Justification>
-    </Match>
-
     <!-- EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC：TypeReference 继承 Identifier 复用代码，
          @EqualsAndHashCode(callSuper=false) 使子类 equals 与父类不对称。
          工具流程中 Identifier 与 TypeReference 从不跨类型比较，值类型独立相等是有意设计。 -->
