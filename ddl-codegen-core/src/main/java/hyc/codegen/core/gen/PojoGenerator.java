@@ -17,7 +17,7 @@ import hyc.codegen.tree.Variable;
  * <li>{@code serializable=true} → {@code implements Serializable} + serialVersionUID</li>
  * <li>{@code jsr303=true} → NOT NULL/长度/精度 → {@code @NotNull/@Size/@Digits}</li>
  * <li>{@code jsr305=true} → nullable 列 → {@code @Nullable}</li>
- * <li>{@code enums/type} → 字段类型视图（在 {@link ArtifactGenerator#fieldType} 基类实现）</li>
+ * <li>{@code enums/type} → 字段类型视图（在 {@link Generator#fieldType} 基类实现）</li>
  * </ul>
  */
 public final class PojoGenerator extends AbstractJavaArtifactGenerator {

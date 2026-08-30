@@ -27,10 +27,10 @@ import hyc.codegen.core.types.TypeMapper;
  */
 public final class CodeGenerator {
 
-    private final Map<String, ArtifactGenerator> generators = new LinkedHashMap<>();
+    private final Map<String, Generator> generators = new LinkedHashMap<>();
 
-    public CodeGenerator(List<ArtifactGenerator> generators) {
-        for (ArtifactGenerator generator : generators) {
+    public CodeGenerator(List<Generator> generators) {
+        for (Generator generator : generators) {
             this.generators.put(generator.kind(), generator);
         }
     }
@@ -84,7 +84,7 @@ public final class CodeGenerator {
                 .typeMapper(typeMapper)
                 .annotationRegistry(annotationRegistry)
                 .report(report);
-        for (ArtifactGenerator generator : generators.values()) {
+        for (Generator generator : generators.values()) {
             gb.generator(generator);
         }
         return gb.build();
@@ -146,7 +146,7 @@ public final class CodeGenerator {
                 gctx.warning("产物 '" + name + "' 未配置 generator，跳过");
                 continue;
             }
-            ArtifactGenerator generator = generators.get(generatorName);
+            Generator generator = generators.get(generatorName);
             if (generator == null) {
                 gctx.warning("产物 '" + name + "' 引用了未注册的生成器: " + generatorName);
                 continue;

@@ -19,7 +19,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * insert（自增主键不入列 + useGeneratedKeys 回填）、deleteById、update（不含主键列）、
  * findById 与索引派生的 findBy*（等值 AND 连接）。XML 方法 id 与 Mapper 接口一致。
  */
-public final class MapperXmlGenerator implements ArtifactGenerator {
+public final class MapperXmlGenerator implements Generator {
 
     /** 生成器注册名。 */
     public static final String NAME = "mybatisXml";

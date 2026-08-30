@@ -9,7 +9,7 @@ import hyc.codegen.core.model.Column;
  * 用不上的方法直接抛 {@link UnsupportedOperationException}（如 XML 生成器无 Java 类/字段）。
  * 基类 {@link AbstractJavaArtifactGenerator} 提供命名/类型映射的框架默认实现。
  */
-public interface ArtifactGenerator {
+public interface Generator {
 
     /** 生成器注册名（config {@code generator=<名>} 引用）。 */
     String kind();

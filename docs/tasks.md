@@ -67,7 +67,7 @@
 
 ## M2：生成核心
 
-- [ ] 2.1 ArtifactGenerator SPI + AbstractJavaArtifactGenerator（@Generated 成员 reconcile 循环：
+- [ ] 2.1 Generator SPI + AbstractJavaArtifactGenerator（@Generated 成员 reconcile 循环：
       缺→增 / 多余→删 / 签名类型不符→替换 / 一致→跳过）
 - [ ] 2.2 GeneratorInterceptor SPI（只动 @Generated 成员 + import；幂等）+ 内置 lombok、jsr303
 - [ ] 2.3 两阶段生成（阶段 A 发布描述 → 阶段 B 生成文件）+ ArtifactRegistry 兜底 +

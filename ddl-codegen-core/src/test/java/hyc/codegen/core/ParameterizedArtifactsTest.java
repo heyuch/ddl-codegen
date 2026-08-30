@@ -13,10 +13,10 @@ import hyc.codegen.core.ddl.ApplyResult;
 import hyc.codegen.core.ddl.DdlParser;
 import hyc.codegen.core.ddl.DruidDdlParser;
 import hyc.codegen.core.ddl.StatementApplier;
-import hyc.codegen.core.gen.ArtifactGenerator;
 import hyc.codegen.core.gen.CodeGenerator;
 import hyc.codegen.core.gen.ConverterGenerator;
 import hyc.codegen.core.gen.EnumGenerator;
+import hyc.codegen.core.gen.Generator;
 import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
 import hyc.codegen.core.gen.MybatisRepositoryImplGenerator;
@@ -85,7 +85,7 @@ class ParameterizedArtifactsTest {
         for (ArtifactConfig artifact : artifacts) {
             config().addArtifact(artifact);
         }
-        List<ArtifactGenerator> generators = Arrays.asList(
+        List<Generator> generators = Arrays.asList(
                 new PojoGenerator(),
                 new EnumGenerator(),
                 new MapperGenerator(),

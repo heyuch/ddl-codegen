@@ -36,7 +36,7 @@ public final class GenerationContext {
 
     private final ArtifactRegistry artifactRegistry;
 
-    private final Map<String, ArtifactGenerator> generators;
+    private final Map<String, Generator> generators;
 
     private final ChangeReport report;
 
@@ -44,7 +44,7 @@ public final class GenerationContext {
 
     GenerationContext(DdlConfig config, NamingService naming, TypeMapper typeMapper,
             AnnotationRegistry annotationRegistry, ArtifactRegistry artifactRegistry,
-            Map<String, ArtifactGenerator> generators, ChangeReport report) {
+            Map<String, Generator> generators, ChangeReport report) {
         this.config = config;
         this.projectRoot = config.getRoot();
         this.naming = naming;
@@ -94,13 +94,13 @@ public final class GenerationContext {
     }
 
     /** 产物对应的生成器实例（config.generator → 注册表）。 */
-    public ArtifactGenerator generatorFor(String artifactName) {
+    public Generator generatorFor(String artifactName) {
         ArtifactConfig artifactConfig = requireArtifact(artifactName);
         String generatorName = artifactConfig.getGenerator();
         if (generatorName == null) {
             throw new IllegalStateException("产物 '" + artifactName + "' 未配置 generator");
         }
-        ArtifactGenerator generator = generators.get(generatorName);
+        Generator generator = generators.get(generatorName);
         if (generator == null) {
             throw new IllegalStateException("产物 '" + artifactName + "' 引用了未注册的生成器: " + generatorName);
         }
@@ -229,7 +229,7 @@ public final class GenerationContext {
             justification = "builder 模式持有待构建对象")
     public static final class Builder {
 
-        private final Map<String, ArtifactGenerator> generators = new LinkedHashMap<>();
+        private final Map<String, Generator> generators = new LinkedHashMap<>();
 
         @MonotonicNonNull
         private DdlConfig config;
@@ -277,7 +277,7 @@ public final class GenerationContext {
             return this;
         }
 
-        public Builder generator(ArtifactGenerator generator) {
+        public Builder generator(Generator generator) {
             generators.put(generator.kind(), generator);
             return this;
         }

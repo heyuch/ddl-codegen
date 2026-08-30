@@ -13,10 +13,10 @@ import hyc.codegen.core.ddl.ApplyResult;
 import hyc.codegen.core.ddl.DdlParser;
 import hyc.codegen.core.ddl.DruidDdlParser;
 import hyc.codegen.core.ddl.StatementApplier;
-import hyc.codegen.core.gen.ArtifactGenerator;
 import hyc.codegen.core.gen.CodeGenerator;
 import hyc.codegen.core.gen.ConverterGenerator;
 import hyc.codegen.core.gen.EnumGenerator;
+import hyc.codegen.core.gen.Generator;
 import hyc.codegen.core.gen.MapperGenerator;
 import hyc.codegen.core.gen.MapperXmlGenerator;
 import hyc.codegen.core.gen.MybatisRepositoryImplGenerator;
@@ -28,6 +28,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -111,7 +112,7 @@ class EndToEndTest {
         artifact("entityConverter").setSource("po");
         artifact("entityConverter").setTarget("entity");
 
-        List<ArtifactGenerator> generators = Arrays.asList(
+        List<Generator> generators = Arrays.asList(
                 new PojoGenerator(),
                 new EnumGenerator(),
                 new MapperGenerator(),

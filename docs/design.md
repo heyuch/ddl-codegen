@@ -193,7 +193,7 @@ public interface DdlAnnotationHandler {
 ## 10. 生成器体系
 
 ```java
-public interface ArtifactGenerator {
+public interface Generator {
     /** existing == null 表示文件不存在，从零构建；否则只动 @Generated 成员 */
     JavaSource<?> apply(TableContext table, JavaSource<?> existing, GenerationContext ctx);
 }
