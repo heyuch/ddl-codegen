@@ -54,3 +54,24 @@
 - **KeyFor 局部化**：移除全局 `-AsuppressWarnings=keyfor`，改为 10 个报错类类级 `@SuppressWarnings("keyfor")` + WHY（与 Map 无关的 JDK 通配符误报；AnnotationRegistry.names 的 keySet 返回值为真实 KeyFor 类型，方法级抑制）
 - JUnit 断言契约：`checker/junit-assertions.astub`（`@EnsuresNonNull("#1")`，-Astubs 引入），测试的 assertNotNull 后非 null 由 checkerframework 认可
 - 测试代码：getColumn/getTable/getIndex 后直接使用 → assertNotNull；e.getMessage() → 判空；EndToEndTest.add 的 pkg/suffix 参数 @Nullable（XML 产物传 null）
+
+### 后续收尾（随本变更迭代完成）
+
+- **KeyFor 抑制清零**（用户要求尝试 @KeyFor 注解）：实验证实 @KeyFor("descs") 不适用
+  （列表元素与 Map key 无关），@UnknownKeyFor 显式元素标注是正确表达——
+  Doc/Import 类 `new ArrayList<@UnknownKeyFor Elem>(x)`、JavaCodegen `foreachWith
+  (Collection<? extends @UnknownKeyFor T>)` 一处签名修 16 处调用点、AnnotationRegistry
+  `new LinkedHashSet<>(keySet)` 拷贝脱离关联——10 个类级 keyfor 抑制全部移除
+- **lombok 生成成员自动 @SuppressFBWarnings**（lombok.extern.findbugs.addSuppressFBWarnings
+  = true + tree 模块 spotbugs-annotations）→ RCN lombok 8 条排除删除（字节码实证）
+- **jsr305 移除 + 迁移 checkerframework @Nullable**：46 文件 import 替换 + TYPE_USE
+  位置调整（87 处声明位置→类型前）+ 生成代码默认值同步；纯 type-use 注解不再与
+  参数级并存 → **spotbugs TIGHTENS 误报消失**，exclude 再删 1 条
+- **TypeReference equals 契约修复**：name→className 消除字段遮蔽 + callSuper=true
+  （lombok canEqual 保证对称，spotbugs EQ 识别委托不再报）+ 统一父类 name 为全限定名
+  + TypeReferenceTest 契约断言 → exclude 删 EQ
+- **core EI 就地注解化**：8 个类 @SuppressFBWarnings(value={...}, justification="...")
+  理由内嵌注解；浅拷贝可行的 3 项（DocLink/QueryMethods$Spec/TypeMapper）代码修复移出
+- **最终状态**：spotbugs-exclude.xml 仅剩 1 条（tree 包可修改 AST 设计，用户认可）；
+  @SuppressWarnings 仅剩工具契约类（override.return/argument 的 javac API 语义、
+  复杂度分发器依据）；checkerframework error 级 + spotbugs 双工具全绿
