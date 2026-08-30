@@ -19,8 +19,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * <p>
  * 由 {@link GenerationContext#tableContext} 创建，生成器不直接持有底层服务。
  */
-// EI 抑制：表上下文持有 Table 模型与 artifact 配置：生成器高频读取，Table 深拷贝不现实且拷贝后与 config 查找结果引用不等
-@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
+@SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"},
+        justification = "表上下文持有 Table 与配置，生成器高频读取")
 public final class TableContext {
 
     private final Table table;

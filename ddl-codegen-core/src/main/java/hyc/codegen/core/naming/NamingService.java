@@ -20,8 +20,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * 配置了 {@link TableNameStrategy} 时整体替换该链（逃生口）。
  * 方法名 = 配置前缀 + 索引列按序 camelCase 以 And 连接（{@code name,gender} → {@code findByNameAndGender}）。
  */
-// EI 抑制：服务构造器持有 DdlConfig（命名规则只读），深拷贝不现实
-@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
+@SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "服务持有 DdlConfig（命名规则只读）")
 public final class NamingService {
 
     /** 保留字全集：Java 关键字 + 常见 SQL 保留字（列名如 {@code order} 命中时按配置追加后缀）。 */

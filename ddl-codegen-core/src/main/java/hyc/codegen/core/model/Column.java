@@ -14,8 +14,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * 由 DDL 解析产生：{@code sqlType} 为 MySQL 原始类型名（小写，如 varchar/decimal/enum），
  * {@code enumValues} 仅对 enum 列非空，{@code meta} 存放 DDL 注解解析结果。
  */
-// EI 抑制：Meta 是开放读写容器（javadoc 契约）：注解处理器 getMeta().put() 写入、生成器读取，拷贝则写入丢失
-@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
+@SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"},
+        justification = "Meta 开放读写容器（javadoc 契约），拷贝则写入丢失")
 public final class Column {
 
     private final String name;
