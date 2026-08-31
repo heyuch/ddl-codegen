@@ -12,6 +12,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  */
 @AnalyzeClasses(packages = {"hyc.codegen.mavenplugin", "hyc.codegen.core", "hyc.codegen.tree"},
         importOptions = ImportOption.DoNotIncludeTests.class)
+// ArchUnit 规则字段命名惯例为小驼峰，与 checkstyle 常量规则冲突
+@SuppressWarnings("ConstantName")
 class ArchitectureTest {
 
     @ArchTest

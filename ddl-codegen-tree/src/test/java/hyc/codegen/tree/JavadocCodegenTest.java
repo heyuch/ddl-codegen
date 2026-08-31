@@ -8,6 +8,8 @@ import com.sun.source.doctree.DocTree;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+// 组装型测试：引用类型数 ≈ 被测 DocTree 节点类型数（§6 元素驱动）
+@SuppressWarnings("ClassDataAbstractionCoupling")
 public class JavadocCodegenTest {
 
     @Test

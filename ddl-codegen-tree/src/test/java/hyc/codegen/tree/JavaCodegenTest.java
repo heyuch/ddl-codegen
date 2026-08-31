@@ -9,6 +9,8 @@ import com.sun.source.tree.Tree;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+// 组装型测试：引用类型数 ≈ 被测 AST 节点类型数（§6 元素驱动）；StringJoiner 先声明后逐行填充的组装模式使声明距使用远（VDUD 固有）
+@SuppressWarnings({"ClassDataAbstractionCoupling", "VariableDeclarationUsageDistance"})
 public class JavaCodegenTest {
 
     @Test
@@ -72,7 +74,8 @@ public class JavaCodegenTest {
         j.add(" * @return 匹配的枚举值，匹配不到返回 null");
         j.add(" */");
         j.add("@Nullable");
-        j.add("public static List<TestEnum> getByCodes(@NotNull @NotEmpty(message = \"codes 不能为空\") List<Integer> codes) {");
+        j.add("public static List<TestEnum> getByCodes(@NotNull @NotEmpty(message = \"codes 不能为空\")"
+                + " List<Integer> codes) {");
         b.add("    if (codes == null) {");
         b.add("        return null;");
         b.add("    }");

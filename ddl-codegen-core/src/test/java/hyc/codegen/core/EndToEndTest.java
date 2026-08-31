@@ -35,7 +35,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * 端到端验收：完整 DDL（enum/@type/@as/@ignore/索引）→ 全链路 artifact 文件。
  */
+// 门面式集成测试：引用类型数 ≈ 被测场景涉及的生成器/模型类数（§6 元素驱动）
+@SuppressWarnings({"ClassDataAbstractionCoupling", "ClassFanOutComplexity"})
 class EndToEndTest {
+
+    private static final String DDL = "create table t_user (\n"
+            + "    id bigint not null auto_increment comment '主键',\n"
+            + "    name varchar(50) not null comment '用户名',\n"
+            + "    gender enum('male','female') comment '性别',\n"
+            + "    status tinyint not null default 0 comment '状态',\n"
+            + "    credits decimal(10,2) comment '积分',\n"
+            + "    ext_info varchar(500) comment '扩展信息 @ignore',\n"
+            + "    create_time datetime comment '创建时间',\n"
+            + "    primary key (id),\n"
+            + "    unique key uk_name (name),\n"
+            + "    index idx_status (status) comment '@ignore'\n"
+            + ") comment '用户表'";
 
     @TempDir
     @Nullable
@@ -46,8 +61,11 @@ class EndToEndTest {
     private @Nullable CodeGenerator generator;
 
     /**
+     * JUnit @TempDir 注入目录。
+     * 
      * @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。
      */
+
     private Path tempDir() {
         Path dir = temp;
         if (dir == null) {
@@ -64,7 +82,7 @@ class EndToEndTest {
     }
 
     /**
-     * @BeforeEach 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。
+     * 初始化字段（@BeforeEach 注入，标注 @Nullable，使用点经此显式校验）。
      */
     private CodeGenerator generator() {
         if (generator == null) {
@@ -149,21 +167,8 @@ class EndToEndTest {
         return new String(Files.readAllBytes(tempDir().resolve(relative)), StandardCharsets.UTF_8);
     }
 
-    private static final String DDL = "create table t_user (\n"
-            + "    id bigint not null auto_increment comment '主键',\n"
-            + "    name varchar(50) not null comment '用户名',\n"
-            + "    gender enum('male','female') comment '性别',\n"
-            + "    status tinyint not null default 0 comment '状态',\n"
-            + "    credits decimal(10,2) comment '积分',\n"
-            + "    ext_info varchar(500) comment '扩展信息 @ignore',\n"
-            + "    create_time datetime comment '创建时间',\n"
-            + "    primary key (id),\n"
-            + "    unique key uk_name (name),\n"
-            + "    index idx_status (status) comment '@ignore'\n"
-            + ") comment '用户表'";
-
     @Test
-    void fullChainGeneratesAllArtifacts() throws Exception {
+    void entityGenerated() throws Exception {
         generate(DDL);
 
         // Entity：字段、@Generated、lombok、jsr303、@ignore 排除、@as 枚举
@@ -179,6 +184,11 @@ class EndToEndTest {
         assertTrue(entity.contains("@Size(max = 50)"), entity);
         assertTrue(entity.contains("@Generated"), entity);
         assertTrue(entity.contains("public class User"), entity);
+    }
+
+    @Test
+    void enumGenerated() throws Exception {
+        generate(DDL);
 
         // Enum：@as 命名 + 常量 + value/fromValue
         String gender = read("com/demo/enums/Gender.java");
@@ -186,11 +196,21 @@ class EndToEndTest {
         assertTrue(gender.contains("FEMALE(\"female\")"), gender);
         assertTrue(gender.contains("fromValue"), gender);
         assertTrue(gender.contains("public String value()"), gender);
+    }
+
+    @Test
+    void pojoGenerated() throws Exception {
+        generate(DDL);
 
         // Pojo：enum → String，@type 不影响 pojo
         String pojo = read("com/demo/pojo/UserPo.java");
         assertTrue(pojo.contains("private String gender"), pojo);
         assertTrue(pojo.contains("private BigDecimal credits"), pojo);
+    }
+
+    @Test
+    void mapperGenerated() throws Exception {
+        generate(DDL);
 
         // Mapper：CRUD + 唯一键 @Nullable + @ignore 索引跳过
         String mapper = read("com/demo/mapper/UserMapper.java");
@@ -201,6 +221,11 @@ class EndToEndTest {
         assertTrue(mapper.contains("UserPo findById(@Param(\"id\") Long id)"), mapper);
         assertTrue(mapper.contains("UserPo findByName(@Param(\"name\") String name)"), mapper);
         assertFalse(mapper.contains("findByStatus"), mapper);
+    }
+
+    @Test
+    void xmlGenerated() throws Exception {
+        generate(DDL);
 
         // XML：resultMap/BaseColumnList/CRUD/select、id 与接口一致、t. 别名、insert 不含自增主键
         String xml = read("src/main/resources/mapper/UserMapper.xml");
@@ -213,6 +238,11 @@ class EndToEndTest {
         assertFalse(xml.contains("findByStatus"), xml);
         assertTrue(xml.contains("useGeneratedKeys=\"true\""), xml);
         assertFalse(xml.contains("t.id,\n        id"), xml);
+    }
+
+    @Test
+    void repositoryGenerated() throws Exception {
+        generate(DDL);
 
         // Repository：entity 视图（enum 参数用枚举类）
         String repository = read("com/demo/repository/UserRepository.java");
@@ -220,6 +250,11 @@ class EndToEndTest {
         assertTrue(repository.contains("User findById(Long id)"), repository);
         assertTrue(repository.contains("User findByName(String name)"), repository);
         assertFalse(repository.contains("findByStatus"), repository);
+    }
+
+    @Test
+    void repositoryImplGenerated() throws Exception {
+        generate(DDL);
 
         // RepositoryImpl：桥接 + enum 转换
         String impl = read("com/demo/repository/impl/UserRepositoryImpl.java");
@@ -227,16 +262,20 @@ class EndToEndTest {
         assertTrue(impl.contains("private UserConverter userConverter;"), impl);
         assertTrue(impl.contains("return userConverter.toUser(userMapper.findById(id));"), impl);
         assertTrue(impl.contains("return userConverter.toUser(userMapper.findByName(name));"), impl);
+    }
+
+    @Test
+    void converterGenerated() throws Exception {
+        generate(DDL);
 
         // Converter：逐字段 + enum 双向转换
         String converter = read("com/demo/converter/UserConverter.java");
         assertTrue(converter.contains("User user = new User();"), converter);
-        assertTrue(
-                converter.contains(
-                        "user.setGender(source.getGender() == null ? null : Gender.fromValue(source.getGender()));"),
+        assertTrue(converter.contains(
+                "user.setGender(source.getGender() == null ? null : Gender.fromValue(source.getGender()));"),
                 converter);
-        assertTrue(
-                converter.contains("userPo.setGender(target.getGender() == null ? null : target.getGender().value());"),
+        assertTrue(converter.contains(
+                "userPo.setGender(target.getGender() == null ? null : target.getGender().value());"),
                 converter);
     }
 

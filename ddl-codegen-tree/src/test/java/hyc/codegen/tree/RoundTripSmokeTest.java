@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * 已知限制（JDK 11 公共 API 无 Tree.getComment）：声明前/语句前的行注释与块注释不保留，
  * 比较时对两侧统一剥离注释。
  */
+// 语义比较的字符转义 normalize 逻辑：分支数 ≈ 转义字符表（每字符一分支，§6 元素驱动）；ModifiedControlVariable 为 normalize 循环固有形态（逐字符改写）
+@SuppressWarnings({"CyclomaticComplexity", "NPathComplexity", "ModifiedControlVariable", "NestedIfDepth"})
 public class RoundTripSmokeTest {
 
     private static final Pattern LINE_COMMENT = Pattern.compile("//[^\\n]*");
@@ -102,10 +104,12 @@ public class RoundTripSmokeTest {
                     if (j < s.length()) {
                         char next = s.charAt(j);
                         if (inString && next == '\'') {
-                            sb.append('\'');      // 字符串内过度转义 \\' → '
+                            // 字符串内过度转义 \\' → '
+                            sb.append('\'');
                             i = j;
                         } else if (inChar && next == '"') {
-                            sb.append('"');       // 字符字面量内过度转义 \\" → "
+                            // 字符字面量内过度转义 \\" → "
+                            sb.append('"');
                             i = j;
                         } else if (next == 'u' && j + 4 < s.length()
                                 && isHexDigit(s.charAt(j + 1)) && isHexDigit(s.charAt(j + 2))
@@ -194,7 +198,10 @@ public class RoundTripSmokeTest {
     }
 
     private static boolean isHexDigit(char c) {
-        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+        boolean digit = c >= '0' && c <= '9';
+        boolean lower = c >= 'a' && c <= 'f';
+        boolean upper = c >= 'A' && c <= 'F';
+        return digit || lower || upper;
     }
 
     private static long hexValue(char c) {

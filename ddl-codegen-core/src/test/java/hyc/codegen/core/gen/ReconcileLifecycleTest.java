@@ -31,6 +31,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>
  * 覆盖字段与方法两级 reconcile（PIT 变异测试曾抓出方法级 reconcile 未被测试）。
  */
+// 门面式集成测试：引用类型数 ≈ 被测管线涉及类数（§6 元素驱动）
+@SuppressWarnings("ClassDataAbstractionCoupling")
 class ReconcileLifecycleTest {
 
     // JUnit @TempDir 注入，语法层不保证非 null：标 @Nullable，使用点经 tempDir() 显式校验。
@@ -38,7 +40,9 @@ class ReconcileLifecycleTest {
     @Nullable
     Path temp;
 
-    /** @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    /**
+     * 注入目录（@TempDir 注入，标注 @Nullable，使用点经此显式校验）。
+     */
     private Path tempDir() {
         Path dir = temp;
         if (dir == null) {

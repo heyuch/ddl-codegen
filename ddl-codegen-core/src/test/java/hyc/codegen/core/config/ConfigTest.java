@@ -21,12 +21,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class ConfigTest {
 
-    private final PropertiesConfigLoader loader = new PropertiesConfigLoader();
-
     // JUnit @TempDir 注入，语法层不保证非 null：标 @Nullable，使用点显式判空。
     @TempDir
     @Nullable
     Path tmpDir;
+
+    private final PropertiesConfigLoader loader = new PropertiesConfigLoader();
 
     private DdlConfig load(String content) throws Exception {
         Path dir = tmpDir;

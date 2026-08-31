@@ -15,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * 语句应用：按顺序累积到 Schema，rename 产出记录、drop 移除表。
  */
+// 测试组装模式：先声明结果/断言对象再使用（声明距使用远是组装型代码固有）
+@SuppressWarnings("VariableDeclarationUsageDistance")
 class StatementApplierTest {
 
     private final DruidDdlParser parser = new DruidDdlParser();

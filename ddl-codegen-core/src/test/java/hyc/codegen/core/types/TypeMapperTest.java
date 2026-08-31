@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+// 自定义 handler 匿名实现 21 行（阈值 20 微超，测试内聚的 handler 直白可读）
+@SuppressWarnings("AnonInnerLength")
 class TypeMapperTest {
 
     private final DdlConfig config = new DdlConfig();

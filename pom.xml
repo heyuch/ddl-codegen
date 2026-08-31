@@ -267,6 +267,8 @@
                     <version>${checkstyle-maven-plugin.version}</version>
                     <configuration>
                         <configLocation>${maven.multiModuleProjectDirectory}/checkstyle.xml</configLocation>
+                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                        <suppressionsLocation>${maven.multiModuleProjectDirectory}/checkstyle-suppressions.xml</suppressionsLocation>
                     </configuration>
                     <dependencies>
                         <dependency>

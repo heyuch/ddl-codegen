@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+    <!-- Demo.java 是 round-trip 字节全等夹具（RoundTripSmokeTest.demoRoundTripIsByteExact）：
+         加注解/javadoc/任何改动都会改变生成文本导致字节不等，整文件排除（与 spotbugs skipDefs 同依据）。 -->
+    <suppress files="Demo\.java$" checks=".*"/>
+    <!-- 测试代码适配：声明顺序/嵌套位置/javadoc 摘要风格对测试是低价值负担
+         （复杂度/长度拦截已覆盖核心诉求，这些规则对测试的可维护性收益不成比例）。 -->
+    <suppress files="src/test/java/.*" checks="DeclarationOrder|InnerTypeLast|SummaryJavadoc|SingleLineJavadoc"/>
+</suppressions>

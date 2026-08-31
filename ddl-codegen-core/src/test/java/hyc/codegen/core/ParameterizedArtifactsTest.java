@@ -37,22 +37,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 产物与生成器解耦场景（design: feat-parameterized-artifacts）：
  * 无 po（mapper.target=entity）、自定义产物（dto）、多 converter、一致性校验。
  */
+// 门面式集成测试：引用类型数 ≈ 被测场景涉及的生成器/模型类数（§6 元素驱动）
+@SuppressWarnings({"ClassFanOutComplexity", "ClassDataAbstractionCoupling"})
 class ParameterizedArtifactsTest {
 
     // JUnit @TempDir 注入，语法层不保证非 null：标 @Nullable，使用点经 tempDir() 显式校验。
-    @TempDir
-    @Nullable
-    Path temp;
-
-    /** @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
-    private Path tempDir() {
-        Path dir = temp;
-        if (dir == null) {
-            throw new AssertionError("JUnit 未注入 @TempDir");
-        }
-        return dir;
-    }
-
     private @Nullable DdlConfig config;
 
     private @Nullable CodeGenerator generator;
@@ -62,6 +51,21 @@ class ParameterizedArtifactsTest {
             + "    name varchar(50) comment '用户名',\n"
             + "    gender enum('male','female') comment '性别'\n"
             + ")";
+
+    @TempDir
+    @Nullable
+    Path temp;
+
+    /**
+     * 注入目录（@TempDir 注入，标注 @Nullable，使用点经此显式校验）。
+     */
+    private Path tempDir() {
+        Path dir = temp;
+        if (dir == null) {
+            throw new AssertionError("JUnit 未注入 @TempDir");
+        }
+        return dir;
+    }
 
     /** setUp 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
     private DdlConfig config() {

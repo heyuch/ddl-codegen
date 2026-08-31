@@ -15,6 +15,8 @@ import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.sli
  * 低层（annotation/naming/types/ddl）只向下；gen 是顶层。模块方向由 Maven 自身强制，这里只约束包级依赖与循环。
  */
 @AnalyzeClasses(packages = "hyc.codegen.core", importOptions = ImportOption.DoNotIncludeTests.class)
+// ArchUnit 规则字段命名惯例为小驼峰（leafPackages.../lowerLayers...），与 checkstyle 常量规则冲突
+@SuppressWarnings("ConstantName")
 class ArchitectureTest {
 
     /** 叶子包（model/config/io）不得依赖任何其他 core 包。 */
