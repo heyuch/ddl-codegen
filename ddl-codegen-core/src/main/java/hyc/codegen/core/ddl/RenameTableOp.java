@@ -17,6 +17,14 @@ public final class RenameTableOp implements DdlOperation {
         this.to = to;
     }
 
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        schema.renameTable(from, to);
+        result.affect(from);
+        result.affect(to);
+        result.tableRenamed(from, to);
+    }
+
     /** 旧表名。 */
     public String getFrom() {
         return from;
@@ -30,14 +38,6 @@ public final class RenameTableOp implements DdlOperation {
     @Override
     public String tableName() {
         return from;
-    }
-
-    @Override
-    public void apply(Schema schema, ApplyResult result) {
-        schema.renameTable(from, to);
-        result.affect(from);
-        result.affect(to);
-        result.tableRenamed(from, to);
     }
 
 }

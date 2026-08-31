@@ -8,8 +8,8 @@ import com.sun.source.doctree.DocTree;
 
 public final class Docs {
 
-    public static List<DocTree> http(String url, String text) {
-        return html("a", text, Map.of("href", url));
+    public static List<DocTree> html(String tag, String value) {
+        return html(tag, value, Map.of());
     }
 
     public static List<DocTree> html(String tag, String value, Map<String, String> attrs) {
@@ -26,8 +26,8 @@ public final class Docs {
         return list;
     }
 
-    public static List<DocTree> html(String tag, String value) {
-        return html(tag, value, Map.of());
+    public static List<DocTree> http(String url, String text) {
+        return html("a", text, Map.of("href", url));
     }
 
     public static List<DocTree> ref(String s) {

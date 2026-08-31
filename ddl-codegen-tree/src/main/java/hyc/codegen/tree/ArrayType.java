@@ -15,16 +15,12 @@ public final class ArrayType implements ArrayTypeTree {
         this.component = component;
     }
 
-    public TypeReference getComponentType() {
-        return component;
-    }
-
-    public void setComponentType(TypeReference component) {
-        this.component = component;
-    }
-
     @Override
-    public Tree getType() {
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitArrayType(this, data);
+    }
+
+    public TypeReference getComponentType() {
         return component;
     }
 
@@ -34,8 +30,12 @@ public final class ArrayType implements ArrayTypeTree {
     }
 
     @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitArrayType(this, data);
+    public Tree getType() {
+        return component;
+    }
+
+    public void setComponentType(TypeReference component) {
+        this.component = component;
     }
 
     @Override

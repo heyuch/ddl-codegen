@@ -248,6 +248,12 @@
                             <removeUnusedImports/>
                             <eclipse>
                                 <file>${maven.multiModuleProjectDirectory}/eclipse-code-formatter.xml</file>
+                                <!-- 成员排序：SF(静态字段)/SI(静态初始化器)/F(字段)/I(初始化器)/C(构造器)/SM(静态方法)/
+                                     C(构造器)/M(方法)/T(嵌套类型)——分组满足 checkstyle DeclarationOrder
+                                     + InnerTypeLast（static 组在前、嵌套类型在尾）；组内按名称排序，
+                                     方法顺序无语义依赖（测试兜底），由格式器统一保证声明顺序合规 -->
+                                <sortMembersEnabled>true</sortMembersEnabled>
+                                <sortMembersOrder>SF,SI,F,I,C,SM,M,T</sortMembersOrder>
                             </eclipse>
                         </java>
                         <pom>

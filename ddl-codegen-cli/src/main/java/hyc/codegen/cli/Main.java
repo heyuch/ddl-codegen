@@ -26,8 +26,56 @@ public final class Main {
         throw new AssertionError("no instances");
     }
 
+    private static int execute(Path configFile, Path ddlPath, boolean dryRun) throws Exception {
+        String ddl = readDdl(ddlPath);
+        Path projectRoot = configFile.toAbsolutePath().getParent();
+        if (projectRoot == null) {
+            throw new IllegalArgumentException("配置文件必须位于目录中（无法确定项目根）: " + configFile);
+        }
+        ChangeReport report = Codegen.run(configFile, projectRoot, ddl, dryRun);
+
+        System.out.println((dryRun ? "[dry-run] " : "") + "变更摘要: " + report.summary());
+        for (ChangeReport.Entry entry : report.getEntries()) {
+            System.out.printf("%-10s %s %s%n", entry.getStatus(), entry.getPath(), entry.getDetail());
+        }
+        for (String warning : report.getWarnings()) {
+            System.out.println("警告: " + warning);
+        }
+        return 0;
+    }
+
+    private static void help() {
+        System.out.println(
+                "用法: java -jar ddl-codegen-cli.jar --ddl <schema.sql|目录>"
+                        + " [--config <ddl-codegen.properties>] [--dry-run]");
+        System.out.println("  --config   配置文件（缺省: cwd/ddl-codegen.properties；项目根 = 该文件所在目录）");
+        System.out.println("  --ddl      DDL 文件或目录（目录会按文件名排序拼接全部 .sql）");
+        System.out.println("  --dry-run  只报告变更，不写盘");
+    }
+
     public static void main(String[] args) {
         System.exit(run(args));
+    }
+
+    /** 读单个 .sql 文件或目录下全部 .sql（按文件名排序拼接）。 */
+    private static String readDdl(Path path) throws IOException {
+        if (Files.isRegularFile(path)) {
+            return Files.readString(path, StandardCharsets.UTF_8);
+        }
+        if (Files.isDirectory(path)) {
+            List<Path> files = new ArrayList<>();
+            try (Stream<Path> walk = Files.walk(path)) {
+                walk.filter(p -> p.toString().endsWith(".sql"))
+                        .sorted()
+                        .forEach(files::add);
+            }
+            StringBuilder sb = new StringBuilder();
+            for (Path file : files) {
+                sb.append(Files.readString(file, StandardCharsets.UTF_8)).append("\n");
+            }
+            return sb.toString();
+        }
+        throw new IllegalArgumentException("DDL 路径不存在: " + path);
     }
 
     static int run(String[] args) {
@@ -74,54 +122,6 @@ public final class Main {
             System.err.println("执行失败: " + e.getMessage());
             return 1;
         }
-    }
-
-    private static int execute(Path configFile, Path ddlPath, boolean dryRun) throws Exception {
-        String ddl = readDdl(ddlPath);
-        Path projectRoot = configFile.toAbsolutePath().getParent();
-        if (projectRoot == null) {
-            throw new IllegalArgumentException("配置文件必须位于目录中（无法确定项目根）: " + configFile);
-        }
-        ChangeReport report = Codegen.run(configFile, projectRoot, ddl, dryRun);
-
-        System.out.println((dryRun ? "[dry-run] " : "") + "变更摘要: " + report.summary());
-        for (ChangeReport.Entry entry : report.getEntries()) {
-            System.out.printf("%-10s %s %s%n", entry.getStatus(), entry.getPath(), entry.getDetail());
-        }
-        for (String warning : report.getWarnings()) {
-            System.out.println("警告: " + warning);
-        }
-        return 0;
-    }
-
-    /** 读单个 .sql 文件或目录下全部 .sql（按文件名排序拼接）。 */
-    private static String readDdl(Path path) throws IOException {
-        if (Files.isRegularFile(path)) {
-            return Files.readString(path, StandardCharsets.UTF_8);
-        }
-        if (Files.isDirectory(path)) {
-            List<Path> files = new ArrayList<>();
-            try (Stream<Path> walk = Files.walk(path)) {
-                walk.filter(p -> p.toString().endsWith(".sql"))
-                        .sorted()
-                        .forEach(files::add);
-            }
-            StringBuilder sb = new StringBuilder();
-            for (Path file : files) {
-                sb.append(Files.readString(file, StandardCharsets.UTF_8)).append("\n");
-            }
-            return sb.toString();
-        }
-        throw new IllegalArgumentException("DDL 路径不存在: " + path);
-    }
-
-    private static void help() {
-        System.out.println(
-                "用法: java -jar ddl-codegen-cli.jar --ddl <schema.sql|目录>"
-                        + " [--config <ddl-codegen.properties>] [--dry-run]");
-        System.out.println("  --config   配置文件（缺省: cwd/ddl-codegen.properties；项目根 = 该文件所在目录）");
-        System.out.println("  --ddl      DDL 文件或目录（目录会按文件名排序拼接全部 .sql）");
-        System.out.println("  --dry-run  只报告变更，不写盘");
     }
 
 }

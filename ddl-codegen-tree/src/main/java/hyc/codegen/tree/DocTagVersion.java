@@ -16,6 +16,11 @@ public final class DocTagVersion implements VersionTree {
     }
 
     @Override
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitVersion(this, data);
+    }
+
+    @Override
     public List<? extends DocTree> getBody() {
         List<DocTree> body = new ArrayList<>();
 
@@ -27,18 +32,13 @@ public final class DocTagVersion implements VersionTree {
     }
 
     @Override
-    public String getTagName() {
-        return getKind().tagName;
-    }
-
-    @Override
     public Kind getKind() {
         return Kind.VERSION;
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitVersion(this, data);
+    public String getTagName() {
+        return getKind().tagName;
     }
 
 }

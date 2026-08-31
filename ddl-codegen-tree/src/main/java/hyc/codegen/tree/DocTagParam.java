@@ -16,14 +16,14 @@ public final class DocTagParam implements ParamTree {
     private List<? extends DocTree> descs;
     private boolean typeParameter;
 
-    public DocTagParam(String name, String descs) {
-        this(name, Arrays.asList(new DocText(descs)), false);
-    }
-
     public DocTagParam(String name, List<? extends DocTree> descs, boolean typeParameter) {
         this.name = name;
         this.descs = new ArrayList<@UnknownKeyFor DocTree>(descs);
         this.typeParameter = typeParameter;
+    }
+
+    public DocTagParam(String name, String descs) {
+        this(name, Arrays.asList(new DocText(descs)), false);
     }
 
     public DocTagParam(String name, String descs, boolean typeParameter) {
@@ -31,13 +31,8 @@ public final class DocTagParam implements ParamTree {
     }
 
     @Override
-    public boolean isTypeParameter() {
-        return typeParameter;
-    }
-
-    @Override
-    public IdentifierTree getName() {
-        return new DocIdent(name);
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitParam(this, data);
     }
 
     @Override
@@ -46,18 +41,23 @@ public final class DocTagParam implements ParamTree {
     }
 
     @Override
-    public String getTagName() {
-        return getKind().tagName;
-    }
-
-    @Override
     public Kind getKind() {
         return Kind.PARAM;
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitParam(this, data);
+    public IdentifierTree getName() {
+        return new DocIdent(name);
+    }
+
+    @Override
+    public String getTagName() {
+        return getKind().tagName;
+    }
+
+    @Override
+    public boolean isTypeParameter() {
+        return typeParameter;
     }
 
 }

@@ -11,9 +11,6 @@ import hyc.codegen.core.model.Schema;
  */
 public interface DdlOperation {
 
-    /** 操作涉及的表名；rename 类操作为旧表名。 */
-    String tableName();
-
     /**
      * 应用到 Schema（就地修改）并记录 {@link ApplyResult}。
      * <p>
@@ -24,5 +21,8 @@ public interface DdlOperation {
      * @param result 变更记录（受影响表、改名/删除记录）
      */
     void apply(Schema schema, ApplyResult result);
+
+    /** 操作涉及的表名；rename 类操作为旧表名。 */
+    String tableName();
 
 }

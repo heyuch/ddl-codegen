@@ -14,6 +14,11 @@ public final class StringName implements Name {
     }
 
     @Override
+    public char charAt(int index) {
+        return name.charAt(index);
+    }
+
+    @Override
     public boolean contentEquals(CharSequence cs) {
         return name.equals(cs.toString());
     }
@@ -21,11 +26,6 @@ public final class StringName implements Name {
     @Override
     public int length() {
         return name.length();
-    }
-
-    @Override
-    public char charAt(int index) {
-        return name.charAt(index);
     }
 
     @Override

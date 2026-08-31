@@ -27,9 +27,23 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
      */
     public static final String NAME = "converter";
 
-    @Override
-    public String kind() {
-        return NAME;
+    private static String capitalize(String s) {
+        if (s.isEmpty()) {
+            return s;
+        }
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    private static String decapitalize(String s) {
+        if (s.isEmpty()) {
+            return s;
+        }
+        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
+    }
+
+    private static String simpleName(String fqn) {
+        int dot = fqn.lastIndexOf('.');
+        return dot < 0 ? fqn : fqn.substring(dot + 1);
     }
 
     @Override
@@ -77,6 +91,35 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
         return imports;
     }
 
+    @Override
+    public String kind() {
+        return NAME;
+    }
+
+    private Method listMethod(String methodName, String elementFqn, String fromType, String toType,
+            String convertMethod, String listParam, String itemParam) {
+        String elementSimple = simpleName(elementFqn);
+        List<String> stmts = new ArrayList<>();
+        stmts.add("java.util.List<" + elementSimple + "> list = new java.util.ArrayList<>();");
+        stmts.add("if (" + listParam + " != null) {");
+        stmts.add("    for (" + fromType + " " + itemParam + " : " + listParam + ") {");
+        stmts.add("        list.add(" + convertMethod + "(" + itemParam + "));");
+        stmts.add("    }");
+        stmts.add("}");
+        stmts.add("return list;");
+
+        return Method.builder()
+                .modifiers(Modifier.PUBLIC)
+                .returnType(Types.listOf(new TypeReference(elementSimple)))
+                .name(methodName)
+                .parameter(Variable.builder()
+                        .type(Types.listOf(new TypeReference(fromType)))
+                        .name(listParam)
+                        .build())
+                .body(String.join("\n", stmts))
+                .build();
+    }
+
     /**
      * 构建单对象映射方法：{@code fromType} → {@code toType}。
      */
@@ -113,49 +156,6 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
                 .parameter(Variable.builder().type(new TypeReference(m.fromType)).name(m.fromParam).build())
                 .body(String.join("\n", stmts))
                 .build();
-    }
-
-    private Method listMethod(String methodName, String elementFqn, String fromType, String toType,
-            String convertMethod, String listParam, String itemParam) {
-        String elementSimple = simpleName(elementFqn);
-        List<String> stmts = new ArrayList<>();
-        stmts.add("java.util.List<" + elementSimple + "> list = new java.util.ArrayList<>();");
-        stmts.add("if (" + listParam + " != null) {");
-        stmts.add("    for (" + fromType + " " + itemParam + " : " + listParam + ") {");
-        stmts.add("        list.add(" + convertMethod + "(" + itemParam + "));");
-        stmts.add("    }");
-        stmts.add("}");
-        stmts.add("return list;");
-
-        return Method.builder()
-                .modifiers(Modifier.PUBLIC)
-                .returnType(Types.listOf(new TypeReference(elementSimple)))
-                .name(methodName)
-                .parameter(Variable.builder()
-                        .type(Types.listOf(new TypeReference(fromType)))
-                        .name(listParam)
-                        .build())
-                .body(String.join("\n", stmts))
-                .build();
-    }
-
-    private static String simpleName(String fqn) {
-        int dot = fqn.lastIndexOf('.');
-        return dot < 0 ? fqn : fqn.substring(dot + 1);
-    }
-
-    private static String capitalize(String s) {
-        if (s.isEmpty()) {
-            return s;
-        }
-        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
-    }
-
-    private static String decapitalize(String s) {
-        if (s.isEmpty()) {
-            return s;
-        }
-        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
     }
 
     /**

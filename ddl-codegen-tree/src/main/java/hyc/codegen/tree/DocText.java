@@ -12,6 +12,11 @@ public final class DocText implements TextTree {
     }
 
     @Override
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitText(this, data);
+    }
+
+    @Override
     public String getBody() {
         return body;
     }
@@ -19,11 +24,6 @@ public final class DocText implements TextTree {
     @Override
     public Kind getKind() {
         return Kind.TEXT;
-    }
-
-    @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitText(this, data);
     }
 
 }

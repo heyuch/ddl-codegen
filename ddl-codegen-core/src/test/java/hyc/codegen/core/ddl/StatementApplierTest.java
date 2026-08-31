@@ -23,6 +23,40 @@ class StatementApplierTest {
     private final StatementApplier applier = new StatementApplier();
 
     @Test
+    void alterOnMissingTableIsNoOp() {
+        Schema schema = new Schema();
+
+        ApplyResult result = applier.apply(schema, parser.parse("ALTER TABLE ghost ADD COLUMN x INT"));
+
+        assertFalse(schema.contains("ghost"));
+        assertTrue(result.getAffectedTables().isEmpty());
+    }
+
+    @Test
+    void columnAndIndexRenamesRecorded() {
+        Schema schema = new Schema();
+        hyc.codegen.core.model.Table table = new hyc.codegen.core.model.Table("t_user", null);
+        table.addColumn(hyc.codegen.core.model.Column.builder().name("create_time").sqlType("datetime").build());
+        table.addIndex(hyc.codegen.core.model.Index.builder().name("idx_a").columns(Arrays.asList("a")).build());
+        schema.addTable(table);
+
+        String ddl = "ALTER TABLE t_user RENAME COLUMN create_time TO created_at, "
+                + "RENAME INDEX idx_a TO idx_b";
+        ApplyResult result = applier.apply(schema, parser.parse(ddl));
+
+        hyc.codegen.core.model.Table tUser = schema.getTable("t_user");
+        assertNotNull(tUser);
+        assertTrue(tUser.hasColumn("created_at"));
+        assertNull(tUser.getColumn("create_time"));
+        assertTrue(tUser.hasIndex("idx_b"));
+
+        assertEquals(1, result.getColumnRenames().size());
+        assertEquals("create_time", result.getColumnRenames().get(0).getFrom());
+        assertEquals(1, result.getIndexRenames().size());
+        assertEquals("idx_a", result.getIndexRenames().get(0).getFrom());
+    }
+
+    @Test
     void createThenAlterInOneBatch() {
         String ddl = "CREATE TABLE t_user (\n"
                 + "  id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',\n"
@@ -69,40 +103,6 @@ class StatementApplierTest {
         ApplyResult.TableRename rename = result.getTableRenames().get(0);
         assertEquals("t_user", rename.getFrom());
         assertEquals("t_account", rename.getTo());
-    }
-
-    @Test
-    void columnAndIndexRenamesRecorded() {
-        Schema schema = new Schema();
-        hyc.codegen.core.model.Table table = new hyc.codegen.core.model.Table("t_user", null);
-        table.addColumn(hyc.codegen.core.model.Column.builder().name("create_time").sqlType("datetime").build());
-        table.addIndex(hyc.codegen.core.model.Index.builder().name("idx_a").columns(Arrays.asList("a")).build());
-        schema.addTable(table);
-
-        String ddl = "ALTER TABLE t_user RENAME COLUMN create_time TO created_at, "
-                + "RENAME INDEX idx_a TO idx_b";
-        ApplyResult result = applier.apply(schema, parser.parse(ddl));
-
-        hyc.codegen.core.model.Table tUser = schema.getTable("t_user");
-        assertNotNull(tUser);
-        assertTrue(tUser.hasColumn("created_at"));
-        assertNull(tUser.getColumn("create_time"));
-        assertTrue(tUser.hasIndex("idx_b"));
-
-        assertEquals(1, result.getColumnRenames().size());
-        assertEquals("create_time", result.getColumnRenames().get(0).getFrom());
-        assertEquals(1, result.getIndexRenames().size());
-        assertEquals("idx_a", result.getIndexRenames().get(0).getFrom());
-    }
-
-    @Test
-    void alterOnMissingTableIsNoOp() {
-        Schema schema = new Schema();
-
-        ApplyResult result = applier.apply(schema, parser.parse("ALTER TABLE ghost ADD COLUMN x INT"));
-
-        assertFalse(schema.contains("ghost"));
-        assertTrue(result.getAffectedTables().isEmpty());
     }
 
     private List<String> tableColumns(Schema schema, String tableName) {

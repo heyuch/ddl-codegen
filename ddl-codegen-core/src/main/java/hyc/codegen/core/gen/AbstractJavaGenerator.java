@@ -33,6 +33,78 @@ public abstract class AbstractJavaGenerator implements Generator {
 
     private final JavaParser parser = new JavaParser();
 
+    /** 从模型构建期望成员（所有成员会由基类自动打上 {@code @Generated}）。 */
+    protected abstract void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx);
+
+    /** 构建期望模型并标记全部成员。 */
+    private Class buildFresh(TableContext ctx, GenerationContext gctx, String className,
+            java.util.function.Consumer<Class.Builder> builderFn) {
+        Class.Builder builder = Class.builder()
+                .name(className)
+                .pkg(ctx.packageName())
+                .modifiers(Modifier.PUBLIC);
+        builderFn.accept(builder);
+        Class fresh = builder.build();
+        markGenerated(fresh);
+        return fresh;
+    }
+
+    /** 类名（框架默认：命名策略 + 产物后缀；特殊命名逻辑可覆盖）。 */
+    @Override
+    public String className(TableContext ctx) {
+        return ctx.getNaming().artifactClassName(ctx.getTable().getName(), ctx.getArtifactName());
+    }
+
+    /** 不再需要该文件时删除（drop 的删除由 CodeGenerator 处理，此处处理 shouldGenerate=false 的清理）。 */
+    protected void deleteIfExists(TableContext ctx, GenerationContext gctx) {
+        try {
+            if (FileWriter.deleteIfExists(ctx.javaFile(gctx.getProjectRoot()))) {
+                gctx.getReport()
+                        .add(ctx.javaFile(gctx.getProjectRoot()), ChangeStatus.DELETED,
+                                ctx.getArtifactName() + " " + ctx.className() + "（不再适用）");
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("删除文件失败: " + ctx.javaFile(gctx.getProjectRoot()), e);
+        }
+    }
+
+    /**
+     * 额外 import（方法体字符串引用的类型不会自动收集，由子类在此显式登记，见 docs/progress.md 决策）。
+     */
+    protected List<hyc.codegen.tree.Import> extraImports(TableContext ctx, GenerationContext gctx) {
+        return java.util.Collections.emptyList();
+    }
+
+    /** 字段名（框架默认：命名策略；特殊逻辑可覆盖）。 */
+    @Override
+    public String fieldName(Column column, TableContext ctx) {
+        return ctx.getNaming().columnFieldName(column.getName());
+    }
+
+    /** 成员类型（框架默认：SQL 类型映射；特性/特殊类型逻辑在生成器内覆盖）。 */
+    @Override
+    public String fieldType(Column column, TableContext ctx) {
+        return ctx.getTypeMapper().resolveType(ctx.getTable().getName(), column);
+    }
+
+    private @Nullable Variable findField(List<Variable> fields, String name) {
+        for (Variable field : fields) {
+            if (name.equals(field.getName().toString())) {
+                return field;
+            }
+        }
+        return null;
+    }
+
+    private @Nullable Method findMethod(List<Method> methods, String name) {
+        for (Method method : methods) {
+            if (name.equals(method.getName().toString())) {
+                return method;
+            }
+        }
+        return null;
+    }
+
     /** 生成/更新该表该 artifact 的 Java 文件。 */
     public void generate(TableContext ctx, GenerationContext gctx) {
         if (!shouldGenerate(ctx)) {
@@ -85,54 +157,52 @@ public abstract class AbstractJavaGenerator implements Generator {
         writeFile(file.toPath(), ctx, gctx, code, className);
     }
 
-    /**
-     * 额外 import（方法体字符串引用的类型不会自动收集，由子类在此显式登记，见 docs/progress.md 决策）。
-     */
-    protected List<hyc.codegen.tree.Import> extraImports(TableContext ctx, GenerationContext gctx) {
-        return java.util.Collections.emptyList();
+    private List<Variable> generatedFields(Class cls) {
+        List<Variable> generated = new ArrayList<>();
+        for (Variable field : cls.getFields()) {
+            if (GeneratedSupport.isGenerated(field)) {
+                generated.add(field);
+            }
+        }
+        return generated;
+    }
+
+    private List<Method> generatedMethods(Class cls) {
+        List<Method> generated = new ArrayList<>();
+        for (Method method : cls.getMethods()) {
+            if (GeneratedSupport.isGenerated(method)) {
+                generated.add(method);
+            }
+        }
+        return generated;
     }
 
     /** artifact 类型名（对应 config {@code generator=<名>}）。 */
     @Override
     public abstract String kind();
 
-    /** 类名（框架默认：命名策略 + 产物后缀；特殊命名逻辑可覆盖）。 */
-    @Override
-    public String className(TableContext ctx) {
-        return ctx.getNaming().artifactClassName(ctx.getTable().getName(), ctx.getArtifactName());
+    /** 给期望模型的全部成员打上生成标记。 */
+    private void markGenerated(Class fresh) {
+        for (Variable f : fresh.getFields()) {
+            GeneratedSupport.mark(f);
+        }
+        for (Method m : fresh.getMethods()) {
+            GeneratedSupport.mark(m);
+        }
     }
 
-    /** 字段名（框架默认：命名策略；特殊逻辑可覆盖）。 */
-    @Override
-    public String fieldName(Column column, TableContext ctx) {
-        return ctx.getNaming().columnFieldName(column.getName());
-    }
-
-    /** 成员类型（框架默认：SQL 类型映射；特性/特殊类型逻辑在生成器内覆盖）。 */
-    @Override
-    public String fieldType(Column column, TableContext ctx) {
-        return ctx.getTypeMapper().resolveType(ctx.getTable().getName(), column);
-    }
-
-    /** 从模型构建期望成员（所有成员会由基类自动打上 {@code @Generated}）。 */
-    protected abstract void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx);
-
-    /** 是否应该生成此文件；返回 false 时若文件已存在则删除（如 enum 文件随 enum 列消失而清理）。 */
-    protected boolean shouldGenerate(TableContext ctx) {
-        return true;
-    }
-
-    /** 构建期望模型并标记全部成员。 */
-    private Class buildFresh(TableContext ctx, GenerationContext gctx, String className,
-            java.util.function.Consumer<Class.Builder> builderFn) {
-        Class.Builder builder = Class.builder()
-                .name(className)
-                .pkg(ctx.packageName())
-                .modifiers(Modifier.PUBLIC);
-        builderFn.accept(builder);
-        Class fresh = builder.build();
-        markGenerated(fresh);
-        return fresh;
+    /** 解析现有文件；不存在或解析失败返回 null（解析失败已记警告）。 */
+    private @Nullable CompileUnit parse(File file) {
+        if (!file.isFile()) {
+            return null;
+        }
+        try {
+            List<CompileUnit> units = parser.parse(file);
+            return units.isEmpty() ? null : units.get(0);
+        } catch (Exception e) {
+            // 契约：解析失败不碰文件，报告错误；--force 由 CLI 层处理
+            throw new IllegalStateException("解析失败: " + file + "（" + e.getMessage() + "），未修改该文件", e);
+        }
     }
 
     /** 成员级 reconcile：把现有类的 {@code @Generated} 成员对齐到期望模型。 */
@@ -171,14 +241,6 @@ public abstract class AbstractJavaGenerator implements Generator {
         }
     }
 
-    private void replaceIfSignatureChanged(Class target, Variable expected, Variable match) {
-        if (signature(expected).equals(signature(match))) {
-            return;
-        }
-        target.removeField(match);
-        target.addField(expected);
-    }
-
     private void replaceIfSignatureChanged(Class target, Method expected, Method match) {
         if (signature(expected).equals(signature(match))) {
             return;
@@ -187,47 +249,17 @@ public abstract class AbstractJavaGenerator implements Generator {
         target.addMethod(expected);
     }
 
-    private List<Variable> generatedFields(Class cls) {
-        List<Variable> generated = new ArrayList<>();
-        for (Variable field : cls.getFields()) {
-            if (GeneratedSupport.isGenerated(field)) {
-                generated.add(field);
-            }
+    private void replaceIfSignatureChanged(Class target, Variable expected, Variable match) {
+        if (signature(expected).equals(signature(match))) {
+            return;
         }
-        return generated;
+        target.removeField(match);
+        target.addField(expected);
     }
 
-    private List<Method> generatedMethods(Class cls) {
-        List<Method> generated = new ArrayList<>();
-        for (Method method : cls.getMethods()) {
-            if (GeneratedSupport.isGenerated(method)) {
-                generated.add(method);
-            }
-        }
-        return generated;
-    }
-
-    private @Nullable Variable findField(List<Variable> fields, String name) {
-        for (Variable field : fields) {
-            if (name.equals(field.getName().toString())) {
-                return field;
-            }
-        }
-        return null;
-    }
-
-    private @Nullable Method findMethod(List<Method> methods, String name) {
-        for (Method method : methods) {
-            if (name.equals(method.getName().toString())) {
-                return method;
-            }
-        }
-        return null;
-    }
-
-    /** 字段签名：类型。 */
-    private String signature(Variable field) {
-        return String.valueOf(field.getType());
+    /** 是否应该生成此文件；返回 false 时若文件已存在则删除（如 enum 文件随 enum 列消失而清理）。 */
+    protected boolean shouldGenerate(TableContext ctx) {
+        return true;
     }
 
     /** 方法签名：返回类型 + 参数类型序列 + 方法体（空白归一化，体变更也能触发替换）。 */
@@ -250,28 +282,9 @@ public abstract class AbstractJavaGenerator implements Generator {
         return sb.toString();
     }
 
-    /** 给期望模型的全部成员打上生成标记。 */
-    private void markGenerated(Class fresh) {
-        for (Variable f : fresh.getFields()) {
-            GeneratedSupport.mark(f);
-        }
-        for (Method m : fresh.getMethods()) {
-            GeneratedSupport.mark(m);
-        }
-    }
-
-    /** 解析现有文件；不存在或解析失败返回 null（解析失败已记警告）。 */
-    private @Nullable CompileUnit parse(File file) {
-        if (!file.isFile()) {
-            return null;
-        }
-        try {
-            List<CompileUnit> units = parser.parse(file);
-            return units.isEmpty() ? null : units.get(0);
-        } catch (Exception e) {
-            // 契约：解析失败不碰文件，报告错误；--force 由 CLI 层处理
-            throw new IllegalStateException("解析失败: " + file + "（" + e.getMessage() + "），未修改该文件", e);
-        }
+    /** 字段签名：类型。 */
+    private String signature(Variable field) {
+        return String.valueOf(field.getType());
     }
 
     private void writeFile(Path file, TableContext ctx, GenerationContext gctx, String code, String className) {
@@ -280,19 +293,6 @@ public abstract class AbstractJavaGenerator implements Generator {
             gctx.getReport().add(file, status, ctx.getArtifactName() + " " + className);
         } catch (IOException e) {
             throw new IllegalStateException("写文件失败: " + file, e);
-        }
-    }
-
-    /** 不再需要该文件时删除（drop 的删除由 CodeGenerator 处理，此处处理 shouldGenerate=false 的清理）。 */
-    protected void deleteIfExists(TableContext ctx, GenerationContext gctx) {
-        try {
-            if (FileWriter.deleteIfExists(ctx.javaFile(gctx.getProjectRoot()))) {
-                gctx.getReport()
-                        .add(ctx.javaFile(gctx.getProjectRoot()), ChangeStatus.DELETED,
-                                ctx.getArtifactName() + " " + ctx.className() + "（不再适用）");
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException("删除文件失败: " + ctx.javaFile(gctx.getProjectRoot()), e);
         }
     }
 

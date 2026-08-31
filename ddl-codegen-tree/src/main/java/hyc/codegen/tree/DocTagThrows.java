@@ -16,18 +16,18 @@ public final class DocTagThrows implements ThrowsTree {
 
     private List<? extends DocTree> descs;
 
-    public DocTagThrows(String name, String desc) {
-        this(new DocReference(name), Arrays.asList(new DocText(desc)));
-    }
-
     public DocTagThrows(ReferenceTree name, List<? extends DocTree> descs) {
         this.name = name;
         this.descs = new ArrayList<@UnknownKeyFor DocTree>(descs);
     }
 
+    public DocTagThrows(String name, String desc) {
+        this(new DocReference(name), Arrays.asList(new DocText(desc)));
+    }
+
     @Override
-    public ReferenceTree getExceptionName() {
-        return name;
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitThrows(this, data);
     }
 
     @Override
@@ -36,8 +36,8 @@ public final class DocTagThrows implements ThrowsTree {
     }
 
     @Override
-    public String getTagName() {
-        return getKind().tagName;
+    public ReferenceTree getExceptionName() {
+        return name;
     }
 
     @Override
@@ -46,8 +46,8 @@ public final class DocTagThrows implements ThrowsTree {
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitThrows(this, data);
+    public String getTagName() {
+        return getKind().tagName;
     }
 
 }

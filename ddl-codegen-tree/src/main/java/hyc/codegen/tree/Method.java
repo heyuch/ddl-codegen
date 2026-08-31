@@ -43,46 +43,33 @@ public final class Method implements MethodTree {
 
     private @Nullable Tree defaultValue;
 
-    /**
-     * 返回方法 javadoc 注释。
-     */
-    public @Nullable DocCommentTree getJavadoc() {
-        return javadoc;
+    public static Builder builder() {
+        return new Builder();
     }
 
-    /**
-     * 设置方法 javadoc 注释。
-     */
-    public void setJavadoc(@Nullable DocCommentTree javadoc) {
-        this.javadoc = javadoc;
+    @Override
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitMethod(this, data);
     }
 
-    /**
-     * 设置方法修饰符。
-     */
-    public void setModifiers(ModifiersTree modifiers) {
-        this.modifiers = modifiers;
-    }
+    public void addAnnotation(AnnotationTree a) {
+        if (a == null) {
+            return;
+        }
 
-    /**
-     * 设置方法名。
-     */
-    public void setName(Name name) {
-        this.name = name;
-    }
-
-    /**
-     * 设置返回类型。
-     */
-    public void setReturnType(Tree returnType) {
-        this.returnType = returnType;
-    }
-
-    /**
-     * 设置类型参数。
-     */
-    public void setTypeParameters(List<? extends TypeParameterTree> typeParameters) {
-        this.typeParameters = new ArrayList<>(typeParameters);
+        if (modifiers == null) {
+            Modifiers mod = new Modifiers();
+            mod.addAnnotation(a);
+            this.modifiers = mod;
+        } else if (modifiers instanceof Modifiers) {
+            ((Modifiers)modifiers).addAnnotation(a);
+        } else {
+            // 非模型 ModifiersTree（如解析出的 javac 节点）：复制现有注解与修饰符到模型容器，避免丢失
+            Modifiers mod = new Modifiers(modifiers.getFlags());
+            mod.addAnnotations(new ArrayList<>(modifiers.getAnnotations()));
+            mod.addAnnotation(a);
+            this.modifiers = mod;
+        }
     }
 
     /**
@@ -90,85 +77,6 @@ public final class Method implements MethodTree {
      */
     public void addParameter(VariableTree parameter) {
         this.parameters.add(parameter);
-    }
-
-    /**
-     * 设置接收者参数。
-     */
-    public void setReceiverParameter(@Nullable VariableTree receiverParameter) {
-        this.receiverParameter = receiverParameter;
-    }
-
-    /**
-     * 设置方法体。
-     */
-    public void setBody(BlockTree body) {
-        this.body = body;
-    }
-
-    /**
-     * 设置注解类型元素的默认值。
-     */
-    public void setDefaultValue(@Nullable Tree defaultValue) {
-        this.defaultValue = defaultValue;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    @Override
-    public ModifiersTree getModifiers() {
-        if (modifiers == null) {
-            throw new IllegalStateException("modifiers 未初始化（构建器/转换器未设置）");
-        }
-        return modifiers;
-    }
-
-    @Override
-    public Name getName() {
-        if (name == null) {
-            throw new IllegalStateException("name 未初始化（构建器/转换器未设置）");
-        }
-        return name;
-    }
-
-    @Override
-    @Nullable
-    // javac tree API 语义：构造器/抽象方法可无返回类型/方法体（MethodTree.getReturnType 对构造器返回 null）
-    @SuppressWarnings("override.return")
-    public Tree getReturnType() {
-        return returnType;
-    }
-
-    @Override
-    public List<? extends TypeParameterTree> getTypeParameters() {
-        return new ArrayList<>(typeParameters);
-    }
-
-    @Override
-    public List<? extends VariableTree> getParameters() {
-        return new ArrayList<>(parameters);
-    }
-
-    @Override
-    @Nullable
-    // javac tree API 语义：无 receiver 参数时 getReceiverParameter 返回 null
-    @SuppressWarnings("override.return")
-    public VariableTree getReceiverParameter() {
-        return receiverParameter;
-    }
-
-    @Override
-    public List<? extends ExpressionTree> getThrows() {
-        return new ArrayList<>(throwsList);
-    }
-
-    /**
-     * 设置 throws 子句类型列表。
-     */
-    public void setThrowsList(List<? extends ExpressionTree> throwsList) {
-        this.throwsList = new ArrayList<>(throwsList);
     }
 
     @Override
@@ -185,16 +93,6 @@ public final class Method implements MethodTree {
     @SuppressWarnings("override.return")
     public Tree getDefaultValue() {
         return defaultValue;
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.METHOD;
-    }
-
-    @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitMethod(this, data);
     }
 
     public List<Import> getImports() {
@@ -222,24 +120,126 @@ public final class Method implements MethodTree {
         return imports;
     }
 
-    public void addAnnotation(AnnotationTree a) {
-        if (a == null) {
-            return;
-        }
+    /**
+     * 返回方法 javadoc 注释。
+     */
+    public @Nullable DocCommentTree getJavadoc() {
+        return javadoc;
+    }
 
+    @Override
+    public Kind getKind() {
+        return Kind.METHOD;
+    }
+
+    @Override
+    public ModifiersTree getModifiers() {
         if (modifiers == null) {
-            Modifiers mod = new Modifiers();
-            mod.addAnnotation(a);
-            this.modifiers = mod;
-        } else if (modifiers instanceof Modifiers) {
-            ((Modifiers)modifiers).addAnnotation(a);
-        } else {
-            // 非模型 ModifiersTree（如解析出的 javac 节点）：复制现有注解与修饰符到模型容器，避免丢失
-            Modifiers mod = new Modifiers(modifiers.getFlags());
-            mod.addAnnotations(new ArrayList<>(modifiers.getAnnotations()));
-            mod.addAnnotation(a);
-            this.modifiers = mod;
+            throw new IllegalStateException("modifiers 未初始化（构建器/转换器未设置）");
         }
+        return modifiers;
+    }
+
+    @Override
+    public Name getName() {
+        if (name == null) {
+            throw new IllegalStateException("name 未初始化（构建器/转换器未设置）");
+        }
+        return name;
+    }
+
+    @Override
+    public List<? extends VariableTree> getParameters() {
+        return new ArrayList<>(parameters);
+    }
+
+    @Override
+    @Nullable
+    // javac tree API 语义：无 receiver 参数时 getReceiverParameter 返回 null
+    @SuppressWarnings("override.return")
+    public VariableTree getReceiverParameter() {
+        return receiverParameter;
+    }
+
+    @Override
+    @Nullable
+    // javac tree API 语义：构造器/抽象方法可无返回类型/方法体（MethodTree.getReturnType 对构造器返回 null）
+    @SuppressWarnings("override.return")
+    public Tree getReturnType() {
+        return returnType;
+    }
+
+    @Override
+    public List<? extends ExpressionTree> getThrows() {
+        return new ArrayList<>(throwsList);
+    }
+
+    @Override
+    public List<? extends TypeParameterTree> getTypeParameters() {
+        return new ArrayList<>(typeParameters);
+    }
+
+    /**
+     * 设置方法体。
+     */
+    public void setBody(BlockTree body) {
+        this.body = body;
+    }
+
+    /**
+     * 设置注解类型元素的默认值。
+     */
+    public void setDefaultValue(@Nullable Tree defaultValue) {
+        this.defaultValue = defaultValue;
+    }
+
+    /**
+     * 设置方法 javadoc 注释。
+     */
+    public void setJavadoc(@Nullable DocCommentTree javadoc) {
+        this.javadoc = javadoc;
+    }
+
+    /**
+     * 设置方法修饰符。
+     */
+    public void setModifiers(ModifiersTree modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    /**
+     * 设置方法名。
+     */
+    public void setName(Name name) {
+        this.name = name;
+    }
+
+    /**
+     * 设置接收者参数。
+     */
+    public void setReceiverParameter(@Nullable VariableTree receiverParameter) {
+        this.receiverParameter = receiverParameter;
+    }
+
+    /**
+     * 设置返回类型。
+     */
+    public void setReturnType(Tree returnType) {
+        this.returnType = returnType;
+    }
+
+    /**
+     * 设置 throws 子句类型列表。
+     */
+    public void setThrowsList(List<? extends ExpressionTree> throwsList) {
+        this.throwsList = new ArrayList<>(throwsList);
+    }
+
+    /**
+     * 设置类型参数。
+     */
+    public void setTypeParameters(List<? extends TypeParameterTree> typeParameters) {
+        this.typeParameters = new ArrayList<>(typeParameters);
     }
 
     public static final class Builder {
@@ -249,11 +249,6 @@ public final class Method implements MethodTree {
         public Builder() {
             this.m = new Method();
             m.modifiers = new Modifiers();
-        }
-
-        public Builder javadoc(DocComment doc) {
-            m.javadoc = doc;
-            return this;
         }
 
         public Builder annotation(Annotation anno) {
@@ -266,6 +261,20 @@ public final class Method implements MethodTree {
             return this;
         }
 
+        public Builder body(String code) {
+            m.body = new SourceBlock(code);
+            return this;
+        }
+
+        public Method build() {
+            return m;
+        }
+
+        public Builder javadoc(DocComment doc) {
+            m.javadoc = doc;
+            return this;
+        }
+
         public Builder modifiers(Modifier... modifiers) {
             Modifiers mods = Modifiers.of(modifiers);
             if (m.modifiers instanceof Modifiers) {
@@ -275,33 +284,13 @@ public final class Method implements MethodTree {
             return this;
         }
 
-        public Builder returnType(PrimitiveType type) {
-            m.returnType = type;
-            return this;
-        }
-
-        public Builder returnType(TypeReference type) {
-            m.returnType = type;
-            return this;
-        }
-
-        public Builder returnType(ParameterizedType type) {
-            m.returnType = type;
-            return this;
-        }
-
-        public Builder returnType(Tree type) {
-            m.returnType = type;
+        public Builder name(Name name) {
+            m.name = name;
             return this;
         }
 
         public Builder name(String name) {
             m.name = new StringName(name);
-            return this;
-        }
-
-        public Builder name(Name name) {
-            m.name = name;
             return this;
         }
 
@@ -317,13 +306,24 @@ public final class Method implements MethodTree {
             return this;
         }
 
-        public Builder body(String code) {
-            m.body = new SourceBlock(code);
+        public Builder returnType(ParameterizedType type) {
+            m.returnType = type;
             return this;
         }
 
-        public Method build() {
-            return m;
+        public Builder returnType(PrimitiveType type) {
+            m.returnType = type;
+            return this;
+        }
+
+        public Builder returnType(Tree type) {
+            m.returnType = type;
+            return this;
+        }
+
+        public Builder returnType(TypeReference type) {
+            m.returnType = type;
+            return this;
         }
 
     }

@@ -14,8 +14,8 @@ public final class DocElemEnd implements EndElementTree {
     }
 
     @Override
-    public Name getName() {
-        return new StringName(name);
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitEndElement(this, data);
     }
 
     @Override
@@ -24,8 +24,8 @@ public final class DocElemEnd implements EndElementTree {
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitEndElement(this, data);
+    public Name getName() {
+        return new StringName(name);
     }
 
 }

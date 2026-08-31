@@ -23,14 +23,14 @@ public final class ChangeReport {
         entries.add(new Entry(path, status, detail));
     }
 
-    /** 变更条目（防御性拷贝）。 */
-    public List<Entry> getEntries() {
-        return new ArrayList<>(entries);
-    }
-
     /** 记一条警告（不中断）。 */
     public void addWarning(String message) {
         warnings.add(message);
+    }
+
+    /** 变更条目（防御性拷贝）。 */
+    public List<Entry> getEntries() {
+        return new ArrayList<>(entries);
     }
 
     /** 本次执行的警告（防御性拷贝）。 */
@@ -88,16 +88,16 @@ public final class ChangeReport {
             this.detail = detail;
         }
 
+        public @Nullable String getDetail() {
+            return detail;
+        }
+
         public Path getPath() {
             return path;
         }
 
         public ChangeStatus getStatus() {
             return status;
-        }
-
-        public @Nullable String getDetail() {
-            return detail;
         }
 
     }

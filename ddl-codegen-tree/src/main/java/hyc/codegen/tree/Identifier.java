@@ -11,20 +11,20 @@ public class Identifier implements IdentifierTree {
 
     Name name;
 
-    public Identifier(String name) {
-        this(new StringName(name));
-    }
-
     public Identifier(Name name) {
         this.name = name;
     }
 
+    public Identifier(String name) {
+        this(new StringName(name));
+    }
+
     /**
-     * 返回标识符名称。
+     * 分发到访问器的 {@code visitIdentifier} 方法。
      */
     @Override
-    public Name getName() {
-        return name;
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitIdentifier(this, data);
     }
 
     /**
@@ -36,11 +36,11 @@ public class Identifier implements IdentifierTree {
     }
 
     /**
-     * 分发到访问器的 {@code visitIdentifier} 方法。
+     * 返回标识符名称。
      */
     @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitIdentifier(this, data);
+    public Name getName() {
+        return name;
     }
 
 }

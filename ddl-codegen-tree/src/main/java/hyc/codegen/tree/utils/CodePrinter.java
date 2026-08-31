@@ -36,28 +36,21 @@ public final class CodePrinter {
         level++;
     }
 
-    /** 缩进层级 -1。 */
-    public void undent() {
-        level--;
-    }
-
     /** 当前缩进空格数 = 层级 × 宽度。 */
     public int indentSpaces() {
         return indentWidth * level;
     }
 
-    /**
-     * 写入内容：若处于行首先补缩进；文本内嵌换行时逐行对齐。
-     *
-     * @param parts 内容片段，null 忽略
-     */
-    public void write(Object... parts) {
-        for (Object part : parts) {
-            if (part == null) {
-                continue;
-            }
-            writeText(part.toString());
-        }
+    /** 写入一行内容并换行；内容为空时仅换行。 */
+    public void line(Object... parts) {
+        write(parts);
+        newline();
+    }
+
+    /** 换行并标记行首。 */
+    public void newline() {
+        writeRaw(SEP);
+        atLineStart = true;
     }
 
     /**
@@ -74,22 +67,53 @@ public final class CodePrinter {
         }
     }
 
-    /** 写入一行内容并换行；内容为空时仅换行。 */
-    public void line(Object... parts) {
-        write(parts);
-        newline();
-    }
-
     /** 原样写入一行并换行（不补缩进），用于已手工对齐的原始文本。 */
     public void rawLine(Object... parts) {
         raw(parts);
         newline();
     }
 
-    /** 换行并标记行首。 */
-    public void newline() {
-        writeRaw(SEP);
-        atLineStart = true;
+    /** 缩进层级 -1。 */
+    public void undent() {
+        level--;
+    }
+
+    /**
+     * 写入内容：若处于行首先补缩进；文本内嵌换行时逐行对齐。
+     *
+     * @param parts 内容片段，null 忽略
+     */
+    public void write(Object... parts) {
+        for (Object part : parts) {
+            if (part == null) {
+                continue;
+            }
+            writeText(part.toString());
+        }
+    }
+
+    private void writeIndent() {
+        writeRaw(" ".repeat(indentWidth * level));
+    }
+
+    private void writeRaw(String s) {
+        try {
+            out.write(s);
+        } catch (IOException e) {
+            throw new RuntimeException("codegen 输出失败", e);
+        }
+    }
+
+    /** 写一段不含换行的文本：行首补缩进；空段不写缩进（避免尾随空格）。 */
+    private void writeSegment(String segment) {
+        if (segment.isEmpty()) {
+            return;
+        }
+        if (atLineStart) {
+            writeIndent();
+            atLineStart = false;
+        }
+        writeRaw(segment);
     }
 
     /**
@@ -106,30 +130,6 @@ public final class CodePrinter {
             writeSegment(text.substring(start, nl));
             newline();
             start = nl + 1;
-        }
-    }
-
-    /** 写一段不含换行的文本：行首补缩进；空段不写缩进（避免尾随空格）。 */
-    private void writeSegment(String segment) {
-        if (segment.isEmpty()) {
-            return;
-        }
-        if (atLineStart) {
-            writeIndent();
-            atLineStart = false;
-        }
-        writeRaw(segment);
-    }
-
-    private void writeIndent() {
-        writeRaw(" ".repeat(indentWidth * level));
-    }
-
-    private void writeRaw(String s) {
-        try {
-            out.write(s);
-        } catch (IOException e) {
-            throw new RuntimeException("codegen 输出失败", e);
         }
     }
 

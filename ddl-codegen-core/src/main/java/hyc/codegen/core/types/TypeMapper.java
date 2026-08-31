@@ -98,6 +98,29 @@ public final class TypeMapper {
     }
 
     /**
+     * SQL 类型 + 列属性 → Java 类型（全限定名；未知类型保守映射 String）。
+     * <p>
+     * 注意：无符号整数可能超出有符号上限，int/mediumint/smallint 无符号时映射 Long。
+     */
+    public static String sqlToJava(Column column) {
+        String type = column.getSqlType().toLowerCase(Locale.ROOT);
+        if ("tinyint".equals(type)) {
+            return column.getLength() == 1 ? "java.lang.Boolean" : "java.lang.Integer";
+        }
+        if (column.isUnsigned() && INTEGER_TYPES.contains(type)) {
+            return "java.lang.Long";
+        }
+        String javaType = JAVA_TYPES.get(type);
+        return javaType != null ? javaType : "java.lang.String";
+    }
+
+    /** SQL 类型 → java.sql.Types 名（MyBatis jdbcType；未知类型保守映射 VARCHAR）。 */
+    public static String sqlToJdbcType(String sqlType) {
+        String jdbcType = JDBC_TYPES.get(sqlType.toLowerCase(Locale.ROOT));
+        return jdbcType != null ? jdbcType : "VARCHAR";
+    }
+
+    /**
      * 列 → Java 类型（全限定名或原样返回的简单名）。
      * <p>
      * 解析顺序：enum 列 → String（实体视图的枚举类与 {@code @type} 覆盖由 TableContext#typeOf
@@ -120,29 +143,6 @@ public final class TypeMapper {
             javaType = handler.resolveType(column, javaType);
         }
         return javaType;
-    }
-
-    /**
-     * SQL 类型 + 列属性 → Java 类型（全限定名；未知类型保守映射 String）。
-     * <p>
-     * 注意：无符号整数可能超出有符号上限，int/mediumint/smallint 无符号时映射 Long。
-     */
-    public static String sqlToJava(Column column) {
-        String type = column.getSqlType().toLowerCase(Locale.ROOT);
-        if ("tinyint".equals(type)) {
-            return column.getLength() == 1 ? "java.lang.Boolean" : "java.lang.Integer";
-        }
-        if (column.isUnsigned() && INTEGER_TYPES.contains(type)) {
-            return "java.lang.Long";
-        }
-        String javaType = JAVA_TYPES.get(type);
-        return javaType != null ? javaType : "java.lang.String";
-    }
-
-    /** SQL 类型 → java.sql.Types 名（MyBatis jdbcType；未知类型保守映射 VARCHAR）。 */
-    public static String sqlToJdbcType(String sqlType) {
-        String jdbcType = JDBC_TYPES.get(sqlType.toLowerCase(Locale.ROOT));
-        return jdbcType != null ? jdbcType : "VARCHAR";
     }
 
 }

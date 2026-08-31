@@ -17,6 +17,11 @@ public final class DocTagSince implements SinceTree {
     }
 
     @Override
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitSince(this, data);
+    }
+
+    @Override
     public List<? extends DocTree> getBody() {
         if (since == null) {
             return new ArrayList<>();
@@ -26,18 +31,13 @@ public final class DocTagSince implements SinceTree {
     }
 
     @Override
-    public String getTagName() {
-        return getKind().tagName;
-    }
-
-    @Override
     public Kind getKind() {
         return Kind.SINCE;
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitSince(this, data);
+    public String getTagName() {
+        return getKind().tagName;
     }
 
 }

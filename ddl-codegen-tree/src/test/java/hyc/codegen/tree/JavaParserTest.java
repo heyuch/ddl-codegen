@@ -12,6 +12,20 @@ import org.junit.jupiter.api.Test;
 
 public class JavaParserTest {
 
+    private static String getFileContent(File file) throws IOException {
+        StringBuilder sb = new StringBuilder();
+
+        try (BufferedReader r = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = r.readLine()) != null) {
+                sb.append(line)
+                        .append(System.lineSeparator());
+            }
+        }
+
+        return sb.toString();
+    }
+
     @Test
     public void parse() throws IOException {
         File file = new File("src/test/java/hyc/codegen/tree/Demo.java");
@@ -27,20 +41,6 @@ public class JavaParserTest {
         String expected = getFileContent(file);
 
         Assertions.assertEquals(expected, sb.toString());
-    }
-
-    private static String getFileContent(File file) throws IOException {
-        StringBuilder sb = new StringBuilder();
-
-        try (BufferedReader r = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = r.readLine()) != null) {
-                sb.append(line)
-                        .append(System.lineSeparator());
-            }
-        }
-
-        return sb.toString();
     }
 
 }

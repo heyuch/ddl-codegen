@@ -27,11 +27,6 @@ public final class AnnotationRegistry {
         return registry;
     }
 
-    /** 注册处理器；同名后注册覆盖先注册。 */
-    public void register(DdlAnnotationHandler handler) {
-        handlers.put(handler.name(), handler);
-    }
-
     /** 按名查处理器；不存在时返回 {@code null}。 */
     public @Nullable DdlAnnotationHandler get(String name) {
         return handlers.get(name);
@@ -40,6 +35,11 @@ public final class AnnotationRegistry {
     /** 已注册的注解名集合（拷贝脱离 KeyFor 关联，调用方可安全遍历）。 */
     public Set<String> names() {
         return new LinkedHashSet<>(handlers.keySet());
+    }
+
+    /** 注册处理器；同名后注册覆盖先注册。 */
+    public void register(DdlAnnotationHandler handler) {
+        handlers.put(handler.name(), handler);
     }
 
 }

@@ -31,26 +31,73 @@ public final class PropertiesConfigLoader implements ConfigLoader {
     /** 保留命名空间：naming.* 与 annotations.*；其余顶层键第一段 = 产物名。 */
     private static final List<String> RESERVED = Arrays.asList("naming", "annotations");
 
-    @Override
-    public DdlConfig load(Path configFile) {
-        Properties props = new Properties();
-        try (Reader r = Files.newBufferedReader(configFile, StandardCharsets.UTF_8)) {
-            props.load(r);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("读取配置文件失败: " + configFile, e);
+    private static void applyArtifactProperty(ArtifactConfig artifact, String prop, String value) {
+        switch (prop) {
+            case "generator":
+                artifact.setGenerator(emptyToNull(value));
+                break;
+            case "source":
+                artifact.setSource(emptyToNull(value));
+                break;
+            case "target":
+                artifact.setTarget(emptyToNull(value));
+                break;
+            case "module":
+                artifact.setModule(emptyToNull(value));
+                break;
+            case "package":
+                artifact.setPkg(emptyToNull(value));
+                break;
+            case "suffix":
+                artifact.setSuffix(value);
+                break;
+            case "path":
+                artifact.setPath(emptyToNull(value));
+                break;
+            default:
+                artifact.putOption(prop, value);
         }
+    }
 
-        DdlConfig config = new DdlConfig();
-        Path root = configFile.toAbsolutePath().getParent();
-        if (root == null) {
-            throw new IllegalArgumentException("配置文件必须位于目录中（无法确定项目根）: " + configFile);
+    /** 顶层键的产物名：非保留命名空间且有属性的键返回第一段，否则 null。 */
+    private static @Nullable String artifactNameOf(String key) {
+        int dot = key.indexOf('.');
+        if (dot <= 0) {
+            return null;
         }
-        config.setRoot(root);
+        String first = key.substring(0, dot);
+        if (RESERVED.contains(first)) {
+            return null;
+        }
+        return first;
+    }
 
-        loadArtifacts(props, config, configFile);
-        loadNaming(props, config);
-        loadCustomHandlers(props, config);
-        return config;
+    private static boolean boolValue(Properties props, String key, boolean defaultValue) {
+        String value = props.getProperty(key);
+        return value == null ? defaultValue : Boolean.parseBoolean(value);
+    }
+
+    /** 空/空白字符串 → null（属性值可缺省语义）；已为 null 原样返回。 */
+    private static @Nullable String emptyToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /** 提取属性行中的键（支持 {@code key=value} 与 {@code key: value}；注释/空行返回 null）。 */
+    private static @Nullable String keyOfLine(String line) {
+        String trimmed = line.trim();
+        if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("!")) {
+            return null;
+        }
+        int eq = trimmed.indexOf('=');
+        if (eq < 0) {
+            eq = trimmed.indexOf(':');
+        }
+        String key = eq < 0 ? trimmed : trimmed.substring(0, eq);
+        return key.trim();
     }
 
     private static void loadArtifacts(Properties props, DdlConfig config, Path configFile) {
@@ -94,58 +141,16 @@ public final class PropertiesConfigLoader implements ConfigLoader {
         }
     }
 
-    /** 顶层键的产物名：非保留命名空间且有属性的键返回第一段，否则 null。 */
-    private static @Nullable String artifactNameOf(String key) {
-        int dot = key.indexOf('.');
-        if (dot <= 0) {
-            return null;
+    private static void loadCustomHandlers(Properties props, DdlConfig config) {
+        String handlers = props.getProperty("annotations.custom");
+        if (handlers != null) {
+            for (String handler : splitList(handlers)) {
+                config.addCustomAnnotationHandler(handler);
+            }
         }
-        String first = key.substring(0, dot);
-        if (RESERVED.contains(first)) {
-            return null;
-        }
-        return first;
-    }
-
-    /** 提取属性行中的键（支持 {@code key=value} 与 {@code key: value}；注释/空行返回 null）。 */
-    private static @Nullable String keyOfLine(String line) {
-        String trimmed = line.trim();
-        if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("!")) {
-            return null;
-        }
-        int eq = trimmed.indexOf('=');
-        if (eq < 0) {
-            eq = trimmed.indexOf(':');
-        }
-        String key = eq < 0 ? trimmed : trimmed.substring(0, eq);
-        return key.trim();
-    }
-
-    private static void applyArtifactProperty(ArtifactConfig artifact, String prop, String value) {
-        switch (prop) {
-            case "generator":
-                artifact.setGenerator(emptyToNull(value));
-                break;
-            case "source":
-                artifact.setSource(emptyToNull(value));
-                break;
-            case "target":
-                artifact.setTarget(emptyToNull(value));
-                break;
-            case "module":
-                artifact.setModule(emptyToNull(value));
-                break;
-            case "package":
-                artifact.setPkg(emptyToNull(value));
-                break;
-            case "suffix":
-                artifact.setSuffix(value);
-                break;
-            case "path":
-                artifact.setPath(emptyToNull(value));
-                break;
-            default:
-                artifact.putOption(prop, value);
+        String nullable = props.getProperty("annotations.nullable");
+        if (nullable != null && !nullable.trim().isEmpty()) {
+            config.setNullableAnnotation(nullable.trim());
         }
     }
 
@@ -177,24 +182,6 @@ public final class PropertiesConfigLoader implements ConfigLoader {
         }
     }
 
-    private static void loadCustomHandlers(Properties props, DdlConfig config) {
-        String handlers = props.getProperty("annotations.custom");
-        if (handlers != null) {
-            for (String handler : splitList(handlers)) {
-                config.addCustomAnnotationHandler(handler);
-            }
-        }
-        String nullable = props.getProperty("annotations.nullable");
-        if (nullable != null && !nullable.trim().isEmpty()) {
-            config.setNullableAnnotation(nullable.trim());
-        }
-    }
-
-    private static boolean boolValue(Properties props, String key, boolean defaultValue) {
-        String value = props.getProperty(key);
-        return value == null ? defaultValue : Boolean.parseBoolean(value);
-    }
-
     /** 逗号分隔 → 去空白去空项的列表。 */
     private static java.util.List<String> splitList(String value) {
         java.util.List<String> result = new java.util.ArrayList<>();
@@ -207,13 +194,26 @@ public final class PropertiesConfigLoader implements ConfigLoader {
         return result;
     }
 
-    /** 空/空白字符串 → null（属性值可缺省语义）；已为 null 原样返回。 */
-    private static @Nullable String emptyToNull(String value) {
-        if (value == null) {
-            return null;
+    @Override
+    public DdlConfig load(Path configFile) {
+        Properties props = new Properties();
+        try (Reader r = Files.newBufferedReader(configFile, StandardCharsets.UTF_8)) {
+            props.load(r);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("读取配置文件失败: " + configFile, e);
         }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+
+        DdlConfig config = new DdlConfig();
+        Path root = configFile.toAbsolutePath().getParent();
+        if (root == null) {
+            throw new IllegalArgumentException("配置文件必须位于目录中（无法确定项目根）: " + configFile);
+        }
+        config.setRoot(root);
+
+        loadArtifacts(props, config, configFile);
+        loadNaming(props, config);
+        loadCustomHandlers(props, config);
+        return config;
     }
 
 }

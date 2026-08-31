@@ -55,62 +55,40 @@ public final class GenerationContext {
         this.report = report;
     }
 
-    public DdlConfig getConfig() {
-        return config;
+    /**
+     * 构造器：由 {@link CodeGenerator} 使用。
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
-     * 项目根（config 所在目录）。
+     * 产物类的全限定名（包 + 类名；未启用报错）。
      */
-    public Path getProjectRoot() {
-        return projectRoot;
-    }
-
-    public NamingService getNaming() {
-        return naming;
-    }
-
-    public TypeMapper getTypeMapper() {
-        return typeMapper;
-    }
-
-    public AnnotationRegistry getAnnotationRegistry() {
-        return annotationRegistry;
-    }
-
-    public GeneratorRegistry getGeneratorRegistry() {
-        return artifactRegistry;
-    }
-
-    public ChangeReport getReport() {
-        return report;
-    }
-
-    /**
-     * 按产物名取配置；未配置时明确报错（生成流程的配置契约）。
-     */
-    private ArtifactConfig requireArtifact(String artifactName) {
-        ArtifactConfig artifactConfig = config.artifact(artifactName);
-        if (artifactConfig == null) {
-            throw new IllegalStateException("未配置产物: " + artifactName);
-        }
-        return artifactConfig;
-    }
-
-    /**
-     * 产物对应的生成器实例（config.generator → 注册表）。
-     */
-    public Generator generatorFor(String artifactName) {
+    public String artifactFqn(String tableName, String artifactName) {
         ArtifactConfig artifactConfig = requireArtifact(artifactName);
-        String generatorName = artifactConfig.getGenerator();
-        if (generatorName == null) {
-            throw new IllegalStateException("产物 '" + artifactName + "' 未配置 generator");
+        String pkg = artifactConfig.getPkg();
+        if (pkg == null) {
+            throw new IllegalStateException(
+                    "产物 '" + artifactName + "' 缺少 package 配置（Java 类产物必须配置 package）");
         }
-        Generator generator = generators.get(generatorName);
-        if (generator == null) {
-            throw new IllegalStateException("产物 '" + artifactName + "' 引用了未注册的生成器: " + generatorName);
+        return pkg + "." + naming.artifactClassName(tableName, artifactName);
+    }
+
+    /**
+     * enum 产物包（唯一 enum 实例；未配置返回 null，多实例报错）。
+     */
+    public @Nullable String enumPackage() {
+        List<ArtifactConfig> matches = new ArrayList<>();
+        for (ArtifactConfig a : config.getArtifacts().values()) {
+            if ("enum".equals(a.getGenerator())) {
+                matches.add(a);
+            }
         }
-        return generator;
+        if (matches.size() <= 1) {
+            return matches.isEmpty() ? null : matches.get(0).getPkg();
+        }
+        throw new IllegalStateException("enum 生成器实例数 = " + matches.size() + "（应唯一，多个时需显式配置引用）");
     }
 
     /**
@@ -134,24 +112,86 @@ public final class GenerationContext {
     }
 
     /**
-     * 产物 enums 特性开关。
+     * 产物对应的生成器实例（config.generator → 注册表）。
      */
-    public boolean usesEnums(String artifactName) {
-        ArtifactConfig artifactConfig = config.artifact(artifactName);
-        return artifactConfig != null && Boolean.parseBoolean(artifactConfig.getOption("enums"));
+    public Generator generatorFor(String artifactName) {
+        ArtifactConfig artifactConfig = requireArtifact(artifactName);
+        String generatorName = artifactConfig.getGenerator();
+        if (generatorName == null) {
+            throw new IllegalStateException("产物 '" + artifactName + "' 未配置 generator");
+        }
+        Generator generator = generators.get(generatorName);
+        if (generator == null) {
+            throw new IllegalStateException("产物 '" + artifactName + "' 引用了未注册的生成器: " + generatorName);
+        }
+        return generator;
+    }
+
+    public AnnotationRegistry getAnnotationRegistry() {
+        return annotationRegistry;
+    }
+
+    public DdlConfig getConfig() {
+        return config;
+    }
+
+    public GeneratorRegistry getGeneratorRegistry() {
+        return artifactRegistry;
+    }
+
+    public NamingService getNaming() {
+        return naming;
     }
 
     /**
-     * 产物类的全限定名（包 + 类名；未启用报错）。
+     * 项目根（config 所在目录）。
      */
-    public String artifactFqn(String tableName, String artifactName) {
-        ArtifactConfig artifactConfig = requireArtifact(artifactName);
-        String pkg = artifactConfig.getPkg();
-        if (pkg == null) {
-            throw new IllegalStateException(
-                    "产物 '" + artifactName + "' 缺少 package 配置（Java 类产物必须配置 package）");
+    public Path getProjectRoot() {
+        return projectRoot;
+    }
+
+    public ChangeReport getReport() {
+        return report;
+    }
+
+    public TypeMapper getTypeMapper() {
+        return typeMapper;
+    }
+
+    /**
+     * 本次执行的全部警告。
+     */
+    public List<String> getWarnings() {
+        return new ArrayList<>(warnings);
+    }
+
+    /**
+     * 产物引用 → FQN（查询契约：路由到引用产物的生成器 className）。
+     */
+    public String refFqn(String tableName, ArtifactConfig referenced) {
+        TableContext refCtx = tableContext(syntheticTable(tableName, referenced), referenced.getName());
+        return referenced.getPkg() + "." + generatorFor(referenced.getName()).className(refCtx);
+    }
+
+    private @Nullable String refOf(ArtifactConfig owner, String refKey) {
+        if ("source".equals(refKey)) {
+            return owner.getSource();
         }
-        return pkg + "." + naming.artifactClassName(tableName, artifactName);
+        if ("target".equals(refKey)) {
+            return owner.getTarget();
+        }
+        return owner.getOption(refKey);
+    }
+
+    /**
+     * 按产物名取配置；未配置时明确报错（生成流程的配置契约）。
+     */
+    private ArtifactConfig requireArtifact(String artifactName) {
+        ArtifactConfig artifactConfig = config.artifact(artifactName);
+        if (artifactConfig == null) {
+            throw new IllegalStateException("未配置产物: " + artifactName);
+        }
+        return artifactConfig;
     }
 
     /**
@@ -178,40 +218,6 @@ public final class GenerationContext {
                 + defaultGenerator + "' 的实例数 = " + matches.size() + "（多实例/无实例时必须显式配置 " + refKey + "）");
     }
 
-    private @Nullable String refOf(ArtifactConfig owner, String refKey) {
-        if ("source".equals(refKey)) {
-            return owner.getSource();
-        }
-        if ("target".equals(refKey)) {
-            return owner.getTarget();
-        }
-        return owner.getOption(refKey);
-    }
-
-    /**
-     * enum 产物包（唯一 enum 实例；未配置返回 null，多实例报错）。
-     */
-    public @Nullable String enumPackage() {
-        List<ArtifactConfig> matches = new ArrayList<>();
-        for (ArtifactConfig a : config.getArtifacts().values()) {
-            if ("enum".equals(a.getGenerator())) {
-                matches.add(a);
-            }
-        }
-        if (matches.size() <= 1) {
-            return matches.isEmpty() ? null : matches.get(0).getPkg();
-        }
-        throw new IllegalStateException("enum 生成器实例数 = " + matches.size() + "（应唯一，多个时需显式配置引用）");
-    }
-
-    /**
-     * 产物引用 → FQN（查询契约：路由到引用产物的生成器 className）。
-     */
-    public String refFqn(String tableName, ArtifactConfig referenced) {
-        TableContext refCtx = tableContext(syntheticTable(tableName, referenced), referenced.getName());
-        return referenced.getPkg() + "." + generatorFor(referenced.getName()).className(refCtx);
-    }
-
     private Table syntheticTable(String tableName, ArtifactConfig referenced) {
         return new Table(tableName, null);
     }
@@ -225,24 +231,18 @@ public final class GenerationContext {
     }
 
     /**
+     * 产物 enums 特性开关。
+     */
+    public boolean usesEnums(String artifactName) {
+        ArtifactConfig artifactConfig = config.artifact(artifactName);
+        return artifactConfig != null && Boolean.parseBoolean(artifactConfig.getOption("enums"));
+    }
+
+    /**
      * 记一条警告（不中断生成）。
      */
     public void warning(String message) {
         warnings.add(message);
-    }
-
-    /**
-     * 本次执行的全部警告。
-     */
-    public List<String> getWarnings() {
-        return new ArrayList<>(warnings);
-    }
-
-    /**
-     * 构造器：由 {@link CodeGenerator} 使用。
-     */
-    public static Builder builder() {
-        return new Builder();
     }
 
     /**
@@ -271,21 +271,6 @@ public final class GenerationContext {
 
         private ChangeReport report = new ChangeReport();
 
-        public Builder config(DdlConfig config) {
-            this.config = config;
-            return this;
-        }
-
-        public Builder naming(NamingService naming) {
-            this.naming = naming;
-            return this;
-        }
-
-        public Builder typeMapper(TypeMapper typeMapper) {
-            this.typeMapper = typeMapper;
-            return this;
-        }
-
         public Builder annotationRegistry(AnnotationRegistry annotationRegistry) {
             this.annotationRegistry = annotationRegistry;
             return this;
@@ -293,16 +278,6 @@ public final class GenerationContext {
 
         public Builder artifactRegistry(GeneratorRegistry artifactRegistry) {
             this.artifactRegistry = artifactRegistry;
-            return this;
-        }
-
-        public Builder report(ChangeReport report) {
-            this.report = report;
-            return this;
-        }
-
-        public Builder generator(Generator generator) {
-            generators.put(generator.kind(), generator);
             return this;
         }
 
@@ -324,6 +299,31 @@ public final class GenerationContext {
                 throw new IllegalStateException("GenerationContext 构建缺失必填字段 annotationRegistry");
             }
             return new GenerationContext(c, n, tm, ar, artifactRegistry, generators, report);
+        }
+
+        public Builder config(DdlConfig config) {
+            this.config = config;
+            return this;
+        }
+
+        public Builder generator(Generator generator) {
+            generators.put(generator.kind(), generator);
+            return this;
+        }
+
+        public Builder naming(NamingService naming) {
+            this.naming = naming;
+            return this;
+        }
+
+        public Builder report(ChangeReport report) {
+            this.report = report;
+            return this;
+        }
+
+        public Builder typeMapper(TypeMapper typeMapper) {
+            this.typeMapper = typeMapper;
+            return this;
         }
 
     }

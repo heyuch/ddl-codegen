@@ -19,6 +19,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public final class Column {
 
     private final String name;
+
     private final String sqlType;
     private final int length;
     private final int precision;
@@ -48,17 +49,35 @@ public final class Column {
         this.enumValues = Collections.unmodifiableList(new ArrayList<>(b.enumValues));
     }
 
-    public String getName() {
-        return name;
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public String getSqlType() {
-        return sqlType;
+    public @Nullable String getComment() {
+        return comment;
+    }
+
+    public @Nullable String getDefaultValue() {
+        return defaultValue;
+    }
+
+    /** enum 列的取值列表（来自 DDL {@code enum(...)}）；非 enum 列为空列表。 */
+    public List<String> getEnumValues() {
+        return enumValues;
     }
 
     /** 长度（varchar(n)/char(n) 等）；无长度概念时返回 0。 */
     public int getLength() {
         return length;
+    }
+
+    /** 列元数据（DDL 注解结果写入这里，开放读写）。 */
+    public Meta getMeta() {
+        return meta;
+    }
+
+    public String getName() {
+        return name;
     }
 
     /** 精度（decimal(p,s) 的 p 等）；无精度概念时返回 0。 */
@@ -71,29 +90,12 @@ public final class Column {
         return scale;
     }
 
-    public boolean isNullable() {
-        return nullable;
-    }
-
-    public boolean isUnsigned() {
-        return unsigned;
+    public String getSqlType() {
+        return sqlType;
     }
 
     public boolean isAutoIncrement() {
         return autoIncrement;
-    }
-
-    public @Nullable String getDefaultValue() {
-        return defaultValue;
-    }
-
-    public @Nullable String getComment() {
-        return comment;
-    }
-
-    /** enum 列的取值列表（来自 DDL {@code enum(...)}）；非 enum 列为空列表。 */
-    public List<String> getEnumValues() {
-        return enumValues;
     }
 
     /** 是否为 MySQL enum 类型列。 */
@@ -101,9 +103,12 @@ public final class Column {
         return "enum".equals(sqlType);
     }
 
-    /** 列元数据（DDL 注解结果写入这里，开放读写）。 */
-    public Meta getMeta() {
-        return meta;
+    public boolean isNullable() {
+        return nullable;
+    }
+
+    public boolean isUnsigned() {
+        return unsigned;
     }
 
     /** 返回同名定义的副本列（保留全部字段与元数据），用于列改名。 */
@@ -123,10 +128,6 @@ public final class Column {
                 .build();
         copy.meta.putAll(meta);
         return copy;
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     /**
@@ -149,18 +150,42 @@ public final class Column {
         private @Nullable String comment;
         private final List<String> enumValues = new ArrayList<>();
 
-        public Builder name(String name) {
-            this.name = name;
+        public Builder autoIncrement(boolean autoIncrement) {
+            this.autoIncrement = autoIncrement;
             return this;
         }
 
-        public Builder sqlType(String sqlType) {
-            this.sqlType = sqlType;
+        public Column build() {
+            return new Column(this);
+        }
+
+        public Builder comment(@Nullable String comment) {
+            this.comment = comment;
+            return this;
+        }
+
+        public Builder defaultValue(@Nullable String defaultValue) {
+            this.defaultValue = defaultValue;
+            return this;
+        }
+
+        public Builder enumValues(List<String> enumValues) {
+            this.enumValues.addAll(enumValues);
             return this;
         }
 
         public Builder length(int length) {
             this.length = length;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder nullable(boolean nullable) {
+            this.nullable = nullable;
             return this;
         }
 
@@ -174,38 +199,14 @@ public final class Column {
             return this;
         }
 
-        public Builder nullable(boolean nullable) {
-            this.nullable = nullable;
+        public Builder sqlType(String sqlType) {
+            this.sqlType = sqlType;
             return this;
         }
 
         public Builder unsigned(boolean unsigned) {
             this.unsigned = unsigned;
             return this;
-        }
-
-        public Builder autoIncrement(boolean autoIncrement) {
-            this.autoIncrement = autoIncrement;
-            return this;
-        }
-
-        public Builder defaultValue(@Nullable String defaultValue) {
-            this.defaultValue = defaultValue;
-            return this;
-        }
-
-        public Builder comment(@Nullable String comment) {
-            this.comment = comment;
-            return this;
-        }
-
-        public Builder enumValues(List<String> enumValues) {
-            this.enumValues.addAll(enumValues);
-            return this;
-        }
-
-        public Column build() {
-            return new Column(this);
         }
 
     }

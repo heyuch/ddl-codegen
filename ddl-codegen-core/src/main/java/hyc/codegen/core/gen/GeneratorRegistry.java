@@ -18,15 +18,8 @@ public final class GeneratorRegistry {
      */
     private final Map<String, Object> entries = new LinkedHashMap<>();
 
-    /**
-     * 发布一条描述。
-     *
-     * @param kind  artifact 类型名
-     * @param table 表名
-     * @param info  描述对象（自定义类型，发布方与消费方约定）
-     */
-    public void publish(String kind, String table, Object info) {
-        entries.put(key(kind, table), info);
+    private static String key(String kind, String table) {
+        return kind + "#" + table;
     }
 
     /**
@@ -37,8 +30,15 @@ public final class GeneratorRegistry {
         return type.isInstance(info) ? type.cast(info) : null;
     }
 
-    private static String key(String kind, String table) {
-        return kind + "#" + table;
+    /**
+     * 发布一条描述。
+     *
+     * @param kind  artifact 类型名
+     * @param table 表名
+     * @param info  描述对象（自定义类型，发布方与消费方约定）
+     */
+    public void publish(String kind, String table, Object info) {
+        entries.put(key(kind, table), info);
     }
 
 }

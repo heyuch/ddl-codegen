@@ -33,25 +33,9 @@ public final class Modifiers implements ModifiersTree {
         return new Modifiers(new HashSet<>(list));
     }
 
-    /**
-     * 返回注解是否内联打印（同一行）。
-     */
-    public boolean isAnnotationInline() {
-        return annotationInline;
-    }
-
-    /**
-     * 设置注解是否内联打印。
-     */
-    public void setAnnotationInline(boolean annotationInline) {
-        this.annotationInline = annotationInline;
-    }
-
-    public void addAnnotations(java.util.Collection<? extends AnnotationTree> annotations) {
-        if (annotations == null) {
-            return;
-        }
-        this.annotations.addAll(annotations);
+    @Override
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitModifiers(this, data);
     }
 
     public void addAnnotation(AnnotationTree a) {
@@ -61,17 +45,11 @@ public final class Modifiers implements ModifiersTree {
         annotations.add(a);
     }
 
-    /** 按注解类型名移除注解（类型名含包名或简单名均可）；存在返回 true。 */
-    public boolean removeAnnotation(String typeName) {
-        return annotations.removeIf(a -> {
-            String name = String.valueOf(a.getAnnotationType());
-            return name.equals(typeName) || name.endsWith("." + typeName);
-        });
-    }
-
-    @Override
-    public Set<Modifier> getFlags() {
-        return EnumSet.copyOf(modifiers);
+    public void addAnnotations(java.util.Collection<? extends AnnotationTree> annotations) {
+        if (annotations == null) {
+            return;
+        }
+        this.annotations.addAll(annotations);
     }
 
     @Override
@@ -80,13 +58,8 @@ public final class Modifiers implements ModifiersTree {
     }
 
     @Override
-    public Kind getKind() {
-        return Kind.MODIFIERS;
-    }
-
-    @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitModifiers(this, data);
+    public Set<Modifier> getFlags() {
+        return EnumSet.copyOf(modifiers);
     }
 
     public List<Import> getImports() {
@@ -97,6 +70,33 @@ public final class Modifiers implements ModifiersTree {
             }
         }
         return imports;
+    }
+
+    @Override
+    public Kind getKind() {
+        return Kind.MODIFIERS;
+    }
+
+    /**
+     * 返回注解是否内联打印（同一行）。
+     */
+    public boolean isAnnotationInline() {
+        return annotationInline;
+    }
+
+    /** 按注解类型名移除注解（类型名含包名或简单名均可）；存在返回 true。 */
+    public boolean removeAnnotation(String typeName) {
+        return annotations.removeIf(a -> {
+            String name = String.valueOf(a.getAnnotationType());
+            return name.equals(typeName) || name.endsWith("." + typeName);
+        });
+    }
+
+    /**
+     * 设置注解是否内联打印。
+     */
+    public void setAnnotationInline(boolean annotationInline) {
+        this.annotationInline = annotationInline;
     }
 
 }

@@ -44,6 +44,34 @@ public final class Codegen {
         throw new AssertionError("no instances");
     }
 
+    private static List<Generator> defaultGenerators() {
+        List<Generator> generators = new ArrayList<>();
+        generators.add(new PojoGenerator());
+        generators.add(new EnumGenerator());
+        generators.add(new MapperGenerator());
+        generators.add(new MapperXmlGenerator());
+        generators.add(new RepositoryGenerator());
+        generators.add(new MybatisRepositoryImplGenerator());
+        generators.add(new ConverterGenerator());
+        return generators;
+    }
+
+    /** config {@code annotations.custom} 指定的自定义注解处理器（反射实例化）。 */
+    private static List<DdlAnnotationHandler> instantiateHandlers(DdlConfig config) {
+        List<DdlAnnotationHandler> handlers = new ArrayList<>();
+        for (String className : config.getCustomAnnotationHandlers()) {
+            try {
+                Class<?> handlerClass = Class.forName(className);
+                handlers.add(handlerClass.asSubclass(DdlAnnotationHandler.class)
+                        .getDeclaredConstructor()
+                        .newInstance());
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalArgumentException("无法实例化注解处理器: " + className, e);
+            }
+        }
+        return handlers;
+    }
+
     /**
      * 执行一次完整生成。
      *
@@ -72,34 +100,6 @@ public final class Codegen {
         CodeGenerator generator = new CodeGenerator(defaultGenerators());
         FileWriter.setDryRun(dryRun);
         return generator.generate(config, schema, result, handlers);
-    }
-
-    /** config {@code annotations.custom} 指定的自定义注解处理器（反射实例化）。 */
-    private static List<DdlAnnotationHandler> instantiateHandlers(DdlConfig config) {
-        List<DdlAnnotationHandler> handlers = new ArrayList<>();
-        for (String className : config.getCustomAnnotationHandlers()) {
-            try {
-                Class<?> handlerClass = Class.forName(className);
-                handlers.add(handlerClass.asSubclass(DdlAnnotationHandler.class)
-                        .getDeclaredConstructor()
-                        .newInstance());
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalArgumentException("无法实例化注解处理器: " + className, e);
-            }
-        }
-        return handlers;
-    }
-
-    private static List<Generator> defaultGenerators() {
-        List<Generator> generators = new ArrayList<>();
-        generators.add(new PojoGenerator());
-        generators.add(new EnumGenerator());
-        generators.add(new MapperGenerator());
-        generators.add(new MapperXmlGenerator());
-        generators.add(new RepositoryGenerator());
-        generators.add(new MybatisRepositoryImplGenerator());
-        generators.add(new ConverterGenerator());
-        return generators;
     }
 
 }

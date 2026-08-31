@@ -22,21 +22,6 @@ public final class ChangeColumnOp implements DdlOperation {
         this.newColumn = newColumn;
     }
 
-    /** 变更前的列名。 */
-    public String getOldName() {
-        return oldName;
-    }
-
-    /** 变更后的完整列定义（可能带新列名）。 */
-    public Column getNewColumn() {
-        return newColumn;
-    }
-
-    @Override
-    public String tableName() {
-        return tableName;
-    }
-
     @Override
     public void apply(Schema schema, ApplyResult result) {
         Table table = schema.getTable(tableName);
@@ -44,6 +29,21 @@ public final class ChangeColumnOp implements DdlOperation {
             table.replaceColumn(oldName, newColumn);
             result.affect(tableName);
         }
+    }
+
+    /** 变更后的完整列定义（可能带新列名）。 */
+    public Column getNewColumn() {
+        return newColumn;
+    }
+
+    /** 变更前的列名。 */
+    public String getOldName() {
+        return oldName;
+    }
+
+    @Override
+    public String tableName() {
+        return tableName;
     }
 
 }

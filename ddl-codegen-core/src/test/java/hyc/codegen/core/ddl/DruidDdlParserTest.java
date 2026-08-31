@@ -22,6 +22,64 @@ class DruidDdlParserTest {
     private final DruidDdlParser parser = new DruidDdlParser();
 
     @Test
+    void addIndexWithIgnoreAnnotation() {
+        // PIT 抓到的缺口：ALTER ADD INDEX 的注解处理路径未被测试
+        String ddl = "ALTER TABLE t_user ADD INDEX idx_name (name) COMMENT '@ignore'";
+        List<DdlOperation> ops = parser.parse(ddl);
+
+        assertEquals(1, ops.size());
+        assertTrue(ops.get(0) instanceof AddIndexOp);
+        Index index = ((AddIndexOp)ops.get(0)).getIndex();
+        assertNotNull(index.getMeta().get("ignore"), "索引注释 @ignore 应被解析");
+    }
+
+    @Test
+    void alterTableAllForms() {
+        String ddl = "ALTER TABLE t_user\n"
+                + "  ADD COLUMN email VARCHAR(100) COMMENT '邮箱',\n"
+                + "  DROP COLUMN secret,\n"
+                + "  MODIFY COLUMN name VARCHAR(100) NOT NULL,\n"
+                + "  CHANGE COLUMN credits points DECIMAL(12,2),\n"
+                + "  ADD INDEX idx_email (email),\n"
+                + "  DROP INDEX idx_credits,\n"
+                + "  RENAME COLUMN create_time TO created_at";
+
+        List<DdlOperation> ops = parser.parse(ddl);
+
+        assertEquals(7, ops.size());
+        assertEquals("t_user", ops.get(0).tableName());
+
+        assertTrue(ops.get(0) instanceof AddColumnOp);
+        assertEquals("email", ((AddColumnOp)ops.get(0)).getColumn().getName());
+
+        assertTrue(ops.get(1) instanceof DropColumnOp);
+        assertEquals("secret", ((DropColumnOp)ops.get(1)).getColumnName());
+
+        assertTrue(ops.get(2) instanceof ChangeColumnOp);
+        ChangeColumnOp modify = (ChangeColumnOp)ops.get(2);
+        assertEquals("name", modify.getOldName());
+        assertEquals("name", modify.getNewColumn().getName());
+        assertEquals(100, modify.getNewColumn().getLength());
+
+        assertTrue(ops.get(3) instanceof ChangeColumnOp);
+        ChangeColumnOp change = (ChangeColumnOp)ops.get(3);
+        assertEquals("credits", change.getOldName());
+        assertEquals("points", change.getNewColumn().getName());
+        assertEquals(12, change.getNewColumn().getPrecision());
+
+        assertTrue(ops.get(4) instanceof AddIndexOp);
+        assertEquals("idx_email", ((AddIndexOp)ops.get(4)).getIndex().getName());
+
+        assertTrue(ops.get(5) instanceof DropIndexOp);
+        assertEquals("idx_credits", ((DropIndexOp)ops.get(5)).getIndexName());
+
+        assertTrue(ops.get(6) instanceof RenameColumnOp);
+        RenameColumnOp renameColumn = (RenameColumnOp)ops.get(6);
+        assertEquals("create_time", renameColumn.getFrom());
+        assertEquals("created_at", renameColumn.getTo());
+    }
+
+    @Test
     void createTableWithFullFeatures() {
         String ddl = "CREATE TABLE t_user (\n"
                 + "  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',\n"
@@ -94,6 +152,38 @@ class DruidDdlParserTest {
     }
 
     @Test
+    void dropTableStatement() {
+        String ddl = "DROP TABLE IF EXISTS t_user";
+
+        List<DdlOperation> ops = parser.parse(ddl);
+
+        assertEquals(1, ops.size());
+        DropTableOp drop = (DropTableOp)ops.get(0);
+        assertEquals("t_user", drop.tableName());
+    }
+
+    private List<String> names(List<Column> columns) {
+        List<String> result = new java.util.ArrayList<>();
+        for (Column column : columns) {
+            result.add(column.getName());
+        }
+        return result;
+    }
+
+    @Test
+    void renameTableStatement() {
+        String ddl = "ALTER TABLE t_user RENAME TO t_account";
+
+        List<DdlOperation> ops = parser.parse(ddl);
+
+        assertEquals(1, ops.size());
+        assertTrue(ops.get(0) instanceof RenameTableOp);
+        RenameTableOp rename = (RenameTableOp)ops.get(0);
+        assertEquals("t_user", rename.getFrom());
+        assertEquals("t_account", rename.getTo());
+    }
+
+    @Test
     void tableLevelAsAnnotation() {
         String ddl = "CREATE TABLE t_account (id BIGINT NOT NULL, PRIMARY KEY (id)) COMMENT '账户表 @as:Account'";
 
@@ -115,18 +205,6 @@ class DruidDdlParserTest {
     }
 
     @Test
-    void addIndexWithIgnoreAnnotation() {
-        // PIT 抓到的缺口：ALTER ADD INDEX 的注解处理路径未被测试
-        String ddl = "ALTER TABLE t_user ADD INDEX idx_name (name) COMMENT '@ignore'";
-        List<DdlOperation> ops = parser.parse(ddl);
-
-        assertEquals(1, ops.size());
-        assertTrue(ops.get(0) instanceof AddIndexOp);
-        Index index = ((AddIndexOp)ops.get(0)).getIndex();
-        assertNotNull(index.getMeta().get("ignore"), "索引注释 @ignore 应被解析");
-    }
-
-    @Test
     void unnamedIndexGetsSynthesizedName() {
         String ddl = "CREATE TABLE t_y (a INT, b INT, KEY (a), UNIQUE (b))";
 
@@ -134,84 +212,6 @@ class DruidDdlParserTest {
 
         assertTrue(table.hasIndex("idx_a"));
         assertTrue(table.hasIndex("uk_b"));
-    }
-
-    @Test
-    void alterTableAllForms() {
-        String ddl = "ALTER TABLE t_user\n"
-                + "  ADD COLUMN email VARCHAR(100) COMMENT '邮箱',\n"
-                + "  DROP COLUMN secret,\n"
-                + "  MODIFY COLUMN name VARCHAR(100) NOT NULL,\n"
-                + "  CHANGE COLUMN credits points DECIMAL(12,2),\n"
-                + "  ADD INDEX idx_email (email),\n"
-                + "  DROP INDEX idx_credits,\n"
-                + "  RENAME COLUMN create_time TO created_at";
-
-        List<DdlOperation> ops = parser.parse(ddl);
-
-        assertEquals(7, ops.size());
-        assertEquals("t_user", ops.get(0).tableName());
-
-        assertTrue(ops.get(0) instanceof AddColumnOp);
-        assertEquals("email", ((AddColumnOp)ops.get(0)).getColumn().getName());
-
-        assertTrue(ops.get(1) instanceof DropColumnOp);
-        assertEquals("secret", ((DropColumnOp)ops.get(1)).getColumnName());
-
-        assertTrue(ops.get(2) instanceof ChangeColumnOp);
-        ChangeColumnOp modify = (ChangeColumnOp)ops.get(2);
-        assertEquals("name", modify.getOldName());
-        assertEquals("name", modify.getNewColumn().getName());
-        assertEquals(100, modify.getNewColumn().getLength());
-
-        assertTrue(ops.get(3) instanceof ChangeColumnOp);
-        ChangeColumnOp change = (ChangeColumnOp)ops.get(3);
-        assertEquals("credits", change.getOldName());
-        assertEquals("points", change.getNewColumn().getName());
-        assertEquals(12, change.getNewColumn().getPrecision());
-
-        assertTrue(ops.get(4) instanceof AddIndexOp);
-        assertEquals("idx_email", ((AddIndexOp)ops.get(4)).getIndex().getName());
-
-        assertTrue(ops.get(5) instanceof DropIndexOp);
-        assertEquals("idx_credits", ((DropIndexOp)ops.get(5)).getIndexName());
-
-        assertTrue(ops.get(6) instanceof RenameColumnOp);
-        RenameColumnOp renameColumn = (RenameColumnOp)ops.get(6);
-        assertEquals("create_time", renameColumn.getFrom());
-        assertEquals("created_at", renameColumn.getTo());
-    }
-
-    @Test
-    void renameTableStatement() {
-        String ddl = "ALTER TABLE t_user RENAME TO t_account";
-
-        List<DdlOperation> ops = parser.parse(ddl);
-
-        assertEquals(1, ops.size());
-        assertTrue(ops.get(0) instanceof RenameTableOp);
-        RenameTableOp rename = (RenameTableOp)ops.get(0);
-        assertEquals("t_user", rename.getFrom());
-        assertEquals("t_account", rename.getTo());
-    }
-
-    @Test
-    void dropTableStatement() {
-        String ddl = "DROP TABLE IF EXISTS t_user";
-
-        List<DdlOperation> ops = parser.parse(ddl);
-
-        assertEquals(1, ops.size());
-        DropTableOp drop = (DropTableOp)ops.get(0);
-        assertEquals("t_user", drop.tableName());
-    }
-
-    private List<String> names(List<Column> columns) {
-        List<String> result = new java.util.ArrayList<>();
-        for (Column column : columns) {
-            result.add(column.getName());
-        }
-        return result;
     }
 
 }

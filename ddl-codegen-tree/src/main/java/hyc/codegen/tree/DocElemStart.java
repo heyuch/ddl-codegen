@@ -19,19 +19,19 @@ public final class DocElemStart implements StartElementTree {
         this(name, false, new ArrayList<@UnknownKeyFor DocTree>());
     }
 
+    public DocElemStart(String name, boolean selfClosing) {
+        this(name, selfClosing, new ArrayList<@UnknownKeyFor DocTree>());
+    }
+
     public DocElemStart(String name, boolean selfClosing, List<? extends DocTree> attrs) {
         this.name = name;
         this.selfClosing = selfClosing;
         this.attrs = new ArrayList<@UnknownKeyFor DocTree>(attrs);
     }
 
-    public DocElemStart(String name, boolean selfClosing) {
-        this(name, selfClosing, new ArrayList<@UnknownKeyFor DocTree>());
-    }
-
     @Override
-    public Name getName() {
-        return new StringName(name);
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitStartElement(this, data);
     }
 
     @Override
@@ -40,18 +40,18 @@ public final class DocElemStart implements StartElementTree {
     }
 
     @Override
-    public boolean isSelfClosing() {
-        return selfClosing;
-    }
-
-    @Override
     public Kind getKind() {
         return Kind.START_ELEMENT;
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitStartElement(this, data);
+    public Name getName() {
+        return new StringName(name);
+    }
+
+    @Override
+    public boolean isSelfClosing() {
+        return selfClosing;
     }
 
 }

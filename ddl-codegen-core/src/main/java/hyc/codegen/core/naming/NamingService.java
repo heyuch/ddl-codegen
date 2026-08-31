@@ -54,17 +54,20 @@ public final class NamingService {
         this.strategy = strategy;
     }
 
-    /** 表名 → 基类名（不含 artifact 后缀）；配置了策略则整体委托。 */
-    public String tableClassName(String tableName) {
-        if (strategy != null) {
-            return strategy.toBaseClassName(tableName);
+    /** 首字母大写、其余小写（name → Name；用于 snake 片段）。 */
+    private static String capitalize(String word) {
+        if (word.isEmpty()) {
+            return word;
         }
+        return word.substring(0, 1).toUpperCase(Locale.ROOT) + word.substring(1).toLowerCase(Locale.ROOT);
+    }
 
-        String name = stripPrefixes(tableName);
-        if (config.isTableStripShardSuffix()) {
-            name = stripShardSuffix(name);
+    /** 仅首字母大写、保留其余（userId → UserId；用于已是 camelCase 的列名）。 */
+    private static String upperFirst(String word) {
+        if (word.isEmpty()) {
+            return word;
         }
-        return toPascalCase(name);
+        return word.substring(0, 1).toUpperCase(Locale.ROOT) + word.substring(1);
     }
 
     /** 表名 → artifact 类名 = 基类名 + 该 artifact 配置的后缀。 */
@@ -83,6 +86,15 @@ public final class NamingService {
         return name;
     }
 
+    /** enum 类名：column 风格 = 列名 PascalCase；tableColumn 风格 = 表基类名 + 列名 PascalCase。 */
+    public String enumClassName(String tableName, String columnName) {
+        String column = toPascalCase(columnName);
+        if ("tableColumn".equals(config.getEnumStyle())) {
+            return tableClassName(tableName) + column;
+        }
+        return column;
+    }
+
     /** 索引 → 查询方法名：前缀 + By + 列 camelCase 以 And 连接（name,gender → findByNameAndGender）。 */
     public String indexMethodName(Index index) {
         return indexMethodName(index.getColumns());
@@ -98,15 +110,6 @@ public final class NamingService {
             sb.append(upperFirst(toCamelCase(columns.get(i))));
         }
         return sb.toString();
-    }
-
-    /** enum 类名：column 风格 = 列名 PascalCase；tableColumn 风格 = 表基类名 + 列名 PascalCase。 */
-    public String enumClassName(String tableName, String columnName) {
-        String column = toPascalCase(columnName);
-        if ("tableColumn".equals(config.getEnumStyle())) {
-            return tableClassName(tableName) + column;
-        }
-        return column;
     }
 
     /** 按前缀列表剥表名前缀（大小写不敏感）。 */
@@ -130,15 +133,17 @@ public final class NamingService {
         return name;
     }
 
-    /** snake_case → PascalCase（user_profile → UserProfile；USER → User）。 */
-    private String toPascalCase(String name) {
-        StringBuilder sb = new StringBuilder();
-        for (String word : name.split("_")) {
-            if (!word.isEmpty()) {
-                sb.append(capitalize(word));
-            }
+    /** 表名 → 基类名（不含 artifact 后缀）；配置了策略则整体委托。 */
+    public String tableClassName(String tableName) {
+        if (strategy != null) {
+            return strategy.toBaseClassName(tableName);
         }
-        return sb.toString();
+
+        String name = stripPrefixes(tableName);
+        if (config.isTableStripShardSuffix()) {
+            name = stripShardSuffix(name);
+        }
+        return toPascalCase(name);
     }
 
     /** snake_case → camelCase（user_id → userId；首段小写，其余段首字母大写）。 */
@@ -153,20 +158,15 @@ public final class NamingService {
         return sb.toString();
     }
 
-    /** 首字母大写、其余小写（name → Name；用于 snake 片段）。 */
-    private static String capitalize(String word) {
-        if (word.isEmpty()) {
-            return word;
+    /** snake_case → PascalCase（user_profile → UserProfile；USER → User）。 */
+    private String toPascalCase(String name) {
+        StringBuilder sb = new StringBuilder();
+        for (String word : name.split("_")) {
+            if (!word.isEmpty()) {
+                sb.append(capitalize(word));
+            }
         }
-        return word.substring(0, 1).toUpperCase(Locale.ROOT) + word.substring(1).toLowerCase(Locale.ROOT);
-    }
-
-    /** 仅首字母大写、保留其余（userId → UserId；用于已是 camelCase 的列名）。 */
-    private static String upperFirst(String word) {
-        if (word.isEmpty()) {
-            return word;
-        }
-        return word.substring(0, 1).toUpperCase(Locale.ROOT) + word.substring(1);
+        return sb.toString();
     }
 
 }

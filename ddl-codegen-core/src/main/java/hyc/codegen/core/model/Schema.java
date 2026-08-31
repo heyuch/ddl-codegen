@@ -21,14 +21,14 @@ public final class Schema {
         tables.put(table.getName(), table);
     }
 
-    /** 按名取表；不存在时返回 {@code null}。 */
-    public @Nullable Table getTable(String name) {
-        return tables.get(name);
-    }
-
     /** 是否包含指定表。 */
     public boolean contains(String name) {
         return tables.containsKey(name);
+    }
+
+    /** 按名取表；不存在时返回 {@code null}。 */
+    public @Nullable Table getTable(String name) {
+        return tables.get(name);
     }
 
     /** 删除表；不存在时静默。 */

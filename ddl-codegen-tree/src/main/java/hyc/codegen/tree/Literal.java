@@ -15,20 +15,8 @@ public final class Literal implements LiteralTree {
         this.kind = kind;
     }
 
-    public static Literal of(int value) {
-        return new Literal(value, Kind.INT_LITERAL);
-    }
-
-    public static Literal of(long value) {
-        return new Literal(value, Kind.LONG_LITERAL);
-    }
-
-    public static Literal of(float value) {
-        return new Literal(value, Kind.FLOAT_LITERAL);
-    }
-
-    public static Literal of(double value) {
-        return new Literal(value, Kind.DOUBLE_LITERAL);
+    public static Literal of(String value) {
+        return new Literal(value, Kind.STRING_LITERAL);
     }
 
     public static Literal of(boolean value) {
@@ -39,8 +27,20 @@ public final class Literal implements LiteralTree {
         return new Literal(value, Kind.CHAR_LITERAL);
     }
 
-    public static Literal of(String value) {
-        return new Literal(value, Kind.STRING_LITERAL);
+    public static Literal of(double value) {
+        return new Literal(value, Kind.DOUBLE_LITERAL);
+    }
+
+    public static Literal of(float value) {
+        return new Literal(value, Kind.FLOAT_LITERAL);
+    }
+
+    public static Literal of(int value) {
+        return new Literal(value, Kind.INT_LITERAL);
+    }
+
+    public static Literal of(long value) {
+        return new Literal(value, Kind.LONG_LITERAL);
     }
 
     public static Literal ofNull() {
@@ -48,11 +48,8 @@ public final class Literal implements LiteralTree {
     }
 
     @Override
-    @Nullable
-    // javac tree API 语义：NULL_LITERAL 的 getValue() 返回 null
-    @SuppressWarnings("override.return")
-    public Object getValue() {
-        return value;
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitLiteral(this, data);
     }
 
     @Override
@@ -61,8 +58,11 @@ public final class Literal implements LiteralTree {
     }
 
     @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitLiteral(this, data);
+    @Nullable
+    // javac tree API 语义：NULL_LITERAL 的 getValue() 返回 null
+    @SuppressWarnings("override.return")
+    public Object getValue() {
+        return value;
     }
 
 }

@@ -18,11 +18,6 @@ public final class Block {
         throw new AssertionError("no instances");
     }
 
-    /** 多语句以行分隔符连接，构成方法体文本。 */
-    public static String statements(String... stmts) {
-        return String.join(SEP, stmts);
-    }
-
     /** if (cond) { ... }：body 各语句自动缩进一层。 */
     public static String ifStmt(String cond, String... body) {
         StringJoiner joined = new StringJoiner(SEP);
@@ -30,6 +25,11 @@ public final class Block {
             joined.add(INDENT + stmt);
         }
         return "if (" + cond + ") {" + SEP + joined + SEP + "}";
+    }
+
+    /** 多语句以行分隔符连接，构成方法体文本。 */
+    public static String statements(String... stmts) {
+        return String.join(SEP, stmts);
     }
 
 }

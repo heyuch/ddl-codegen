@@ -14,8 +14,8 @@ public final class PrimitiveType implements PrimitiveTypeTree {
     }
 
     @Override
-    public TypeKind getPrimitiveTypeKind() {
-        return typeKind;
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitPrimitiveType(this, data);
     }
 
     @Override
@@ -24,8 +24,8 @@ public final class PrimitiveType implements PrimitiveTypeTree {
     }
 
     @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitPrimitiveType(this, data);
+    public TypeKind getPrimitiveTypeKind() {
+        return typeKind;
     }
 
 }

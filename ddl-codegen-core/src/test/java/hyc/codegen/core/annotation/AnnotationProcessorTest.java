@@ -16,11 +16,15 @@ class AnnotationProcessorTest {
     private final AnnotationProcessor processor = new AnnotationProcessor(AnnotationRegistry.builtin());
 
     @Test
-    void typeAnnotationOnColumn() {
+    void annotationOnWrongTargetIsIgnored() {
         Meta meta = new Meta();
-        processor.process("扩展信息 @type:UserExtInfo", MetaTarget.COLUMN, meta);
+        // @type 仅允许列；用在表注释时忽略
+        processor.process("用户表 @type:UserExt", MetaTarget.TABLE, meta);
+        assertFalse(meta.contains("type"));
 
-        assertEquals("UserExtInfo", meta.getString("type"));
+        // @ignore 不允许表；用在表注释时忽略
+        processor.process("用户表 @ignore", MetaTarget.TABLE, meta);
+        assertFalse(meta.contains("ignore"));
     }
 
     @Test
@@ -46,28 +50,6 @@ class AnnotationProcessorTest {
     }
 
     @Test
-    void unknownAnnotationIsTolerated() {
-        Meta meta = new Meta();
-        // @boolean 是未注册注解名（无隐式简写），应被忽略且不中断
-        processor.process("状态 @boolean", MetaTarget.COLUMN, meta);
-
-        assertNull(meta.getString("type"));
-        assertFalse(meta.contains("boolean"));
-    }
-
-    @Test
-    void annotationOnWrongTargetIsIgnored() {
-        Meta meta = new Meta();
-        // @type 仅允许列；用在表注释时忽略
-        processor.process("用户表 @type:UserExt", MetaTarget.TABLE, meta);
-        assertFalse(meta.contains("type"));
-
-        // @ignore 不允许表；用在表注释时忽略
-        processor.process("用户表 @ignore", MetaTarget.TABLE, meta);
-        assertFalse(meta.contains("ignore"));
-    }
-
-    @Test
     void multipleAnnotationsInOneComment() {
         Meta meta = new Meta();
         processor.process("扩展信息 @type:UserExtInfo @ignore", MetaTarget.COLUMN, meta);
@@ -81,6 +63,24 @@ class AnnotationProcessorTest {
         Meta meta = new Meta();
         processor.process("普通注释没有注解", MetaTarget.COLUMN, meta);
         assertEquals(0, meta.asMap().size());
+    }
+
+    @Test
+    void typeAnnotationOnColumn() {
+        Meta meta = new Meta();
+        processor.process("扩展信息 @type:UserExtInfo", MetaTarget.COLUMN, meta);
+
+        assertEquals("UserExtInfo", meta.getString("type"));
+    }
+
+    @Test
+    void unknownAnnotationIsTolerated() {
+        Meta meta = new Meta();
+        // @boolean 是未注册注解名（无隐式简写），应被忽略且不中断
+        processor.process("状态 @boolean", MetaTarget.COLUMN, meta);
+
+        assertNull(meta.getString("type"));
+        assertFalse(meta.contains("boolean"));
     }
 
 }

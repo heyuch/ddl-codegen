@@ -14,31 +14,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class NamingServiceTest {
 
-    private DdlConfig config() {
-        DdlConfig config = new DdlConfig();
-        config.addTableStripPrefix("t_");
-        config.setTableStripShardSuffix(true);
-        return config;
-    }
-
-    private Index index(String name, String... columns) {
-        return Index.builder()
-                .name(name)
-                .unique(true)
-                .columns(Arrays.asList(columns))
-                .build();
-    }
-
-    @Test
-    void tableClassNameStripPrefixAndShard() {
-        NamingService naming = new NamingService(config());
-        assertEquals("User", naming.tableClassName("t_user"));
-        assertEquals("User", naming.tableClassName("user_0"));
-        assertEquals("User", naming.tableClassName("t_user_0"));
-        assertEquals("UserProfile", naming.tableClassName("user_profile"));
-        assertEquals("User", naming.tableClassName("T_USER"));
-    }
-
     @Test
     void artifactClassNameAppendsSuffix() {
         DdlConfig config = config();
@@ -60,13 +35,18 @@ class NamingServiceTest {
         assertEquals("class_", naming.columnFieldName("class"));
     }
 
+    private DdlConfig config() {
+        DdlConfig config = new DdlConfig();
+        config.addTableStripPrefix("t_");
+        config.setTableStripShardSuffix(true);
+        return config;
+    }
+
     @Test
-    void indexMethodNameJoinedByAnd() {
-        NamingService naming = new NamingService(config());
-        assertEquals("findByNameAndGender", naming.indexMethodName(index("uk_name_gender", "name", "gender")));
-        assertEquals("findByStatusAndType", naming.indexMethodName(index("idx_status_type", "status", "type")));
-        assertEquals("findById", naming.indexMethodName(index("PRIMARY", "id")));
-        assertEquals("findByUserId", naming.indexMethodName(index("uk_user_id", "user_id")));
+    void customStrategyReplacesChain() {
+        DdlConfig config = config();
+        NamingService naming = new NamingService(config, tableName -> "Sys" + tableName);
+        assertEquals("Syst_user", naming.tableClassName("t_user"));
     }
 
     @Test
@@ -79,11 +59,31 @@ class NamingServiceTest {
         assertEquals("UserGender", naming.enumClassName("t_user", "gender"));
     }
 
+    private Index index(String name, String... columns) {
+        return Index.builder()
+                .name(name)
+                .unique(true)
+                .columns(Arrays.asList(columns))
+                .build();
+    }
+
     @Test
-    void customStrategyReplacesChain() {
-        DdlConfig config = config();
-        NamingService naming = new NamingService(config, tableName -> "Sys" + tableName);
-        assertEquals("Syst_user", naming.tableClassName("t_user"));
+    void indexMethodNameJoinedByAnd() {
+        NamingService naming = new NamingService(config());
+        assertEquals("findByNameAndGender", naming.indexMethodName(index("uk_name_gender", "name", "gender")));
+        assertEquals("findByStatusAndType", naming.indexMethodName(index("idx_status_type", "status", "type")));
+        assertEquals("findById", naming.indexMethodName(index("PRIMARY", "id")));
+        assertEquals("findByUserId", naming.indexMethodName(index("uk_user_id", "user_id")));
+    }
+
+    @Test
+    void tableClassNameStripPrefixAndShard() {
+        NamingService naming = new NamingService(config());
+        assertEquals("User", naming.tableClassName("t_user"));
+        assertEquals("User", naming.tableClassName("user_0"));
+        assertEquals("User", naming.tableClassName("t_user_0"));
+        assertEquals("UserProfile", naming.tableClassName("user_profile"));
+        assertEquals("User", naming.tableClassName("T_USER"));
     }
 
 }

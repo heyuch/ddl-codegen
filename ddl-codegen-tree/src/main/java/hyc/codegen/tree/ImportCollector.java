@@ -13,6 +13,27 @@ final class ImportCollector {
 
     private ImportCollector() {}
 
+    private static void addMemberImports(List<Import> imports, Tree member) {
+        if (member instanceof Variable) {
+            imports.addAll(((Variable)member).getImports());
+        } else if (member instanceof Method) {
+            imports.addAll(((Method)member).getImports());
+        } else if (member instanceof Class) {
+            imports.addAll(((Class)member).getImports());
+        }
+    }
+
+    private static void addTypeImports(List<Import> imports, @Nullable Tree type) {
+        if (type instanceof TypeReference) {
+            TypeReference tr = (TypeReference)type;
+            if (tr.getPkg() != null) {
+                imports.add(tr.getImport());
+            }
+        } else if (type instanceof ParameterizedType) {
+            imports.addAll(((ParameterizedType)type).getImports());
+        }
+    }
+
     /**
      * 收集类节点（含继承、实现、字段、方法、内部类）引用的 import。
      */
@@ -34,27 +55,6 @@ final class ImportCollector {
         }
 
         return imports;
-    }
-
-    private static void addTypeImports(List<Import> imports, @Nullable Tree type) {
-        if (type instanceof TypeReference) {
-            TypeReference tr = (TypeReference)type;
-            if (tr.getPkg() != null) {
-                imports.add(tr.getImport());
-            }
-        } else if (type instanceof ParameterizedType) {
-            imports.addAll(((ParameterizedType)type).getImports());
-        }
-    }
-
-    private static void addMemberImports(List<Import> imports, Tree member) {
-        if (member instanceof Variable) {
-            imports.addAll(((Variable)member).getImports());
-        } else if (member instanceof Method) {
-            imports.addAll(((Method)member).getImports());
-        } else if (member instanceof Class) {
-            imports.addAll(((Class)member).getImports());
-        }
     }
 
 }

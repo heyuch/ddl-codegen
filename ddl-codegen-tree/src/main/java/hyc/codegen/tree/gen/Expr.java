@@ -21,14 +21,14 @@ public final class Expr {
         return owner + "." + field;
     }
 
-    /** cond ? yes : no */
-    public static String ternary(String cond, String yes, String no) {
-        return cond + " ? " + yes + " : " + no;
-    }
-
     /** value == null ? null : thenExpr —— 可空引用做转换时的空安全三元。 */
     public static String nullSafe(String value, String thenExpr) {
         return value + " == null ? null : " + thenExpr;
+    }
+
+    /** cond ? yes : no */
+    public static String ternary(String cond, String yes, String no) {
+        return cond + " ? " + yes + " : " + no;
     }
 
 }

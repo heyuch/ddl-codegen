@@ -32,12 +32,12 @@ public final class Types {
     public static final TypeReference SET = new TypeReference("java.util.Set");
     public static final TypeReference MAP = new TypeReference("java.util.Map");
 
-    public static ParameterizedType mapOf(TypeReference keyType, Tree valueType) {
-        return new ParameterizedType(MAP, keyType, valueType);
-    }
-
     public static ParameterizedType listOf(Tree elementType) {
         return new ParameterizedType(LIST, elementType);
+    }
+
+    public static ParameterizedType mapOf(TypeReference keyType, Tree valueType) {
+        return new ParameterizedType(MAP, keyType, valueType);
     }
 
     public static ParameterizedType setOf(Tree elementType) {

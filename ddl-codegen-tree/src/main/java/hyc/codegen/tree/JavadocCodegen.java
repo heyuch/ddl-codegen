@@ -32,55 +32,19 @@ import hyc.codegen.tree.utils.CodePrinter;
 @SuppressWarnings("ClassFanOutComplexity")
 public final class JavadocCodegen extends DocTreeScanner<Boolean, CodePrinter> {
 
-    public static String generateCode(DocTree node) {
-        StringWriter out = new StringWriter();
-        generate(node, out);
-        return out.toString();
+    public static void generate(DocTree node, CodePrinter out) {
+        JavadocCodegen g = new JavadocCodegen();
+        g.scan(node, out);
     }
 
     public static void generate(DocTree node, Writer out) {
         generate(node, new CodePrinter(out));
     }
 
-    public static void generate(DocTree node, CodePrinter out) {
-        JavadocCodegen g = new JavadocCodegen();
-        g.scan(node, out);
-    }
-
-    @Override
-    public Boolean visitDocComment(DocCommentTree node, CodePrinter p) {
-        p.line("/**");
-
-        List<? extends DocTree> first = node.getFirstSentence();
-        if (first != null && !first.isEmpty()) {
-            StringWriter sw = new StringWriter();
-            for (DocTree d : first) {
-                d.accept(this, new CodePrinter(sw));
-            }
-            printPrefixedLines(sw.toString(), p);
-        }
-
-        List<? extends DocTree> body = node.getBody();
-        if (body != null && !body.isEmpty()) {
-            StringWriter sw = new StringWriter();
-            for (DocTree d : body) {
-                d.accept(this, new CodePrinter(sw));
-            }
-            printPrefixedLines(sw.toString(), p);
-        }
-
-        List<? extends DocTree> tags = node.getBlockTags();
-        if (tags != null && !tags.isEmpty()) {
-            p.line(" *");
-            for (DocTree tag : tags) {
-                p.write(" * ");
-                tag.accept(this, p);
-                p.newline();
-            }
-        }
-
-        p.line(" */");
-        return true;
+    public static String generateCode(DocTree node) {
+        StringWriter out = new StringWriter();
+        generate(node, out);
+        return out.toString();
     }
 
     /**
@@ -121,120 +85,6 @@ public final class JavadocCodegen extends DocTreeScanner<Boolean, CodePrinter> {
     }
 
     @Override
-    public Boolean visitText(TextTree node, CodePrinter p) {
-        p.write(node.getBody());
-        return true;
-    }
-
-    @Override
-    public Boolean visitAuthor(AuthorTree node, CodePrinter p) {
-        return visitBlockTag(node, p, node.getName());
-    }
-
-    private boolean visitBlockTag(BlockTagTree node, CodePrinter w, Object... args) {
-        w.write("@", node.getTagName());
-        visitVarargs(args, w);
-        return true;
-    }
-
-    private void visitVarargs(Object[] args, CodePrinter p) {
-        if (args == null) {
-            return;
-        }
-
-        for (Object arg : args) {
-            if (arg instanceof DocTree) {
-                p.write(" ");
-                ((DocTree)arg).accept(this, p);
-            } else if (arg instanceof List) {
-                List<?> list = (List<?>)arg;
-                if (!list.isEmpty()) {
-                    p.write(" ");
-                    for (Object item : list) {
-                        if (item instanceof DocTree) {
-                            ((DocTree)item).accept(this, p);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @Override
-    public Boolean visitSince(SinceTree node, CodePrinter p) {
-        return visitBlockTag(node, p, node.getBody());
-    }
-
-    @Override
-    public Boolean visitVersion(VersionTree node, CodePrinter p) {
-        return visitBlockTag(node, p, node.getBody());
-    }
-
-    @Override
-    public Boolean visitSee(SeeTree node, CodePrinter p) {
-        return visitBlockTag(node, p, node.getReference());
-    }
-
-    @Override
-    public Boolean visitParam(ParamTree node, CodePrinter p) {
-        return visitBlockTag(node, p, node.getName(), node.getDescription());
-    }
-
-    @Override
-    public Boolean visitReturn(ReturnTree node, CodePrinter p) {
-        return visitBlockTag(node, p, node.getDescription());
-    }
-
-    @Override
-    public Boolean visitThrows(ThrowsTree node, CodePrinter p) {
-        return visitBlockTag(node, p, node.getExceptionName(), node.getDescription());
-    }
-
-    @Override
-    public Boolean visitDeprecated(DeprecatedTree node, CodePrinter p) {
-        return visitBlockTag(node, p, node.getBody());
-    }
-
-    @Override
-    public Boolean visitStartElement(StartElementTree node, CodePrinter p) {
-        p.write("<", node.getName());
-
-        List<? extends DocTree> attrs = node.getAttributes();
-        if (attrs != null && !attrs.isEmpty()) {
-            p.write(" ");
-            visitForeach(attrs, p, " ");
-        }
-
-        if (node.isSelfClosing()) {
-            p.write(" />");
-        } else {
-            p.write(">");
-        }
-
-        return true;
-    }
-
-    private void visitForeach(List<? extends DocTree> body, CodePrinter p, String seperator) {
-        if (body == null) {
-            return;
-        }
-
-        for (int i = 0, size = body.size(), last = size - 1; i < size; i++) {
-            DocTree d = body.get(i);
-            d.accept(this, p);
-            if (seperator != null && i < last) {
-                p.write(seperator);
-            }
-        }
-    }
-
-    @Override
-    public Boolean visitEndElement(EndElementTree node, CodePrinter p) {
-        p.write("</", node.getName(), ">");
-        return true;
-    }
-
-    @Override
     public Boolean visitAttribute(AttributeTree node, CodePrinter p) {
         p.write(node.getName());
 
@@ -263,12 +113,75 @@ public final class JavadocCodegen extends DocTreeScanner<Boolean, CodePrinter> {
     }
 
     @Override
-    public Boolean visitReference(ReferenceTree node, CodePrinter p) {
-        String s = node.getSignature();
-        if (s != null) {
-            p.write(s);
-        }
+    public Boolean visitAuthor(AuthorTree node, CodePrinter p) {
+        return visitBlockTag(node, p, node.getName());
+    }
+
+    private boolean visitBlockTag(BlockTagTree node, CodePrinter w, Object... args) {
+        w.write("@", node.getTagName());
+        visitVarargs(args, w);
         return true;
+    }
+
+    @Override
+    public Boolean visitDeprecated(DeprecatedTree node, CodePrinter p) {
+        return visitBlockTag(node, p, node.getBody());
+    }
+
+    @Override
+    public Boolean visitDocComment(DocCommentTree node, CodePrinter p) {
+        p.line("/**");
+
+        List<? extends DocTree> first = node.getFirstSentence();
+        if (first != null && !first.isEmpty()) {
+            StringWriter sw = new StringWriter();
+            for (DocTree d : first) {
+                d.accept(this, new CodePrinter(sw));
+            }
+            printPrefixedLines(sw.toString(), p);
+        }
+
+        List<? extends DocTree> body = node.getBody();
+        if (body != null && !body.isEmpty()) {
+            StringWriter sw = new StringWriter();
+            for (DocTree d : body) {
+                d.accept(this, new CodePrinter(sw));
+            }
+            printPrefixedLines(sw.toString(), p);
+        }
+
+        List<? extends DocTree> tags = node.getBlockTags();
+        if (tags != null && !tags.isEmpty()) {
+            p.line(" *");
+            for (DocTree tag : tags) {
+                p.write(" * ");
+                tag.accept(this, p);
+                p.newline();
+            }
+        }
+
+        p.line(" */");
+        return true;
+    }
+
+    @Override
+    public Boolean visitEndElement(EndElementTree node, CodePrinter p) {
+        p.write("</", node.getName(), ">");
+        return true;
+    }
+
+    private void visitForeach(List<? extends DocTree> body, CodePrinter p, String seperator) {
+        if (body == null) {
+            return;
+        }
+
+        for (int i = 0, size = body.size(), last = size - 1; i < size; i++) {
+            DocTree d = body.get(i);
+            d.accept(this, p);
+            if (seperator != null && i < last) {
+                p.write(seperator);
+            }
+        }
     }
 
     @Override
@@ -279,11 +192,6 @@ public final class JavadocCodegen extends DocTreeScanner<Boolean, CodePrinter> {
         return true;
     }
 
-    @Override
-    public Boolean visitLink(LinkTree node, CodePrinter p) {
-        return visitInlineTag(node, p, node.getReference(), node.getLabel());
-    }
-
     private boolean visitInlineTag(InlineTagTree node, CodePrinter p, Object... args) {
         p.write("{@", node.getTagName());
         visitVarargs(args, p);
@@ -292,8 +200,100 @@ public final class JavadocCodegen extends DocTreeScanner<Boolean, CodePrinter> {
     }
 
     @Override
+    public Boolean visitLink(LinkTree node, CodePrinter p) {
+        return visitInlineTag(node, p, node.getReference(), node.getLabel());
+    }
+
+    @Override
     public Boolean visitLiteral(LiteralTree node, CodePrinter p) {
         return visitInlineTag(node, p, node.getBody());
+    }
+
+    @Override
+    public Boolean visitParam(ParamTree node, CodePrinter p) {
+        return visitBlockTag(node, p, node.getName(), node.getDescription());
+    }
+
+    @Override
+    public Boolean visitReference(ReferenceTree node, CodePrinter p) {
+        String s = node.getSignature();
+        if (s != null) {
+            p.write(s);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean visitReturn(ReturnTree node, CodePrinter p) {
+        return visitBlockTag(node, p, node.getDescription());
+    }
+
+    @Override
+    public Boolean visitSee(SeeTree node, CodePrinter p) {
+        return visitBlockTag(node, p, node.getReference());
+    }
+
+    @Override
+    public Boolean visitSince(SinceTree node, CodePrinter p) {
+        return visitBlockTag(node, p, node.getBody());
+    }
+
+    @Override
+    public Boolean visitStartElement(StartElementTree node, CodePrinter p) {
+        p.write("<", node.getName());
+
+        List<? extends DocTree> attrs = node.getAttributes();
+        if (attrs != null && !attrs.isEmpty()) {
+            p.write(" ");
+            visitForeach(attrs, p, " ");
+        }
+
+        if (node.isSelfClosing()) {
+            p.write(" />");
+        } else {
+            p.write(">");
+        }
+
+        return true;
+    }
+
+    @Override
+    public Boolean visitText(TextTree node, CodePrinter p) {
+        p.write(node.getBody());
+        return true;
+    }
+
+    @Override
+    public Boolean visitThrows(ThrowsTree node, CodePrinter p) {
+        return visitBlockTag(node, p, node.getExceptionName(), node.getDescription());
+    }
+
+    private void visitVarargs(Object[] args, CodePrinter p) {
+        if (args == null) {
+            return;
+        }
+
+        for (Object arg : args) {
+            if (arg instanceof DocTree) {
+                p.write(" ");
+                ((DocTree)arg).accept(this, p);
+            } else if (arg instanceof List) {
+                List<?> list = (List<?>)arg;
+                if (!list.isEmpty()) {
+                    p.write(" ");
+                    for (Object item : list) {
+                        if (item instanceof DocTree) {
+                            ((DocTree)item).accept(this, p);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public Boolean visitVersion(VersionTree node, CodePrinter p) {
+        return visitBlockTag(node, p, node.getBody());
     }
 
 }

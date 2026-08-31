@@ -13,13 +13,13 @@ public final class DocCode implements LiteralTree {
     }
 
     @Override
-    public TextTree getBody() {
-        return new DocText(code);
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitLiteral(this, data);
     }
 
     @Override
-    public String getTagName() {
-        return getKind().tagName;
+    public TextTree getBody() {
+        return new DocText(code);
     }
 
     @Override
@@ -28,8 +28,8 @@ public final class DocCode implements LiteralTree {
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitLiteral(this, data);
+    public String getTagName() {
+        return getKind().tagName;
     }
 
 }

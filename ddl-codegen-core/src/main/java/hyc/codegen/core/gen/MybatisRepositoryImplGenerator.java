@@ -34,9 +34,65 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
 
     private static final String RESOURCE = "javax.annotation.Resource";
 
-    @Override
-    public String kind() {
-        return NAME;
+    private static String capitalize(String s) {
+        if (s.isEmpty()) {
+            return s;
+        }
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    private static String decapitalize(String s) {
+        if (s.isEmpty()) {
+            return s;
+        }
+        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
+    }
+
+    private static String simpleName(String fqn) {
+        int dot = fqn.lastIndexOf('.');
+        return dot < 0 ? fqn : fqn.substring(dot + 1);
+    }
+
+    private Method bridgeMethod(QueryMethods.Spec spec, TableContext ctx, String targetFqn, String nullable,
+            Bridge bridge) {
+        List<String> args = new ArrayList<>();
+        Method.Builder builder = Method.builder()
+                .modifiers(Modifier.PUBLIC)
+                .annotation(Annotation.of("java.lang.Override"))
+                .name(spec.getMethodName());
+
+        if (spec.isUniqueFull()) {
+            builder.annotation(Annotation.of(nullable));
+            builder.returnType(new TypeReference(targetFqn));
+        } else {
+            builder.returnType(Types.listOf(new TypeReference(targetFqn)));
+        }
+
+        for (String columnName : spec.getColumns()) {
+            Column column = ctx.getTable().getColumn(columnName);
+            if (column == null) {
+                throw new IllegalStateException("索引列 '" + columnName + "' 在表 '" + ctx.getTable().getName()
+                        + "' 中不存在（DDL 索引引用了未定义的列）");
+            }
+            String fieldName = ctx.fieldName(column);
+            builder.parameter(Variable.builder()
+                    .type(JavaTypes.typeTree(ctx.typeOf(column)))
+                    .name(fieldName)
+                    .build());
+            // 参数类型走本生成器 fieldType（SQL 映射，enum 列 String），与 mapper 参数同型，直传
+            args.add(fieldName);
+        }
+
+        String call = bridge.mapperField + "." + spec.getMethodName() + "(" + String.join(", ", args) + ")";
+        String body;
+        if (bridge.convert) {
+            String listSuffix = spec.isUniqueFull() ? "" : "List";
+            body = "return " + decapitalize(simpleName(bridge.converterFqn())) + "."
+                    + bridge.convertMethod() + listSuffix + "(" + call + ");";
+        } else {
+            body = "return " + call + ";";
+        }
+        return builder.body(body).build();
     }
 
     @Override
@@ -107,46 +163,9 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
                 .build();
     }
 
-    private Method bridgeMethod(QueryMethods.Spec spec, TableContext ctx, String targetFqn, String nullable,
-            Bridge bridge) {
-        List<String> args = new ArrayList<>();
-        Method.Builder builder = Method.builder()
-                .modifiers(Modifier.PUBLIC)
-                .annotation(Annotation.of("java.lang.Override"))
-                .name(spec.getMethodName());
-
-        if (spec.isUniqueFull()) {
-            builder.annotation(Annotation.of(nullable));
-            builder.returnType(new TypeReference(targetFqn));
-        } else {
-            builder.returnType(Types.listOf(new TypeReference(targetFqn)));
-        }
-
-        for (String columnName : spec.getColumns()) {
-            Column column = ctx.getTable().getColumn(columnName);
-            if (column == null) {
-                throw new IllegalStateException("索引列 '" + columnName + "' 在表 '" + ctx.getTable().getName()
-                        + "' 中不存在（DDL 索引引用了未定义的列）");
-            }
-            String fieldName = ctx.fieldName(column);
-            builder.parameter(Variable.builder()
-                    .type(JavaTypes.typeTree(ctx.typeOf(column)))
-                    .name(fieldName)
-                    .build());
-            // 参数类型走本生成器 fieldType（SQL 映射，enum 列 String），与 mapper 参数同型，直传
-            args.add(fieldName);
-        }
-
-        String call = bridge.mapperField + "." + spec.getMethodName() + "(" + String.join(", ", args) + ")";
-        String body;
-        if (bridge.convert) {
-            String listSuffix = spec.isUniqueFull() ? "" : "List";
-            body = "return " + decapitalize(simpleName(bridge.converterFqn())) + "."
-                    + bridge.convertMethod() + listSuffix + "(" + call + ");";
-        } else {
-            body = "return " + call + ";";
-        }
-        return builder.body(body).build();
+    @Override
+    public String kind() {
+        return NAME;
     }
 
     private Bridge resolveBridge(TableContext ctx, GenerationContext gctx, String targetFqn) {
@@ -179,25 +198,6 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
         return new Bridge(mapperField, true, converterFqn, "to" + capitalize(simpleName(targetFqn)));
     }
 
-    private static String simpleName(String fqn) {
-        int dot = fqn.lastIndexOf('.');
-        return dot < 0 ? fqn : fqn.substring(dot + 1);
-    }
-
-    private static String capitalize(String s) {
-        if (s.isEmpty()) {
-            return s;
-        }
-        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
-    }
-
-    private static String decapitalize(String s) {
-        if (s.isEmpty()) {
-            return s;
-        }
-        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
-    }
-
     /**
      * 桥接解析结果：mapper.target 与自己的 target 不一致时经 converter 转换（含一致性校验）。
      */
@@ -219,16 +219,6 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
         }
 
         /**
-         * converter 全限定名（convert=true 时必有值，由 resolveBridge 保证）。
-         */
-        String converterFqn() {
-            if (converterFqn == null) {
-                throw new IllegalStateException("内部不一致：convert=true 但 converterFqn 为空");
-            }
-            return converterFqn;
-        }
-
-        /**
          * converter 转换方法名（convert=true 时必有值，由 resolveBridge 保证）。
          */
         String convertMethod() {
@@ -236,6 +226,16 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
                 throw new IllegalStateException("内部不一致：convert=true 但 convertMethod 为空");
             }
             return convertMethod;
+        }
+
+        /**
+         * converter 全限定名（convert=true 时必有值，由 resolveBridge 保证）。
+         */
+        String converterFqn() {
+            if (converterFqn == null) {
+                throw new IllegalStateException("内部不一致：convert=true 但 converterFqn 为空");
+            }
+            return converterFqn;
         }
 
     }

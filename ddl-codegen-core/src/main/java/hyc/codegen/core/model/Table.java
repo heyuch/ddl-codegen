@@ -27,22 +27,16 @@ public final class Table {
         this.comment = comment;
     }
 
-    public String getName() {
-        return name;
+    /** 新增列；同名已存在时先移除（保持新列追加到末尾）。 */
+    public void addColumn(Column column) {
+        removeColumn(column.getName());
+        columns.add(column);
     }
 
-    public @Nullable String getComment() {
-        return comment;
-    }
-
-    /** 列列表（DDL 定义顺序，不可变视图）。 */
-    public List<Column> getColumns() {
-        return new ArrayList<>(columns);
-    }
-
-    /** 索引列表（DDL 定义顺序，不可变视图）。 */
-    public List<Index> getIndexes() {
-        return new ArrayList<>(indexes);
+    /** 新增索引；同名已存在时先移除（保持新索引追加到末尾）。 */
+    public void addIndex(Index index) {
+        removeIndex(index.getName());
+        indexes.add(index);
     }
 
     /** 按名查列；不存在时返回 {@code null}。 */
@@ -55,15 +49,47 @@ public final class Table {
         return null;
     }
 
+    /** 列列表（DDL 定义顺序，不可变视图）。 */
+    public List<Column> getColumns() {
+        return new ArrayList<>(columns);
+    }
+
+    public @Nullable String getComment() {
+        return comment;
+    }
+
+    /** 按名查索引；不存在时返回 {@code null}。 */
+    public @Nullable Index getIndex(String indexName) {
+        for (Index index : indexes) {
+            if (index.getName().equals(indexName)) {
+                return index;
+            }
+        }
+        return null;
+    }
+
+    /** 索引列表（DDL 定义顺序，不可变视图）。 */
+    public List<Index> getIndexes() {
+        return new ArrayList<>(indexes);
+    }
+
+    /** 表元数据（表级 DDL 注解结果写入这里，开放读写）。 */
+    public Meta getMeta() {
+        return meta;
+    }
+
+    public String getName() {
+        return name;
+    }
+
     /** 是否包含指定列。 */
     public boolean hasColumn(String columnName) {
         return getColumn(columnName) != null;
     }
 
-    /** 新增列；同名已存在时先移除（保持新列追加到末尾）。 */
-    public void addColumn(Column column) {
-        removeColumn(column.getName());
-        columns.add(column);
+    /** 是否包含指定索引。 */
+    public boolean hasIndex(String indexName) {
+        return getIndex(indexName) != null;
     }
 
     /** 删除列；不存在时静默。 */
@@ -71,11 +97,31 @@ public final class Table {
         columns.removeIf(column -> column.getName().equals(columnName));
     }
 
+    /** 删除索引；不存在时静默。 */
+    public void removeIndex(String indexName) {
+        indexes.removeIf(index -> index.getName().equals(indexName));
+    }
+
+    /** 就地改名（同包 {@link Schema} 专用，保持名称与注册表一致）。 */
+    void rename(String newName) {
+        this.name = newName;
+    }
+
     /** 列改名：原地替换为新名副本，保持列位置与元数据。 */
     public void renameColumn(String from, String to) {
         for (int i = 0; i < columns.size(); i++) {
             if (columns.get(i).getName().equals(from)) {
                 columns.set(i, columns.get(i).renamedTo(to));
+                return;
+            }
+        }
+    }
+
+    /** 索引改名：原地替换为新名副本，保持位置与元数据。 */
+    public void renameIndex(String from, String to) {
+        for (int i = 0; i < indexes.size(); i++) {
+            if (indexes.get(i).getName().equals(from)) {
+                indexes.set(i, indexes.get(i).renamedTo(to));
                 return;
             }
         }
@@ -89,52 +135,6 @@ public final class Table {
                 return;
             }
         }
-    }
-
-    /** 按名查索引；不存在时返回 {@code null}。 */
-    public @Nullable Index getIndex(String indexName) {
-        for (Index index : indexes) {
-            if (index.getName().equals(indexName)) {
-                return index;
-            }
-        }
-        return null;
-    }
-
-    /** 是否包含指定索引。 */
-    public boolean hasIndex(String indexName) {
-        return getIndex(indexName) != null;
-    }
-
-    /** 新增索引；同名已存在时先移除（保持新索引追加到末尾）。 */
-    public void addIndex(Index index) {
-        removeIndex(index.getName());
-        indexes.add(index);
-    }
-
-    /** 删除索引；不存在时静默。 */
-    public void removeIndex(String indexName) {
-        indexes.removeIf(index -> index.getName().equals(indexName));
-    }
-
-    /** 索引改名：原地替换为新名副本，保持位置与元数据。 */
-    public void renameIndex(String from, String to) {
-        for (int i = 0; i < indexes.size(); i++) {
-            if (indexes.get(i).getName().equals(from)) {
-                indexes.set(i, indexes.get(i).renamedTo(to));
-                return;
-            }
-        }
-    }
-
-    /** 表元数据（表级 DDL 注解结果写入这里，开放读写）。 */
-    public Meta getMeta() {
-        return meta;
-    }
-
-    /** 就地改名（同包 {@link Schema} 专用，保持名称与注册表一致）。 */
-    void rename(String newName) {
-        this.name = newName;
     }
 
 }

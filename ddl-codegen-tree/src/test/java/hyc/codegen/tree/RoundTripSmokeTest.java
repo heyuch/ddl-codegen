@@ -28,55 +28,22 @@ public class RoundTripSmokeTest {
     private static final Pattern BLOCK_COMMENT = Pattern.compile("(?s)/\\*.*?\\*/");
     private static final Pattern SINGLE_PARAM_LAMBDA = Pattern.compile("\\(([A-Za-z_$][A-Za-z0-9_$]*)\\)->");
 
-    @Test
-    public void demoRoundTripIsByteExact() throws Exception {
-        File file = new File("src/test/java/hyc/codegen/tree/Demo.java");
-        assertEquals(read(file), print(file), "Demo.java round-trip 应字节全等");
-    }
-
-    @Test
-    public void javaCodegenRoundTripKeepsSemantics() throws Exception {
-        File file = new File("src/main/java/hyc/codegen/tree/JavaCodegen.java");
-        assertSemanticStable(file);
-    }
-
-    @Test
-    public void codePrinterRoundTripKeepsSemantics() throws Exception {
-        File file = new File("src/main/java/hyc/codegen/tree/utils/CodePrinter.java");
-        assertSemanticStable(file);
-    }
-
-    private void assertSemanticStable(File file) throws Exception {
-        String printed = print(file);
-        // 语义零丢失：剥离注释与空白后应与原文一致
-        assertEquals(semantic(read(file)), semantic(printed),
-                file.getName() + " round-trip 存在语义丢失（非空白/注释差异）");
-        // 幂等：二次 round-trip 字节一致
-        assertEquals(printed, print(file), file.getName() + " round-trip 不幂等");
-    }
-
-    private static String print(File file) throws Exception {
-        List<CompileUnit> units = new JavaParser().parse(file);
-        StringBuilder sb = new StringBuilder();
-        for (CompileUnit unit : units) {
-            sb.append(JavaCodegen.generateCode(unit));
+    private static long hexValue(char c) {
+        if (c >= '0' && c <= '9') {
+            return c - '0';
         }
-        return sb.toString();
+        return (c >= 'a' && c <= 'f') ? (c - 'a' + 10) : (c - 'A' + 10);
     }
 
-    private static String read(File file) throws Exception {
-        return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+    private static boolean isHexDigit(char c) {
+        boolean digit = c >= '0' && c <= '9';
+        boolean lower = c >= 'a' && c <= 'f';
+        boolean upper = c >= 'A' && c <= 'F';
+        return digit || lower || upper;
     }
 
-    /** 剥离注释与全部空白，归一化 javac toString 的 token 差异：单参 lambda 括号、字符串内 \' 转义、无参注解空括号。 */
-    private static String semantic(String code) {
-        String s = BLOCK_COMMENT.matcher(LINE_COMMENT.matcher(code).replaceAll("")).replaceAll("");
-        s = normalizeStringEscapes(s);
-        s = s.replaceAll("\\s+", "");
-        s = SINGLE_PARAM_LAMBDA.matcher(s).replaceAll("$1->");
-        // javac 打印 type-use 注解强制带空括号（@Foo() 与 @Foo 是 JLS 等价形式，无参注解括号可省略）
-        s = s.replaceAll("@([A-Za-z_$][A-Za-z0-9_$]*)\\(\\),?", "@$1");
-        return s;
+    private static boolean isIdentifierChar(char c) {
+        return Character.isLetterOrDigit(c) || c == '_' || c == '$';
     }
 
     /**
@@ -193,22 +160,55 @@ public class RoundTripSmokeTest {
         return sb.toString();
     }
 
-    private static boolean isIdentifierChar(char c) {
-        return Character.isLetterOrDigit(c) || c == '_' || c == '$';
-    }
-
-    private static boolean isHexDigit(char c) {
-        boolean digit = c >= '0' && c <= '9';
-        boolean lower = c >= 'a' && c <= 'f';
-        boolean upper = c >= 'A' && c <= 'F';
-        return digit || lower || upper;
-    }
-
-    private static long hexValue(char c) {
-        if (c >= '0' && c <= '9') {
-            return c - '0';
+    private static String print(File file) throws Exception {
+        List<CompileUnit> units = new JavaParser().parse(file);
+        StringBuilder sb = new StringBuilder();
+        for (CompileUnit unit : units) {
+            sb.append(JavaCodegen.generateCode(unit));
         }
-        return (c >= 'a' && c <= 'f') ? (c - 'a' + 10) : (c - 'A' + 10);
+        return sb.toString();
+    }
+
+    private static String read(File file) throws Exception {
+        return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+    }
+
+    /** 剥离注释与全部空白，归一化 javac toString 的 token 差异：单参 lambda 括号、字符串内 \' 转义、无参注解空括号。 */
+    private static String semantic(String code) {
+        String s = BLOCK_COMMENT.matcher(LINE_COMMENT.matcher(code).replaceAll("")).replaceAll("");
+        s = normalizeStringEscapes(s);
+        s = s.replaceAll("\\s+", "");
+        s = SINGLE_PARAM_LAMBDA.matcher(s).replaceAll("$1->");
+        // javac 打印 type-use 注解强制带空括号（@Foo() 与 @Foo 是 JLS 等价形式，无参注解括号可省略）
+        s = s.replaceAll("@([A-Za-z_$][A-Za-z0-9_$]*)\\(\\),?", "@$1");
+        return s;
+    }
+
+    private void assertSemanticStable(File file) throws Exception {
+        String printed = print(file);
+        // 语义零丢失：剥离注释与空白后应与原文一致
+        assertEquals(semantic(read(file)), semantic(printed),
+                file.getName() + " round-trip 存在语义丢失（非空白/注释差异）");
+        // 幂等：二次 round-trip 字节一致
+        assertEquals(printed, print(file), file.getName() + " round-trip 不幂等");
+    }
+
+    @Test
+    public void codePrinterRoundTripKeepsSemantics() throws Exception {
+        File file = new File("src/main/java/hyc/codegen/tree/utils/CodePrinter.java");
+        assertSemanticStable(file);
+    }
+
+    @Test
+    public void demoRoundTripIsByteExact() throws Exception {
+        File file = new File("src/test/java/hyc/codegen/tree/Demo.java");
+        assertEquals(read(file), print(file), "Demo.java round-trip 应字节全等");
+    }
+
+    @Test
+    public void javaCodegenRoundTripKeepsSemantics() throws Exception {
+        File file = new File("src/main/java/hyc/codegen/tree/JavaCodegen.java");
+        assertSemanticStable(file);
     }
 
 }

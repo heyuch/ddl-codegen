@@ -59,13 +59,13 @@ public final class AnnotationParser {
             return name;
         }
 
-        public @Nullable String value() {
-            return value;
-        }
-
         @Override
         public String toString() {
             return value == null ? "@" + name : "@" + name + ":" + value;
+        }
+
+        public @Nullable String value() {
+            return value;
         }
 
     }

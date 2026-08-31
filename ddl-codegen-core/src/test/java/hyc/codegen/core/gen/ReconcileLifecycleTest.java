@@ -40,17 +40,6 @@ class ReconcileLifecycleTest {
     @Nullable
     Path temp;
 
-    /**
-     * 注入目录（@TempDir 注入，标注 @Nullable，使用点经此显式校验）。
-     */
-    private Path tempDir() {
-        Path dir = temp;
-        if (dir == null) {
-            throw new AssertionError("JUnit 未注入 @TempDir");
-        }
-        return dir;
-    }
-
     /** 测试生成器：每列一个 private 字段 + 一个由表名驱动的 describe() 方法（覆盖方法级 reconcile）。 */
 
     private DdlConfig config() {
@@ -64,19 +53,8 @@ class ReconcileLifecycleTest {
         return config;
     }
 
-    private ChangeReport generate(DdlConfig config, Schema schema, String ddl) {
-        DdlParser parser = new DruidDdlParser();
-        ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
-        CodeGenerator generator = new CodeGenerator(Collections.singletonList(new TestGenerator()));
-        return generator.generate(config, schema, result, Collections.emptyList());
-    }
-
     private String content() throws Exception {
         return new String(Files.readAllBytes(tempDir().resolve("com/test/User.java")), StandardCharsets.UTF_8);
-    }
-
-    private boolean fileExists() {
-        return Files.isRegularFile(tempDir().resolve("com/test/User.java"));
     }
 
     @Test
@@ -130,26 +108,15 @@ class ReconcileLifecycleTest {
         assertFalse(fileExists());
     }
 
-    @Test
-    void userWrittenMembersArePreserved() throws Exception {
-        DdlConfig config = config();
-        Schema schema = new Schema();
-        generate(config, schema, "create table user (id bigint primary key)");
+    private boolean fileExists() {
+        return Files.isRegularFile(tempDir().resolve("com/test/User.java"));
+    }
 
-        // 用户手写一个方法（模拟用户编辑：插入到类结尾前）
-        Path file = tempDir().resolve("com/test/User.java");
-        String userMethod = "\n    /** 用户手写方法 */\n    public String hello() {\n        return \"hi\";\n    }\n";
-        String existing = content();
-        int lastBrace = existing.lastIndexOf('}');
-        String edited = existing.substring(0, lastBrace) + userMethod + existing.substring(lastBrace);
-        Files.write(file, edited.getBytes(StandardCharsets.UTF_8));
-
-        // alter 增加列 → 用户方法必须保留
-        generate(config, schema, "alter table user add column name varchar(50)");
-        String after = content();
-        assertTrue(after.contains("public String hello()"));
-        assertTrue(after.contains("return \"hi\";"));
-        assertTrue(after.contains("private String name"));
+    private ChangeReport generate(DdlConfig config, Schema schema, String ddl) {
+        DdlParser parser = new DruidDdlParser();
+        ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
+        CodeGenerator generator = new CodeGenerator(Collections.singletonList(new TestGenerator()));
+        return generator.generate(config, schema, result, Collections.emptyList());
     }
 
     @Test
@@ -188,12 +155,40 @@ class ReconcileLifecycleTest {
         assertTrue(Files.isRegularFile(tempDir().resolve("com/test/Account.java")));
     }
 
-    static final class TestGenerator extends AbstractJavaGenerator {
-
-        @Override
-        public String kind() {
-            return "test";
+    /**
+     * 注入目录（@TempDir 注入，标注 @Nullable，使用点经此显式校验）。
+     */
+    private Path tempDir() {
+        Path dir = temp;
+        if (dir == null) {
+            throw new AssertionError("JUnit 未注入 @TempDir");
         }
+        return dir;
+    }
+
+    @Test
+    void userWrittenMembersArePreserved() throws Exception {
+        DdlConfig config = config();
+        Schema schema = new Schema();
+        generate(config, schema, "create table user (id bigint primary key)");
+
+        // 用户手写一个方法（模拟用户编辑：插入到类结尾前）
+        Path file = tempDir().resolve("com/test/User.java");
+        String userMethod = "\n    /** 用户手写方法 */\n    public String hello() {\n        return \"hi\";\n    }\n";
+        String existing = content();
+        int lastBrace = existing.lastIndexOf('}');
+        String edited = existing.substring(0, lastBrace) + userMethod + existing.substring(lastBrace);
+        Files.write(file, edited.getBytes(StandardCharsets.UTF_8));
+
+        // alter 增加列 → 用户方法必须保留
+        generate(config, schema, "alter table user add column name varchar(50)");
+        String after = content();
+        assertTrue(after.contains("public String hello()"));
+        assertTrue(after.contains("return \"hi\";"));
+        assertTrue(after.contains("private String name"));
+    }
+
+    static final class TestGenerator extends AbstractJavaGenerator {
 
         @Override
         protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
@@ -210,6 +205,11 @@ class ReconcileLifecycleTest {
                     .name("describe")
                     .body("return \"" + ctx.getTable().getName() + "\";")
                     .build());
+        }
+
+        @Override
+        public String kind() {
+            return "test";
         }
 
     }

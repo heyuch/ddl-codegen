@@ -17,6 +17,12 @@ public final class CreateTableOp implements DdlOperation {
         this.table = table;
     }
 
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        schema.addTable(table);
+        result.affect(tableName());
+    }
+
     /** 完整的表模型（含列、索引、注解元数据）。 */
     public Table getTable() {
         return table;
@@ -25,12 +31,6 @@ public final class CreateTableOp implements DdlOperation {
     @Override
     public String tableName() {
         return table.getName();
-    }
-
-    @Override
-    public void apply(Schema schema, ApplyResult result) {
-        schema.addTable(table);
-        result.affect(tableName());
     }
 
 }

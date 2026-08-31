@@ -19,11 +19,33 @@ public final class DocComment implements DocCommentTree {
         return new Builder();
     }
 
-    /**
-     * 设置首句摘要。
-     */
-    public void setSummary(List<? extends DocTree> summary) {
-        this.summary = new ArrayList<>(summary);
+    @Override
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitDocComment(this, data);
+    }
+
+    public void addTag(DocTagVersion tag) {
+        tags.add(tag);
+    }
+
+    @Override
+    public List<? extends DocTree> getBlockTags() {
+        return new ArrayList<>(tags);
+    }
+
+    @Override
+    public List<? extends DocTree> getBody() {
+        return new ArrayList<>(body);
+    }
+
+    @Override
+    public List<? extends DocTree> getFirstSentence() {
+        return new ArrayList<>(summary);
+    }
+
+    @Override
+    public Kind getKind() {
+        return Kind.DOC_COMMENT;
     }
 
     /**
@@ -34,39 +56,17 @@ public final class DocComment implements DocCommentTree {
     }
 
     /**
+     * 设置首句摘要。
+     */
+    public void setSummary(List<? extends DocTree> summary) {
+        this.summary = new ArrayList<>(summary);
+    }
+
+    /**
      * 设置块标签。
      */
     public void setTags(List<? extends DocTree> tags) {
         this.tags = new ArrayList<>(tags);
-    }
-
-    @Override
-    public List<? extends DocTree> getFirstSentence() {
-        return new ArrayList<>(summary);
-    }
-
-    @Override
-    public List<? extends DocTree> getBody() {
-        return new ArrayList<>(body);
-    }
-
-    @Override
-    public List<? extends DocTree> getBlockTags() {
-        return new ArrayList<>(tags);
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.DOC_COMMENT;
-    }
-
-    @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitDocComment(this, data);
-    }
-
-    public void addTag(DocTagVersion tag) {
-        tags.add(tag);
     }
 
     public static final class Builder {
@@ -75,22 +75,6 @@ public final class DocComment implements DocCommentTree {
 
         public Builder() {
             this.d = new DocComment();
-        }
-
-        public Builder summary(Object... args) {
-            if (args == null) {
-                return this;
-            }
-
-            for (Object arg : args) {
-                if (arg instanceof String) {
-                    d.summary.add(new DocText((String)arg));
-                } else if (arg instanceof DocTree) {
-                    d.summary.add((DocTree)arg);
-                }
-            }
-
-            return this;
         }
 
         public Builder body(Object... args) {
@@ -120,13 +104,29 @@ public final class DocComment implements DocCommentTree {
             return this;
         }
 
-        public Builder tag(DocTree tag) {
-            d.tags.add(tag);
+        public DocComment build() {
+            return d;
+        }
+
+        public Builder summary(Object... args) {
+            if (args == null) {
+                return this;
+            }
+
+            for (Object arg : args) {
+                if (arg instanceof String) {
+                    d.summary.add(new DocText((String)arg));
+                } else if (arg instanceof DocTree) {
+                    d.summary.add((DocTree)arg);
+                }
+            }
+
             return this;
         }
 
-        public DocComment build() {
-            return d;
+        public Builder tag(DocTree tag) {
+            d.tags.add(tag);
+            return this;
         }
 
     }

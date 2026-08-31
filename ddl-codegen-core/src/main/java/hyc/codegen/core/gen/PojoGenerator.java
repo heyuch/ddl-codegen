@@ -29,37 +29,6 @@ public final class PojoGenerator extends AbstractJavaGenerator {
 
     private static final String JSR303 = "javax.validation.constraints";
 
-    @Override
-    public String kind() {
-        return NAME;
-    }
-
-    @Override
-    protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
-        applyClassFeatures(builder, ctx);
-
-        for (Column column : ctx.columns()) {
-            builder.field(fieldFor(column, ctx));
-        }
-    }
-
-    /**
-     * 成员类型视图（pojo 内部特性）：{@code type=true} 时 @type 优先；{@code enums=true} 时 enum 列 → 枚举类；否则 SQL 映射。
-     */
-    @Override
-    public String fieldType(Column column, TableContext ctx) {
-        if (option(ctx, "type")) {
-            Object type = column.getMeta().get("type");
-            if (type != null) {
-                return type.toString();
-            }
-        }
-        if (option(ctx, "enums") && !column.getEnumValues().isEmpty()) {
-            return ctx.getEnumPackage() + "." + ctx.enumClassName(column);
-        }
-        return super.fieldType(column, ctx);
-    }
-
     private static boolean option(TableContext ctx, String key) {
         return Boolean.parseBoolean(ctx.getArtifactConfig().getOption(key));
     }
@@ -87,18 +56,6 @@ public final class PojoGenerator extends AbstractJavaGenerator {
     }
 
     /**
-     * 单字段：类型走查询契约（type/enums 视图在基类 fieldType），字段级特性加注解。
-     */
-    private Variable fieldFor(Column column, TableContext ctx) {
-        Variable.Builder builder = Variable.builder()
-                .modifiers(Modifier.PRIVATE)
-                .type(JavaTypes.typeTree(ctx.typeOf(column)))
-                .name(ctx.fieldName(column));
-        applyFieldAnnotations(builder, column, ctx);
-        return builder.build();
-    }
-
-    /**
      * 字段级特性：jsr303 约束、jsr305 空值注解。
      */
     private void applyFieldAnnotations(Variable.Builder builder, Column column, TableContext ctx) {
@@ -120,6 +77,49 @@ public final class PojoGenerator extends AbstractJavaGenerator {
         if (option(ctx, "jsr305") && column.isNullable()) {
             builder.annotation(Annotation.of(ctx.getNullableAnnotation()));
         }
+    }
+
+    @Override
+    protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
+        applyClassFeatures(builder, ctx);
+
+        for (Column column : ctx.columns()) {
+            builder.field(fieldFor(column, ctx));
+        }
+    }
+
+    /**
+     * 单字段：类型走查询契约（type/enums 视图在基类 fieldType），字段级特性加注解。
+     */
+    private Variable fieldFor(Column column, TableContext ctx) {
+        Variable.Builder builder = Variable.builder()
+                .modifiers(Modifier.PRIVATE)
+                .type(JavaTypes.typeTree(ctx.typeOf(column)))
+                .name(ctx.fieldName(column));
+        applyFieldAnnotations(builder, column, ctx);
+        return builder.build();
+    }
+
+    /**
+     * 成员类型视图（pojo 内部特性）：{@code type=true} 时 @type 优先；{@code enums=true} 时 enum 列 → 枚举类；否则 SQL 映射。
+     */
+    @Override
+    public String fieldType(Column column, TableContext ctx) {
+        if (option(ctx, "type")) {
+            Object type = column.getMeta().get("type");
+            if (type != null) {
+                return type.toString();
+            }
+        }
+        if (option(ctx, "enums") && !column.getEnumValues().isEmpty()) {
+            return ctx.getEnumPackage() + "." + ctx.enumClassName(column);
+        }
+        return super.fieldType(column, ctx);
+    }
+
+    @Override
+    public String kind() {
+        return NAME;
     }
 
 }

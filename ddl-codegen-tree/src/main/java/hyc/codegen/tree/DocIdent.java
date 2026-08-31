@@ -14,8 +14,8 @@ public final class DocIdent implements IdentifierTree {
     }
 
     @Override
-    public Name getName() {
-        return new StringName(name);
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitIdentifier(this, data);
     }
 
     @Override
@@ -24,8 +24,8 @@ public final class DocIdent implements IdentifierTree {
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitIdentifier(this, data);
+    public Name getName() {
+        return new StringName(name);
     }
 
 }

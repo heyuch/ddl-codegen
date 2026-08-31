@@ -16,42 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class SchemaModelTest {
 
-    private Column column(String name) {
-        return Column.builder().name(name).sqlType("varchar").length(50).build();
-    }
-
-    @Test
-    void schemaAddGetRemoveTable() {
-        Schema schema = new Schema();
-        schema.addTable(new Table("user", "用户表"));
-        schema.addTable(new Table("account", null));
-
-        assertTrue(schema.contains("user"));
-        Table user = schema.getTable("user");
-        assertNotNull(user);
-        assertEquals("用户表", user.getComment());
-        assertNull(schema.getTable("missing"));
-        assertEquals(Arrays.asList("user", "account"), schema.tableNames());
-
-        schema.removeTable("user");
-        assertFalse(schema.contains("user"));
-    }
-
-    @Test
-    void renameTableMovesToEnd() {
-        Schema schema = new Schema();
-        schema.addTable(new Table("a", null));
-        schema.addTable(new Table("b", null));
-        schema.renameTable("a", "c");
-
-        assertFalse(schema.contains("a"));
-        Table c = schema.getTable("c");
-        assertNotNull(c);
-        assertEquals("c", c.getName());
-        // LinkedHashMap 改名采用移除后追加语义
-        assertEquals(Arrays.asList("b", "c"), schema.tableNames());
-    }
-
     @Test
     void addAndRemoveColumnPreservesOrder() {
         Table table = new Table("user", null);
@@ -70,35 +34,16 @@ class SchemaModelTest {
         assertEquals(Arrays.asList("email", "id"), columnNames(table));
     }
 
-    @Test
-    void renameColumnKeepsPositionAndMeta() {
-        Table table = new Table("user", null);
-        Column name = column("name");
-        name.getMeta().put("type", "java.lang.String");
-        table.addColumn(name);
-
-        table.renameColumn("name", "userName");
-
-        Column renamed = table.getColumn("userName");
-        assertNotNull(renamed);
-        assertEquals("userName", renamed.getName());
-        assertEquals(50, renamed.getLength());
-        assertEquals("java.lang.String", renamed.getMeta().getString("type"));
-        assertNull(table.getColumn("name"));
+    private Column column(String name) {
+        return Column.builder().name(name).sqlType("varchar").length(50).build();
     }
 
-    @Test
-    void replaceColumnKeepsPosition() {
-        Table table = new Table("user", null);
-        table.addColumn(column("id"));
-        table.addColumn(column("name"));
-        table.addColumn(column("email"));
-
-        table.replaceColumn("name", Column.builder().name("name").sqlType("varchar").length(100).build());
-
-        List<Column> columns = table.getColumns();
-        assertEquals(3, columns.size());
-        assertEquals(100, columns.get(1).getLength());
+    private List<String> columnNames(Table table) {
+        List<String> result = new java.util.ArrayList<>();
+        for (Column column : table.getColumns()) {
+            result.add(column.getName());
+        }
+        return result;
     }
 
     @Test
@@ -136,12 +81,67 @@ class SchemaModelTest {
         assertEquals(2, meta.asMap().size());
     }
 
-    private List<String> columnNames(Table table) {
-        List<String> result = new java.util.ArrayList<>();
-        for (Column column : table.getColumns()) {
-            result.add(column.getName());
-        }
-        return result;
+    @Test
+    void renameColumnKeepsPositionAndMeta() {
+        Table table = new Table("user", null);
+        Column name = column("name");
+        name.getMeta().put("type", "java.lang.String");
+        table.addColumn(name);
+
+        table.renameColumn("name", "userName");
+
+        Column renamed = table.getColumn("userName");
+        assertNotNull(renamed);
+        assertEquals("userName", renamed.getName());
+        assertEquals(50, renamed.getLength());
+        assertEquals("java.lang.String", renamed.getMeta().getString("type"));
+        assertNull(table.getColumn("name"));
+    }
+
+    @Test
+    void renameTableMovesToEnd() {
+        Schema schema = new Schema();
+        schema.addTable(new Table("a", null));
+        schema.addTable(new Table("b", null));
+        schema.renameTable("a", "c");
+
+        assertFalse(schema.contains("a"));
+        Table c = schema.getTable("c");
+        assertNotNull(c);
+        assertEquals("c", c.getName());
+        // LinkedHashMap 改名采用移除后追加语义
+        assertEquals(Arrays.asList("b", "c"), schema.tableNames());
+    }
+
+    @Test
+    void replaceColumnKeepsPosition() {
+        Table table = new Table("user", null);
+        table.addColumn(column("id"));
+        table.addColumn(column("name"));
+        table.addColumn(column("email"));
+
+        table.replaceColumn("name", Column.builder().name("name").sqlType("varchar").length(100).build());
+
+        List<Column> columns = table.getColumns();
+        assertEquals(3, columns.size());
+        assertEquals(100, columns.get(1).getLength());
+    }
+
+    @Test
+    void schemaAddGetRemoveTable() {
+        Schema schema = new Schema();
+        schema.addTable(new Table("user", "用户表"));
+        schema.addTable(new Table("account", null));
+
+        assertTrue(schema.contains("user"));
+        Table user = schema.getTable("user");
+        assertNotNull(user);
+        assertEquals("用户表", user.getComment());
+        assertNull(schema.getTable("missing"));
+        assertEquals(Arrays.asList("user", "account"), schema.tableNames());
+
+        schema.removeTable("user");
+        assertFalse(schema.contains("user"));
     }
 
 }

@@ -28,14 +28,6 @@ class ConfigTest {
 
     private final PropertiesConfigLoader loader = new PropertiesConfigLoader();
 
-    private DdlConfig load(String content) throws Exception {
-        Path dir = tmpDir;
-        assertNotNull(dir);
-        Path file = dir.resolve("ddlgen.properties");
-        Files.write(file, content.getBytes(StandardCharsets.UTF_8));
-        return loader.load(file);
-    }
-
     /** 按产物名取配置（测试约定产物已配置）。 */
     private ArtifactConfig artifact(DdlConfig config, String name) {
         ArtifactConfig artifactConfig = config.artifact(name);
@@ -43,6 +35,38 @@ class ConfigTest {
             throw new AssertionError("产物未配置: " + name);
         }
         return artifactConfig;
+    }
+
+    @Test
+    void artifactNamesKeepConfigOrder() throws Exception {
+        DdlConfig config = load(String.join("\n",
+                "po.generator=pojo",
+                "po.package=com.x.pojo",
+                "entity.generator=pojo",
+                "entity.package=com.x.entity",
+                "mapper.generator=mybatisMapper",
+                "mapper.package=com.x.mapper"));
+
+        assertEquals(Arrays.asList("po", "entity", "mapper"), config.artifactNames());
+    }
+
+    @Test
+    void defaultsApplied() throws Exception {
+        DdlConfig config = load("entity.generator=pojo\nentity.package=com.x.entity");
+
+        assertTrue(config.getTableStripPrefixes().isEmpty());
+        assertFalse(config.isTableStripShardSuffix());
+        assertEquals("_\\d+$", config.getTableShardPattern());
+        assertTrue(config.isColumnCamelCase());
+        assertEquals("_", config.getColumnKeywordSuffix());
+        assertEquals("find", config.getMethodPrefix());
+        assertEquals("column", config.getEnumStyle());
+        assertTrue(config.getCustomAnnotationHandlers().isEmpty());
+
+        ArtifactConfig entity = artifact(config, "entity");
+        assertNull(entity.getModule());
+        assertEquals("", entity.getSuffix());
+        assertTrue(entity.getOptions().isEmpty());
     }
 
     @Test
@@ -104,36 +128,12 @@ class ConfigTest {
         assertEquals(Arrays.asList("com.myapp.MyHandler"), config.getCustomAnnotationHandlers());
     }
 
-    @Test
-    void defaultsApplied() throws Exception {
-        DdlConfig config = load("entity.generator=pojo\nentity.package=com.x.entity");
-
-        assertTrue(config.getTableStripPrefixes().isEmpty());
-        assertFalse(config.isTableStripShardSuffix());
-        assertEquals("_\\d+$", config.getTableShardPattern());
-        assertTrue(config.isColumnCamelCase());
-        assertEquals("_", config.getColumnKeywordSuffix());
-        assertEquals("find", config.getMethodPrefix());
-        assertEquals("column", config.getEnumStyle());
-        assertTrue(config.getCustomAnnotationHandlers().isEmpty());
-
-        ArtifactConfig entity = artifact(config, "entity");
-        assertNull(entity.getModule());
-        assertEquals("", entity.getSuffix());
-        assertTrue(entity.getOptions().isEmpty());
-    }
-
-    @Test
-    void artifactNamesKeepConfigOrder() throws Exception {
-        DdlConfig config = load(String.join("\n",
-                "po.generator=pojo",
-                "po.package=com.x.pojo",
-                "entity.generator=pojo",
-                "entity.package=com.x.entity",
-                "mapper.generator=mybatisMapper",
-                "mapper.package=com.x.mapper"));
-
-        assertEquals(Arrays.asList("po", "entity", "mapper"), config.artifactNames());
+    private DdlConfig load(String content) throws Exception {
+        Path dir = tmpDir;
+        assertNotNull(dir);
+        Path file = dir.resolve("ddlgen.properties");
+        Files.write(file, content.getBytes(StandardCharsets.UTF_8));
+        return loader.load(file);
     }
 
     @Test

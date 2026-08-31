@@ -19,17 +19,6 @@ class FileIoTest {
     @Nullable
     Path temp;
 
-    /**
-     * 注入目录（@TempDir 注入，标注 @Nullable，使用点经此显式校验）。
-     */
-    private Path tempDir() {
-        Path dir = temp;
-        if (dir == null) {
-            throw new AssertionError("JUnit 未注入 @TempDir");
-        }
-        return dir;
-    }
-
     @Test
     void javaFileWithModule() {
         Path file = PathResolver.javaFile(tempDir(), "core", "com.myapp.core.entity", "User");
@@ -43,9 +32,35 @@ class FileIoTest {
     }
 
     @Test
-    void xmlFileWithResourcePath() {
-        Path file = PathResolver.xmlFile(tempDir(), "service", "src/main/resources/mapper", "UserMapper.xml");
-        assertEquals(tempDir().resolve("service/src/main/resources/mapper/UserMapper.xml"), file);
+    void reportTracksStatusAndSummary() throws IOException {
+        ChangeReport report = new ChangeReport();
+        report.add(tempDir().resolve("new.java"), ChangeStatus.CREATED);
+        report.add(tempDir().resolve("upd.java"), ChangeStatus.UPDATED);
+        report.add(tempDir().resolve("del.java"), ChangeStatus.DELETED);
+        report.add(tempDir().resolve("same.java"), ChangeStatus.UNCHANGED);
+
+        assertTrue(report.hasChanges());
+        assertEquals("+1 ~1 -1 =1", report.summary());
+        assertEquals(4, report.getEntries().size());
+    }
+
+    /**
+     * 注入目录（@TempDir 注入，标注 @Nullable，使用点经此显式校验）。
+     */
+    private Path tempDir() {
+        Path dir = temp;
+        if (dir == null) {
+            throw new AssertionError("JUnit 未注入 @TempDir");
+        }
+        return dir;
+    }
+
+    @Test
+    void writeChangedContentUpdates() throws IOException {
+        Path file = tempDir().resolve("a.txt");
+        FileWriter.writeIfChanged(file, "v1");
+        assertEquals(ChangeStatus.UPDATED, FileWriter.writeIfChanged(file, "v2"));
+        assertEquals("v2", new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
     }
 
     @Test
@@ -66,24 +81,9 @@ class FileIoTest {
     }
 
     @Test
-    void writeChangedContentUpdates() throws IOException {
-        Path file = tempDir().resolve("a.txt");
-        FileWriter.writeIfChanged(file, "v1");
-        assertEquals(ChangeStatus.UPDATED, FileWriter.writeIfChanged(file, "v2"));
-        assertEquals("v2", new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
-    }
-
-    @Test
-    void reportTracksStatusAndSummary() throws IOException {
-        ChangeReport report = new ChangeReport();
-        report.add(tempDir().resolve("new.java"), ChangeStatus.CREATED);
-        report.add(tempDir().resolve("upd.java"), ChangeStatus.UPDATED);
-        report.add(tempDir().resolve("del.java"), ChangeStatus.DELETED);
-        report.add(tempDir().resolve("same.java"), ChangeStatus.UNCHANGED);
-
-        assertTrue(report.hasChanges());
-        assertEquals("+1 ~1 -1 =1", report.summary());
-        assertEquals(4, report.getEntries().size());
+    void xmlFileWithResourcePath() {
+        Path file = PathResolver.xmlFile(tempDir(), "service", "src/main/resources/mapper", "UserMapper.xml");
+        assertEquals(tempDir().resolve("service/src/main/resources/mapper/UserMapper.xml"), file);
     }
 
 }

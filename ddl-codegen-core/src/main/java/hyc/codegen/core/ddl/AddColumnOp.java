@@ -17,6 +17,15 @@ public final class AddColumnOp implements DdlOperation {
         this.column = column;
     }
 
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        Table table = schema.getTable(tableName);
+        if (table != null) {
+            table.addColumn(column);
+            result.affect(tableName);
+        }
+    }
+
     /** 新增的列定义。 */
     public Column getColumn() {
         return column;
@@ -25,15 +34,6 @@ public final class AddColumnOp implements DdlOperation {
     @Override
     public String tableName() {
         return tableName;
-    }
-
-    @Override
-    public void apply(Schema schema, ApplyResult result) {
-        Table table = schema.getTable(tableName);
-        if (table != null) {
-            table.addColumn(column);
-            result.affect(tableName);
-        }
     }
 
 }

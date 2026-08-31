@@ -22,50 +22,6 @@ class MainTest {
     @Nullable
     Path temp;
 
-    private Path tempDir() {
-        Path dir = temp;
-        if (dir == null) {
-            throw new AssertionError("JUnit 未注入 @TempDir");
-        }
-        return dir;
-    }
-
-    private Path writeConfig() throws Exception {
-        Path config = tempDir().resolve("ddl-codegen.properties");
-        Files.writeString(config, "entity.generator=pojo\nentity.package=com.demo.entity\n", StandardCharsets.UTF_8);
-        return config;
-    }
-
-    private Path writeDdl() throws Exception {
-        Path ddl = tempDir().resolve("schema.sql");
-        Files.writeString(ddl, "create table user (\n    id bigint primary key,\n    name varchar(50)\n)\n",
-                StandardCharsets.UTF_8);
-        return ddl;
-    }
-
-    @Test
-    void generateWritesFiles() throws Exception {
-        Path config = writeConfig();
-        Path ddl = writeDdl();
-
-        int code = Main.run(new String[] {"--config", config.toString(), "--ddl", ddl.toString()});
-
-        assertEquals(0, code);
-        Path generated = tempDir().resolve("com/demo/entity/User.java");
-        assertTrue(Files.isRegularFile(generated), "应生成实体类 User.java");
-    }
-
-    @Test
-    void dryRunDoesNotWrite() throws Exception {
-        Path config = writeConfig();
-        Path ddl = writeDdl();
-
-        int code = Main.run(new String[] {"--config", config.toString(), "--ddl", ddl.toString(), "--dry-run"});
-
-        assertEquals(0, code);
-        assertFalse(Files.exists(tempDir().resolve("com/demo/entity/User.java")), "dry-run 不应写盘");
-    }
-
     @Test
     void directoryDdlConcatenatesSqlFiles() throws Exception {
         Path config = writeConfig();
@@ -82,18 +38,36 @@ class MainTest {
     }
 
     @Test
-    void missingDdlArgReturns2() {
-        assertEquals(2, Main.run(new String[] {"--config", "ddl-codegen.properties"}));
+    void dryRunDoesNotWrite() throws Exception {
+        Path config = writeConfig();
+        Path ddl = writeDdl();
+
+        int code = Main.run(new String[] {"--config", config.toString(), "--ddl", ddl.toString(), "--dry-run"});
+
+        assertEquals(0, code);
+        assertFalse(Files.exists(tempDir().resolve("com/demo/entity/User.java")), "dry-run 不应写盘");
     }
 
     @Test
-    void unknownArgReturns2() {
-        assertEquals(2, Main.run(new String[] {"--foo"}));
+    void generateWritesFiles() throws Exception {
+        Path config = writeConfig();
+        Path ddl = writeDdl();
+
+        int code = Main.run(new String[] {"--config", config.toString(), "--ddl", ddl.toString()});
+
+        assertEquals(0, code);
+        Path generated = tempDir().resolve("com/demo/entity/User.java");
+        assertTrue(Files.isRegularFile(generated), "应生成实体类 User.java");
     }
 
     @Test
     void helpReturns0() {
         assertEquals(0, Main.run(new String[] {"--help"}));
+    }
+
+    @Test
+    void missingDdlArgReturns2() {
+        assertEquals(2, Main.run(new String[] {"--config", "ddl-codegen.properties"}));
     }
 
     @Test
@@ -103,6 +77,32 @@ class MainTest {
         int code = Main.run(new String[] {"--config", config.toString(), "--ddl", "不存在.sql"});
 
         assertEquals(1, code);
+    }
+
+    private Path tempDir() {
+        Path dir = temp;
+        if (dir == null) {
+            throw new AssertionError("JUnit 未注入 @TempDir");
+        }
+        return dir;
+    }
+
+    @Test
+    void unknownArgReturns2() {
+        assertEquals(2, Main.run(new String[] {"--foo"}));
+    }
+
+    private Path writeConfig() throws Exception {
+        Path config = tempDir().resolve("ddl-codegen.properties");
+        Files.writeString(config, "entity.generator=pojo\nentity.package=com.demo.entity\n", StandardCharsets.UTF_8);
+        return config;
+    }
+
+    private Path writeDdl() throws Exception {
+        Path ddl = tempDir().resolve("schema.sql");
+        Files.writeString(ddl, "create table user (\n    id bigint primary key,\n    name varchar(50)\n)\n",
+                StandardCharsets.UTF_8);
+        return ddl;
     }
 
 }

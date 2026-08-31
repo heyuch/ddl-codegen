@@ -18,12 +18,12 @@ public final class DocAttr implements AttributeTree {
 
     private List<? extends DocTree> value;
 
-    public DocAttr(String name, String value) {
-        this(name, new DocText(value));
-    }
-
     public DocAttr(String name, DocTree value) {
         this(name, ValueKind.DOUBLE, Arrays.asList(value));
+    }
+
+    public DocAttr(String name, String value) {
+        this(name, new DocText(value));
     }
 
     public DocAttr(String name, ValueKind valueKind, List<? extends DocTree> value) {
@@ -33,18 +33,8 @@ public final class DocAttr implements AttributeTree {
     }
 
     @Override
-    public Name getName() {
-        return new StringName(name);
-    }
-
-    @Override
-    public ValueKind getValueKind() {
-        return valueKind;
-    }
-
-    @Override
-    public List<? extends DocTree> getValue() {
-        return new ArrayList<@UnknownKeyFor DocTree>(value);
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitAttribute(this, data);
     }
 
     @Override
@@ -53,8 +43,18 @@ public final class DocAttr implements AttributeTree {
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitAttribute(this, data);
+    public Name getName() {
+        return new StringName(name);
+    }
+
+    @Override
+    public List<? extends DocTree> getValue() {
+        return new ArrayList<@UnknownKeyFor DocTree>(value);
+    }
+
+    @Override
+    public ValueKind getValueKind() {
+        return valueKind;
     }
 
 }

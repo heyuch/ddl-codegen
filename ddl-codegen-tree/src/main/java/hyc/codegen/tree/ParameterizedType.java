@@ -14,28 +14,13 @@ public final class ParameterizedType implements ParameterizedTypeTree {
 
     private List<Tree> typeArguments;
 
-    public ParameterizedType(TypeReference type, Tree... typeArguments) {
-        this(type, Arrays.asList(typeArguments));
-    }
-
     public ParameterizedType(TypeReference type, List<Tree> typeArguments) {
         this.type = type;
         this.typeArguments = new ArrayList<>(typeArguments);
     }
 
-    @Override
-    public Tree getType() {
-        return type;
-    }
-
-    @Override
-    public List<? extends Tree> getTypeArguments() {
-        return new ArrayList<>(typeArguments);
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.PARAMETERIZED_TYPE;
+    public ParameterizedType(TypeReference type, Tree... typeArguments) {
+        this(type, Arrays.asList(typeArguments));
     }
 
     @Override
@@ -61,6 +46,21 @@ public final class ParameterizedType implements ParameterizedTypeTree {
         }
 
         return imports;
+    }
+
+    @Override
+    public Kind getKind() {
+        return Kind.PARAMETERIZED_TYPE;
+    }
+
+    @Override
+    public Tree getType() {
+        return type;
+    }
+
+    @Override
+    public List<? extends Tree> getTypeArguments() {
+        return new ArrayList<>(typeArguments);
     }
 
 }

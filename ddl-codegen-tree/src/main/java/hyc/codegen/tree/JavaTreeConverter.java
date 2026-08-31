@@ -25,6 +25,14 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
         this.docs = docs;
     }
 
+    /**
+     * JDK 11 无 Modifier.VARARGS（JDK 21+ 才有）：javac 对可变参数的类型与普通数组同为
+     * ArrayTypeTree，只能靠 toString 中的 "..." 区分（javac 打印忠实于源码）。
+     */
+    private static boolean isVarargsParam(VariableTree param) {
+        return param.getType() instanceof ArrayTypeTree && param.toString().contains("...");
+    }
+
     /** 把 javac 的 ModifiersTree 统一转为可变模型（保留注解与修饰符；已是模型则原样返回）。 */
     private static Modifiers toModelModifiers(ModifiersTree node) {
         if (node instanceof Modifiers) {
@@ -39,23 +47,6 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
         TreePath path = new TreePath(unit);
 
         return (CompileUnit)visitCompilationUnit(unit, path);
-    }
-
-    @Override
-    public Tree visitCompilationUnit(CompilationUnitTree node, TreePath path) {
-        CompileUnit u = new CompileUnit();
-
-        u.setPackage(node.getPackage());
-        for (com.sun.source.tree.ImportTree imp : node.getImports()) {
-            u.addImport(imp);
-        }
-
-        for (Tree decl : node.getTypeDecls()) {
-            Class c = (Class)decl.accept(this, TreePath.getPath(path, decl));
-            u.addClass(c);
-        }
-
-        return u;
     }
 
     @Override
@@ -94,17 +85,20 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
     }
 
     @Override
-    public Tree visitVariable(VariableTree node, TreePath path) {
-        Variable v = new Variable();
+    public Tree visitCompilationUnit(CompilationUnitTree node, TreePath path) {
+        CompileUnit u = new CompileUnit();
 
-        v.setJavadoc(javadocConverter.convert(docs.getDocCommentTree(path)));
-        v.setModifiers(toModelModifiers(node.getModifiers()));
-        v.setName(node.getName());
-        v.setNameExpr(node.getNameExpression());
-        v.setType(node.getType());
-        v.setInitExpr(node.getInitializer());
+        u.setPackage(node.getPackage());
+        for (com.sun.source.tree.ImportTree imp : node.getImports()) {
+            u.addImport(imp);
+        }
 
-        return v;
+        for (Tree decl : node.getTypeDecls()) {
+            Class c = (Class)decl.accept(this, TreePath.getPath(path, decl));
+            u.addClass(c);
+        }
+
+        return u;
     }
 
     @Override
@@ -130,12 +124,18 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
         return m;
     }
 
-    /**
-     * JDK 11 无 Modifier.VARARGS（JDK 21+ 才有）：javac 对可变参数的类型与普通数组同为
-     * ArrayTypeTree，只能靠 toString 中的 "..." 区分（javac 打印忠实于源码）。
-     */
-    private static boolean isVarargsParam(VariableTree param) {
-        return param.getType() instanceof ArrayTypeTree && param.toString().contains("...");
+    @Override
+    public Tree visitVariable(VariableTree node, TreePath path) {
+        Variable v = new Variable();
+
+        v.setJavadoc(javadocConverter.convert(docs.getDocCommentTree(path)));
+        v.setModifiers(toModelModifiers(node.getModifiers()));
+        v.setName(node.getName());
+        v.setNameExpr(node.getNameExpression());
+        v.setType(node.getType());
+        v.setInitExpr(node.getInitializer());
+
+        return v;
     }
 
 }

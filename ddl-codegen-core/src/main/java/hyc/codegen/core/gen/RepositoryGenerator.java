@@ -16,11 +16,6 @@ public final class RepositoryGenerator extends AbstractJavaGenerator {
     public static final String NAME = "repository";
 
     @Override
-    public String kind() {
-        return NAME;
-    }
-
-    @Override
     protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
         builder.kind(Kind.INTERFACE);
 
@@ -34,6 +29,11 @@ public final class RepositoryGenerator extends AbstractJavaGenerator {
                 builder.method(QueryMethodFactory.findBy(spec, ctx, returnType, nullable, false));
             }
         }
+    }
+
+    @Override
+    public String kind() {
+        return NAME;
     }
 
 }

@@ -30,9 +30,28 @@ public final class MapperGenerator extends AbstractJavaGenerator {
      */
     private static final String PARAM = "org.apache.ibatis.annotations.Param";
 
-    @Override
-    public String kind() {
-        return NAME;
+    private static String decapitalize(String s) {
+        if (s.isEmpty()) {
+            return s;
+        }
+        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
+    }
+
+    /**
+     * 主键列：PRIMARY KEY 索引首列；无主键返回 null（不生成按 id 删除）。
+     */
+    static @Nullable Column primaryKey(TableContext ctx) {
+        for (Index index : ctx.indexes()) {
+            if (index.isUnique() && "PRIMARY".equalsIgnoreCase(index.getName())) {
+                return ctx.getTable().getColumn(index.getColumns().get(0));
+            }
+        }
+        return null;
+    }
+
+    private static String simpleName(String fqn) {
+        int dot = fqn.lastIndexOf('.');
+        return dot < 0 ? fqn : fqn.substring(dot + 1);
     }
 
     @Override
@@ -55,40 +74,6 @@ public final class MapperGenerator extends AbstractJavaGenerator {
                 builder.method(findByMethod(spec, poType, nullable, ctx));
             }
         }
-    }
-
-    /**
-     * 主键列：PRIMARY KEY 索引首列；无主键返回 null（不生成按 id 删除）。
-     */
-    static @Nullable Column primaryKey(TableContext ctx) {
-        for (Index index : ctx.indexes()) {
-            if (index.isUnique() && "PRIMARY".equalsIgnoreCase(index.getName())) {
-                return ctx.getTable().getColumn(index.getColumns().get(0));
-            }
-        }
-        return null;
-    }
-
-    private Method insertMethod(String poType) {
-        return Method.builder()
-                .returnType(new hyc.codegen.tree.TypeReference("int"))
-                .name("insert")
-                .parameter(Variable.builder()
-                        .type(new hyc.codegen.tree.TypeReference(poType))
-                        .name(decapitalize(simpleName(poType)))
-                        .build())
-                .build();
-    }
-
-    private Method updateMethod(String poType) {
-        return Method.builder()
-                .returnType(new hyc.codegen.tree.TypeReference("int"))
-                .name("update")
-                .parameter(Variable.builder()
-                        .type(new hyc.codegen.tree.TypeReference(poType))
-                        .name(decapitalize(simpleName(poType)))
-                        .build())
-                .build();
     }
 
     private Method deleteByIdMethod(Column id, TableContext ctx) {
@@ -130,16 +115,31 @@ public final class MapperGenerator extends AbstractJavaGenerator {
         return builder.build();
     }
 
-    private static String simpleName(String fqn) {
-        int dot = fqn.lastIndexOf('.');
-        return dot < 0 ? fqn : fqn.substring(dot + 1);
+    private Method insertMethod(String poType) {
+        return Method.builder()
+                .returnType(new hyc.codegen.tree.TypeReference("int"))
+                .name("insert")
+                .parameter(Variable.builder()
+                        .type(new hyc.codegen.tree.TypeReference(poType))
+                        .name(decapitalize(simpleName(poType)))
+                        .build())
+                .build();
     }
 
-    private static String decapitalize(String s) {
-        if (s.isEmpty()) {
-            return s;
-        }
-        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
+    @Override
+    public String kind() {
+        return NAME;
+    }
+
+    private Method updateMethod(String poType) {
+        return Method.builder()
+                .returnType(new hyc.codegen.tree.TypeReference("int"))
+                .name("update")
+                .parameter(Variable.builder()
+                        .type(new hyc.codegen.tree.TypeReference(poType))
+                        .name(decapitalize(simpleName(poType)))
+                        .build())
+                .build();
     }
 
 }

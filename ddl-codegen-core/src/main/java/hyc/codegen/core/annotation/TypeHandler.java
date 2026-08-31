@@ -24,13 +24,13 @@ public final class TypeHandler implements DdlAnnotationHandler {
     }
 
     @Override
-    public Set<MetaTarget> targets() {
-        return EnumSet.of(MetaTarget.COLUMN);
+    public void parse(Meta meta, @Nullable String value) {
+        meta.put(NAME, value);
     }
 
     @Override
-    public void parse(Meta meta, @Nullable String value) {
-        meta.put(NAME, value);
+    public Set<MetaTarget> targets() {
+        return EnumSet.of(MetaTarget.COLUMN);
     }
 
 }

@@ -17,6 +17,15 @@ public final class AddIndexOp implements DdlOperation {
         this.index = index;
     }
 
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        Table table = schema.getTable(tableName);
+        if (table != null) {
+            table.addIndex(index);
+            result.affect(tableName);
+        }
+    }
+
     /** 新增的索引定义。 */
     public Index getIndex() {
         return index;
@@ -25,15 +34,6 @@ public final class AddIndexOp implements DdlOperation {
     @Override
     public String tableName() {
         return tableName;
-    }
-
-    @Override
-    public void apply(Schema schema, ApplyResult result) {
-        Table table = schema.getTable(tableName);
-        if (table != null) {
-            table.addIndex(index);
-            result.affect(tableName);
-        }
     }
 
 }

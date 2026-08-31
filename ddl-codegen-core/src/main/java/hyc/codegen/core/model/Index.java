@@ -22,6 +22,7 @@ public final class Index {
     public static final String PRIMARY = "PRIMARY";
 
     private final String name;
+
     private final boolean unique;
     private final List<String> columns;
     private final @Nullable String comment;
@@ -37,13 +38,8 @@ public final class Index {
         this.comment = b.comment;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    /** 是否为唯一约束（PRIMARY KEY / UNIQUE KEY）。 */
-    public boolean isUnique() {
-        return unique;
+    public static Builder builder() {
+        return new Builder();
     }
 
     /** 索引列名（按定义顺序，不可变）。 */
@@ -60,6 +56,15 @@ public final class Index {
         return meta;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    /** 是否为唯一约束（PRIMARY KEY / UNIQUE KEY）。 */
+    public boolean isUnique() {
+        return unique;
+    }
+
     /** 返回同名定义的副本索引（保留全部字段与元数据），用于索引改名。 */
     public Index renamedTo(String newName) {
         Index copy = builder()
@@ -70,10 +75,6 @@ public final class Index {
                 .build();
         copy.meta.putAll(meta);
         return copy;
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     /**
@@ -88,14 +89,8 @@ public final class Index {
         private final List<String> columns = new ArrayList<>();
         private @Nullable String comment;
 
-        public Builder name(String name) {
-            this.name = name;
-            return this;
-        }
-
-        public Builder unique(boolean unique) {
-            this.unique = unique;
-            return this;
+        public Index build() {
+            return new Index(this);
         }
 
         public Builder columns(List<String> columns) {
@@ -108,8 +103,14 @@ public final class Index {
             return this;
         }
 
-        public Index build() {
-            return new Index(this);
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder unique(boolean unique) {
+            this.unique = unique;
+            return this;
         }
 
     }

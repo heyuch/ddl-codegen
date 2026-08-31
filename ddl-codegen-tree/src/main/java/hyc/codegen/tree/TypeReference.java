@@ -12,6 +12,12 @@ public final class TypeReference extends Identifier {
 
     private String className;
 
+    public TypeReference(Package pkg, String name) {
+        super(pkg == null ? name : pkg.getPath() + "." + name);
+        this.pkg = pkg;
+        this.className = name;
+    }
+
     public TypeReference(String qname) {
         super(qname);
 
@@ -31,10 +37,8 @@ public final class TypeReference extends Identifier {
         this.className = name;
     }
 
-    public TypeReference(Package pkg, String name) {
-        super(pkg == null ? name : pkg.getPath() + "." + name);
-        this.pkg = pkg;
-        this.className = name;
+    public Import getImport() {
+        return new Import(this);
     }
 
     @Override
@@ -49,13 +53,11 @@ public final class TypeReference extends Identifier {
         return pkg;
     }
 
-    public Import getImport() {
-        return new Import(this);
-    }
-
-    @Override
-    public String toString() {
-        return getQualifiedName();
+    public @Nullable String getPkgString() {
+        if (pkg == null) {
+            return null;
+        }
+        return pkg.getPath();
     }
 
     public String getQualifiedName() {
@@ -71,11 +73,9 @@ public final class TypeReference extends Identifier {
         return sb.toString();
     }
 
-    public @Nullable String getPkgString() {
-        if (pkg == null) {
-            return null;
-        }
-        return pkg.getPath();
+    @Override
+    public String toString() {
+        return getQualifiedName();
     }
 
 }

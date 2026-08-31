@@ -17,10 +17,12 @@ class GenHelpersTest {
     }
 
     @Test
-    void testTernaryAndNullSafe() {
-        assertEquals("a ? b : c", Expr.ternary("a", "b", "c"));
-        assertEquals("po.getGender() == null ? null : Gender.fromValue(po.getGender())",
-                Expr.nullSafe("po.getGender()", Expr.call("Gender", "fromValue", "po.getGender()")));
+    void testIfStmt() {
+        String code = Block.ifStmt("po.getGender() != null", "u.setGender(po.getGender().name());");
+        String expected = "if (po.getGender() != null) {" + System.lineSeparator()
+                + "    u.setGender(po.getGender().name());" + System.lineSeparator()
+                + "}";
+        assertEquals(expected, code);
     }
 
     @Test
@@ -37,12 +39,10 @@ class GenHelpersTest {
     }
 
     @Test
-    void testIfStmt() {
-        String code = Block.ifStmt("po.getGender() != null", "u.setGender(po.getGender().name());");
-        String expected = "if (po.getGender() != null) {" + System.lineSeparator()
-                + "    u.setGender(po.getGender().name());" + System.lineSeparator()
-                + "}";
-        assertEquals(expected, code);
+    void testTernaryAndNullSafe() {
+        assertEquals("a ? b : c", Expr.ternary("a", "b", "c"));
+        assertEquals("po.getGender() == null ? null : Gender.fromValue(po.getGender())",
+                Expr.nullSafe("po.getGender()", Expr.call("Gender", "fromValue", "po.getGender()")));
     }
 
     /** docs/design.md §10 的 plain converter toEntity 方法体示例。 */

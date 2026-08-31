@@ -14,168 +14,6 @@ import org.junit.jupiter.api.Test;
 public class JavaCodegenTest {
 
     @Test
-    public void field() {
-        StringJoiner j = new StringJoiner(System.lineSeparator());
-        j.add("/**");
-        j.add(" * 编码列表");
-        j.add(" */");
-        j.add("@NotEmpty(message = \"编码列表不能为空\")");
-        j.add("private List<String> codes = new ArrayList<>()");
-
-        Variable v = Variable.builder()
-                .javadoc(DocComment.builder()
-                        .summary("编码列表")
-                        .build())
-                .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotEmpty"),
-                        "message = \"编码列表不能为空\""))
-                .modifiers(Modifier.PRIVATE)
-                .type(Types.listOf(Types.STRING))
-                .name("codes")
-                .init(SourceExpr.of("new ArrayList<>()", new TypeReference("java.util.ArrayList")))
-                .build();
-
-        String code = codegen(v);
-        Assertions.assertEquals(j.toString(), code);
-
-        List<Import> imports = v.getImports();
-        List<Import> expectedImports = Arrays.asList(
-                new Import(Types.LIST),
-                new Import(Types.STRING),
-                new Import("java.util.ArrayList"),
-                new Import("javax.validation.constraints.NotEmpty"));
-        Assertions.assertEquals(ImportManager.sort(expectedImports), ImportManager.sort(imports));
-    }
-
-    private String codegen(Tree tree) {
-        return JavaCodegen.generateCode(tree);
-    }
-
-    @Test
-    public void constant() {
-        Variable v = Variable.builder()
-                .modifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                .type(Types.LONG)
-                .name("serialVersionUID")
-                .init(Literal.of(1L))
-                .build();
-
-        String code = codegen(v);
-        Assertions.assertEquals("private static final long serialVersionUID = 1L", code);
-    }
-
-    @Test
-    public void method() {
-        StringJoiner j = new StringJoiner(System.lineSeparator());
-        StringJoiner b = new StringJoiner(System.lineSeparator());
-        j.add("/**");
-        j.add(" * 根据编码获取对应的枚举值");
-        j.add(" *");
-        j.add(" * @param codes 编码列表");
-        j.add(" * @return 匹配的枚举值，匹配不到返回 null");
-        j.add(" */");
-        j.add("@Nullable");
-        j.add("public static List<TestEnum> getByCodes(@NotNull @NotEmpty(message = \"codes 不能为空\")"
-                + " List<Integer> codes) {");
-        b.add("    if (codes == null) {");
-        b.add("        return null;");
-        b.add("    }");
-        b.add("");
-        b.add("    for (Integer code : codes) {");
-        b.add("        if (Objects.equals(e.code, code)) {");
-        b.add("            return e;");
-        b.add("        }");
-        b.add("    }");
-        b.add("");
-        b.add("    return null;");
-        j.merge(b);
-        j.add("}");
-        j.add("");
-
-        Method m = Method.builder()
-                .javadoc(DocComment.builder()
-                        .summary("根据编码获取对应的枚举值")
-                        .tag(new DocTagParam("codes", "编码列表"))
-                        .tag(new DocTagReturn("匹配的枚举值，匹配不到返回 null"))
-                        .build())
-                .annotation(Annotation.of(new TypeReference("org.checkerframework.checker.nullness.qual.Nullable")))
-                .modifiers(Modifier.PUBLIC, Modifier.STATIC)
-                .returnType(Types.listOf(new TypeReference("demo.TestEnum")))
-                .name("getByCodes")
-                .parameter(Variable.builder()
-                        .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotNull")))
-                        .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotEmpty"),
-                                "message = \"codes 不能为空\""))
-                        .type(Types.listOf(Types.INT_OBJ))
-                        .name("codes")
-                        .build())
-                .body(b.toString())
-                .build();
-
-        String code = codegen(m);
-
-        Assertions.assertEquals(j.toString(), code);
-    }
-
-    @Test
-    public void interfaces() {
-        StringJoiner j = new StringJoiner(System.lineSeparator());
-        j.add("/**");
-        j.add(" * Demo 数据仓库");
-        j.add(" *");
-        j.add(" * @author hyc");
-        j.add(" * @since 2025-12-18");
-        j.add(" * @version 1.0.0");
-        j.add(" */");
-        j.add("@FunctionalInterface");
-        j.add("interface DemoRepo extends BaseRepo<Demo> {");
-        j.add("");
-        j.add("    boolean insert(@NotNull Demo demo);");
-        j.add("");
-        j.add("    @Nullable");
-        j.add("    Demo findById(@NotNull Long id);");
-        j.add("");
-        j.add("}");
-        j.add("");
-
-        Class c = Class.builder()
-                .javadoc(DocComment.builder()
-                        .summary("Demo 数据仓库")
-                        .tag(new DocTagAuthor("hyc"))
-                        .tag(new DocTagSince("2025-12-18"))
-                        .tag(new DocTagVersion("1.0.0"))
-                        .build())
-                .kind(Tree.Kind.INTERFACE)
-                .annotation(Annotation.of(new TypeReference("java.lang.FunctionalInterface")))
-                .name("DemoRepo")
-                .extend(new ParameterizedType(new TypeReference("demo.BaseRepo"), new TypeReference("demo.Demo")))
-                .method(Method.builder()
-                        .returnType(Types.BOOLEAN)
-                        .name("insert")
-                        .parameter(Variable.builder()
-                                .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotNull")))
-                                .type(new TypeReference("demo.Demo"))
-                                .name("demo")
-                                .build())
-                        .build())
-                .method(Method.builder()
-                        .annotation(
-                                Annotation.of(new TypeReference("org.checkerframework.checker.nullness.qual.Nullable")))
-                        .returnType(new TypeReference("demo.Demo"))
-                        .name("findById")
-                        .parameter(Variable.builder()
-                                .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotNull")))
-                                .type(Types.LONG_OBJ)
-                                .name("id")
-                                .build())
-                        .build())
-                .build();
-
-        String code = codegen(c);
-
-        Assertions.assertEquals(j.toString(), code);
-    }
-
-    @Test
     public void classes() {
         StringJoiner j = new StringJoiner(System.lineSeparator());
         StringJoiner a = new StringJoiner(System.lineSeparator());
@@ -270,6 +108,126 @@ public class JavaCodegenTest {
         String code = codegen(c);
 
         Assertions.assertEquals(j.toString(), code);
+    }
+
+    private String codegen(Tree tree) {
+        return JavaCodegen.generateCode(tree);
+    }
+
+    @Test
+    public void compileUnit() {
+        StringJoiner j = new StringJoiner(System.lineSeparator());
+        StringJoiner a = new StringJoiner(System.lineSeparator());
+        j.add("package demo;");
+        j.add("");
+        j.add("import javax.validation.constraints.NotNull;");
+        j.add("");
+        j.add("import org.checkerframework.checker.nullness.qual.Nullable;");
+        j.add("import org.springframework.beans.factory.annotation.Autowired;");
+        j.add("import org.springframework.stereotype.Repository;");
+        j.add("");
+        j.add("@FunctionalInterface");
+        j.add("public interface DemoRepo extends BaseRepo<Demo> {");
+        j.add("");
+        j.add("    boolean insert(@NotNull Demo demo);");
+        j.add("");
+        j.add("    @Nullable");
+        j.add("    Demo findById(@NotNull Long id);");
+        j.add("");
+        j.add("}");
+        j.add("");
+        j.add("@Repository");
+        j.add("public static class DemoRepoImpl implements DemoRepo {");
+        j.add("");
+        j.add("    @Autowired");
+        j.add("    private DemoMapper mapper;");
+        j.add("");
+        j.add("    @Nullable");
+        j.add("    public Demo findById(@NotNull Long id) {");
+        a.add("        Demo demo = mapper.findById(id);");
+        a.add("        return demo;");
+        j.merge(a);
+        j.add("    }");
+        j.add("");
+        j.add("}");
+        j.add("");
+
+        CompileUnit u = new CompileUnit();
+        Class i = hyc.codegen.tree.Class.builder()
+                .pkg("demo")
+                .kind(Tree.Kind.INTERFACE)
+                .annotation(Annotation.of(new TypeReference("java.lang.FunctionalInterface")))
+                .modifiers(Modifier.PUBLIC)
+                .name("DemoRepo")
+                .extend(new ParameterizedType(new TypeReference("demo.BaseRepo"), new TypeReference("demo.Demo")))
+                .method(Method.builder()
+                        .returnType(Types.BOOLEAN)
+                        .name("insert")
+                        .parameter(Variable.builder()
+                                .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotNull")))
+                                .type(new TypeReference("demo.Demo"))
+                                .name("demo")
+                                .build())
+                        .build())
+                .method(Method.builder()
+                        .annotation(
+                                Annotation.of(new TypeReference("org.checkerframework.checker.nullness.qual.Nullable")))
+                        .returnType(new TypeReference("demo.Demo"))
+                        .name("findById")
+                        .parameter(Variable.builder()
+                                .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotNull")))
+                                .type(Types.LONG_OBJ)
+                                .name("id")
+                                .build())
+                        .build())
+                .build();
+        u.addClass(i);
+
+        Class c = Class.builder()
+                .pkg("demo")
+                .kind(Tree.Kind.CLASS)
+                .annotation(Annotation.of("org.springframework.stereotype.Repository"))
+                .modifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .name("DemoRepoImpl")
+                .implement(new TypeReference("demo.DemoRepo"))
+                .field(Variable.builder()
+                        .annotation(Annotation
+                                .of(new TypeReference("org.springframework.beans.factory.annotation.Autowired")))
+                        .modifiers(Modifier.PRIVATE)
+                        .type(new TypeReference("demo.DemoMapper"))
+                        .name("mapper")
+                        .build())
+                .method(Method.builder()
+                        .annotation(
+                                Annotation.of(new TypeReference("org.checkerframework.checker.nullness.qual.Nullable")))
+                        .modifiers(Modifier.PUBLIC)
+                        .returnType(new TypeReference("demo.Demo"))
+                        .name("findById")
+                        .parameter(Variable.builder()
+                                .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotNull")))
+                                .type(Types.LONG_OBJ)
+                                .name("id")
+                                .build())
+                        .body(a.toString())
+                        .build())
+                .build();
+        u.addClass(c);
+
+        String code = codegen(u);
+        Assertions.assertEquals(j.toString(), code);
+    }
+
+    @Test
+    public void constant() {
+        Variable v = Variable.builder()
+                .modifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                .type(Types.LONG)
+                .name("serialVersionUID")
+                .init(Literal.of(1L))
+                .build();
+
+        String code = codegen(v);
+        Assertions.assertEquals("private static final long serialVersionUID = 1L", code);
     }
 
     @Test
@@ -383,19 +341,50 @@ public class JavaCodegenTest {
     }
 
     @Test
-    public void compileUnit() {
+    public void field() {
         StringJoiner j = new StringJoiner(System.lineSeparator());
-        StringJoiner a = new StringJoiner(System.lineSeparator());
-        j.add("package demo;");
-        j.add("");
-        j.add("import javax.validation.constraints.NotNull;");
-        j.add("");
-        j.add("import org.checkerframework.checker.nullness.qual.Nullable;");
-        j.add("import org.springframework.beans.factory.annotation.Autowired;");
-        j.add("import org.springframework.stereotype.Repository;");
-        j.add("");
+        j.add("/**");
+        j.add(" * 编码列表");
+        j.add(" */");
+        j.add("@NotEmpty(message = \"编码列表不能为空\")");
+        j.add("private List<String> codes = new ArrayList<>()");
+
+        Variable v = Variable.builder()
+                .javadoc(DocComment.builder()
+                        .summary("编码列表")
+                        .build())
+                .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotEmpty"),
+                        "message = \"编码列表不能为空\""))
+                .modifiers(Modifier.PRIVATE)
+                .type(Types.listOf(Types.STRING))
+                .name("codes")
+                .init(SourceExpr.of("new ArrayList<>()", new TypeReference("java.util.ArrayList")))
+                .build();
+
+        String code = codegen(v);
+        Assertions.assertEquals(j.toString(), code);
+
+        List<Import> imports = v.getImports();
+        List<Import> expectedImports = Arrays.asList(
+                new Import(Types.LIST),
+                new Import(Types.STRING),
+                new Import("java.util.ArrayList"),
+                new Import("javax.validation.constraints.NotEmpty"));
+        Assertions.assertEquals(ImportManager.sort(expectedImports), ImportManager.sort(imports));
+    }
+
+    @Test
+    public void interfaces() {
+        StringJoiner j = new StringJoiner(System.lineSeparator());
+        j.add("/**");
+        j.add(" * Demo 数据仓库");
+        j.add(" *");
+        j.add(" * @author hyc");
+        j.add(" * @since 2025-12-18");
+        j.add(" * @version 1.0.0");
+        j.add(" */");
         j.add("@FunctionalInterface");
-        j.add("public interface DemoRepo extends BaseRepo<Demo> {");
+        j.add("interface DemoRepo extends BaseRepo<Demo> {");
         j.add("");
         j.add("    boolean insert(@NotNull Demo demo);");
         j.add("");
@@ -404,28 +393,16 @@ public class JavaCodegenTest {
         j.add("");
         j.add("}");
         j.add("");
-        j.add("@Repository");
-        j.add("public static class DemoRepoImpl implements DemoRepo {");
-        j.add("");
-        j.add("    @Autowired");
-        j.add("    private DemoMapper mapper;");
-        j.add("");
-        j.add("    @Nullable");
-        j.add("    public Demo findById(@NotNull Long id) {");
-        a.add("        Demo demo = mapper.findById(id);");
-        a.add("        return demo;");
-        j.merge(a);
-        j.add("    }");
-        j.add("");
-        j.add("}");
-        j.add("");
 
-        CompileUnit u = new CompileUnit();
-        Class i = hyc.codegen.tree.Class.builder()
-                .pkg("demo")
+        Class c = Class.builder()
+                .javadoc(DocComment.builder()
+                        .summary("Demo 数据仓库")
+                        .tag(new DocTagAuthor("hyc"))
+                        .tag(new DocTagSince("2025-12-18"))
+                        .tag(new DocTagVersion("1.0.0"))
+                        .build())
                 .kind(Tree.Kind.INTERFACE)
                 .annotation(Annotation.of(new TypeReference("java.lang.FunctionalInterface")))
-                .modifiers(Modifier.PUBLIC)
                 .name("DemoRepo")
                 .extend(new ParameterizedType(new TypeReference("demo.BaseRepo"), new TypeReference("demo.Demo")))
                 .method(Method.builder()
@@ -449,39 +426,62 @@ public class JavaCodegenTest {
                                 .build())
                         .build())
                 .build();
-        u.addClass(i);
 
-        Class c = Class.builder()
-                .pkg("demo")
-                .kind(Tree.Kind.CLASS)
-                .annotation(Annotation.of("org.springframework.stereotype.Repository"))
+        String code = codegen(c);
+
+        Assertions.assertEquals(j.toString(), code);
+    }
+
+    @Test
+    public void method() {
+        StringJoiner j = new StringJoiner(System.lineSeparator());
+        StringJoiner b = new StringJoiner(System.lineSeparator());
+        j.add("/**");
+        j.add(" * 根据编码获取对应的枚举值");
+        j.add(" *");
+        j.add(" * @param codes 编码列表");
+        j.add(" * @return 匹配的枚举值，匹配不到返回 null");
+        j.add(" */");
+        j.add("@Nullable");
+        j.add("public static List<TestEnum> getByCodes(@NotNull @NotEmpty(message = \"codes 不能为空\")"
+                + " List<Integer> codes) {");
+        b.add("    if (codes == null) {");
+        b.add("        return null;");
+        b.add("    }");
+        b.add("");
+        b.add("    for (Integer code : codes) {");
+        b.add("        if (Objects.equals(e.code, code)) {");
+        b.add("            return e;");
+        b.add("        }");
+        b.add("    }");
+        b.add("");
+        b.add("    return null;");
+        j.merge(b);
+        j.add("}");
+        j.add("");
+
+        Method m = Method.builder()
+                .javadoc(DocComment.builder()
+                        .summary("根据编码获取对应的枚举值")
+                        .tag(new DocTagParam("codes", "编码列表"))
+                        .tag(new DocTagReturn("匹配的枚举值，匹配不到返回 null"))
+                        .build())
+                .annotation(Annotation.of(new TypeReference("org.checkerframework.checker.nullness.qual.Nullable")))
                 .modifiers(Modifier.PUBLIC, Modifier.STATIC)
-                .name("DemoRepoImpl")
-                .implement(new TypeReference("demo.DemoRepo"))
-                .field(Variable.builder()
-                        .annotation(Annotation
-                                .of(new TypeReference("org.springframework.beans.factory.annotation.Autowired")))
-                        .modifiers(Modifier.PRIVATE)
-                        .type(new TypeReference("demo.DemoMapper"))
-                        .name("mapper")
+                .returnType(Types.listOf(new TypeReference("demo.TestEnum")))
+                .name("getByCodes")
+                .parameter(Variable.builder()
+                        .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotNull")))
+                        .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotEmpty"),
+                                "message = \"codes 不能为空\""))
+                        .type(Types.listOf(Types.INT_OBJ))
+                        .name("codes")
                         .build())
-                .method(Method.builder()
-                        .annotation(
-                                Annotation.of(new TypeReference("org.checkerframework.checker.nullness.qual.Nullable")))
-                        .modifiers(Modifier.PUBLIC)
-                        .returnType(new TypeReference("demo.Demo"))
-                        .name("findById")
-                        .parameter(Variable.builder()
-                                .annotation(Annotation.of(new TypeReference("javax.validation.constraints.NotNull")))
-                                .type(Types.LONG_OBJ)
-                                .name("id")
-                                .build())
-                        .body(a.toString())
-                        .build())
+                .body(b.toString())
                 .build();
-        u.addClass(c);
 
-        String code = codegen(u);
+        String code = codegen(m);
+
         Assertions.assertEquals(j.toString(), code);
     }
 

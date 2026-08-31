@@ -16,6 +16,15 @@ public final class DropColumnOp implements DdlOperation {
         this.columnName = columnName;
     }
 
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        Table table = schema.getTable(tableName);
+        if (table != null) {
+            table.removeColumn(columnName);
+            result.affect(tableName);
+        }
+    }
+
     /** 被删除的列名。 */
     public String getColumnName() {
         return columnName;
@@ -24,15 +33,6 @@ public final class DropColumnOp implements DdlOperation {
     @Override
     public String tableName() {
         return tableName;
-    }
-
-    @Override
-    public void apply(Schema schema, ApplyResult result) {
-        Table table = schema.getTable(tableName);
-        if (table != null) {
-            table.removeColumn(columnName);
-            result.affect(tableName);
-        }
     }
 
 }

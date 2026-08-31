@@ -28,13 +28,40 @@ class TypeMapperTest {
     }
 
     @Test
-    void pojoEnumColumnMapsToString() {
-        Column c = Column.builder()
-                .name("gender")
-                .sqlType("enum")
-                .enumValues(Arrays.asList("male", "female"))
-                .build();
-        assertEquals("java.lang.String", mapper.resolveType("user", c));
+    void customHandlerResolveTypeHook() {
+        DdlAnnotationHandler handler = new DdlAnnotationHandler() {
+
+            @Override
+            public String name() {
+                return "custom";
+            }
+
+            @Override
+            public void parse(Meta meta, @Nullable String value) {}
+
+            @Override
+            public String resolveType(Column column, String defaultType) {
+                return "com.example.Money";
+            }
+
+            @Override
+            public Set<MetaTarget> targets() {
+                return EnumSet.of(MetaTarget.COLUMN);
+            }
+
+        };
+        TypeMapper customMapper = new TypeMapper(Collections.singletonList(handler));
+        assertEquals("com.example.Money", customMapper.resolveType("user", column("amount")));
+    }
+
+    @Test
+    void datetimeMapsToLocalDateTime() {
+        assertEquals("java.time.LocalDateTime", mapper.sqlToJava(column("datetime")));
+    }
+
+    @Test
+    void decimalMapsToBigDecimal() {
+        assertEquals("java.math.BigDecimal", mapper.sqlToJava(column("decimal")));
     }
 
     @Test
@@ -46,6 +73,32 @@ class TypeMapperTest {
                 .enumValues(Arrays.asList("male", "female"))
                 .build();
         assertEquals("java.lang.String", mapper.resolveType("user", c));
+    }
+
+    @Test
+    void jdbcTypeMapping() {
+        assertEquals("VARCHAR", TypeMapper.sqlToJdbcType("varchar"));
+        assertEquals("BIGINT", TypeMapper.sqlToJdbcType("bigint"));
+        assertEquals("TINYINT", TypeMapper.sqlToJdbcType("tinyint"));
+        assertEquals("DECIMAL", TypeMapper.sqlToJdbcType("decimal"));
+        assertEquals("TIMESTAMP", TypeMapper.sqlToJdbcType("datetime"));
+        assertEquals("INTEGER", TypeMapper.sqlToJdbcType("int"));
+    }
+
+    @Test
+    void pojoEnumColumnMapsToString() {
+        Column c = Column.builder()
+                .name("gender")
+                .sqlType("enum")
+                .enumValues(Arrays.asList("male", "female"))
+                .build();
+        assertEquals("java.lang.String", mapper.resolveType("user", c));
+    }
+
+    @Test
+    void tinyintOneMapsToBoolean() {
+        Column c = Column.builder().name("valid").sqlType("tinyint").length(1).build();
+        assertEquals("java.lang.Boolean", mapper.sqlToJava(c));
     }
 
     @Test
@@ -61,67 +114,14 @@ class TypeMapperTest {
     }
 
     @Test
-    void decimalMapsToBigDecimal() {
-        assertEquals("java.math.BigDecimal", mapper.sqlToJava(column("decimal")));
-    }
-
-    @Test
-    void tinyintOneMapsToBoolean() {
-        Column c = Column.builder().name("valid").sqlType("tinyint").length(1).build();
-        assertEquals("java.lang.Boolean", mapper.sqlToJava(c));
+    void unknownTypeDefaultsToString() {
+        assertEquals("java.lang.String", mapper.sqlToJava(column("geometry")));
     }
 
     @Test
     void unsignedIntMapsToLong() {
         Column c = Column.builder().name("cnt").sqlType("int").unsigned(true).build();
         assertEquals("java.lang.Long", mapper.sqlToJava(c));
-    }
-
-    @Test
-    void datetimeMapsToLocalDateTime() {
-        assertEquals("java.time.LocalDateTime", mapper.sqlToJava(column("datetime")));
-    }
-
-    @Test
-    void unknownTypeDefaultsToString() {
-        assertEquals("java.lang.String", mapper.sqlToJava(column("geometry")));
-    }
-
-    @Test
-    void jdbcTypeMapping() {
-        assertEquals("VARCHAR", TypeMapper.sqlToJdbcType("varchar"));
-        assertEquals("BIGINT", TypeMapper.sqlToJdbcType("bigint"));
-        assertEquals("TINYINT", TypeMapper.sqlToJdbcType("tinyint"));
-        assertEquals("DECIMAL", TypeMapper.sqlToJdbcType("decimal"));
-        assertEquals("TIMESTAMP", TypeMapper.sqlToJdbcType("datetime"));
-        assertEquals("INTEGER", TypeMapper.sqlToJdbcType("int"));
-    }
-
-    @Test
-    void customHandlerResolveTypeHook() {
-        DdlAnnotationHandler handler = new DdlAnnotationHandler() {
-
-            @Override
-            public String name() {
-                return "custom";
-            }
-
-            @Override
-            public Set<MetaTarget> targets() {
-                return EnumSet.of(MetaTarget.COLUMN);
-            }
-
-            @Override
-            public void parse(Meta meta, @Nullable String value) {}
-
-            @Override
-            public String resolveType(Column column, String defaultType) {
-                return "com.example.Money";
-            }
-
-        };
-        TypeMapper customMapper = new TypeMapper(Collections.singletonList(handler));
-        assertEquals("com.example.Money", customMapper.resolveType("user", column("amount")));
     }
 
 }

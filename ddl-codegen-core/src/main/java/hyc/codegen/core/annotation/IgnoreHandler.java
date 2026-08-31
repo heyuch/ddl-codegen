@@ -24,13 +24,13 @@ public final class IgnoreHandler implements DdlAnnotationHandler {
     }
 
     @Override
-    public Set<MetaTarget> targets() {
-        return EnumSet.of(MetaTarget.COLUMN, MetaTarget.INDEX);
+    public void parse(Meta meta, @Nullable String value) {
+        meta.put(NAME, Boolean.TRUE);
     }
 
     @Override
-    public void parse(Meta meta, @Nullable String value) {
-        meta.put(NAME, Boolean.TRUE);
+    public Set<MetaTarget> targets() {
+        return EnumSet.of(MetaTarget.COLUMN, MetaTarget.INDEX);
     }
 
 }

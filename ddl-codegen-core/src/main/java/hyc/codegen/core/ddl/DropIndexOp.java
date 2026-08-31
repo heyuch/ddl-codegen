@@ -16,6 +16,15 @@ public final class DropIndexOp implements DdlOperation {
         this.indexName = indexName;
     }
 
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        Table table = schema.getTable(tableName);
+        if (table != null) {
+            table.removeIndex(indexName);
+            result.affect(tableName);
+        }
+    }
+
     /** 被删除的索引名。 */
     public String getIndexName() {
         return indexName;
@@ -24,15 +33,6 @@ public final class DropIndexOp implements DdlOperation {
     @Override
     public String tableName() {
         return tableName;
-    }
-
-    @Override
-    public void apply(Schema schema, ApplyResult result) {
-        Table table = schema.getTable(tableName);
-        if (table != null) {
-            table.removeIndex(indexName);
-            result.affect(tableName);
-        }
     }
 
 }

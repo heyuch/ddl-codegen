@@ -12,8 +12,8 @@ public final class DocReference implements ReferenceTree {
     }
 
     @Override
-    public String getSignature() {
-        return signature;
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitReference(this, data);
     }
 
     @Override
@@ -22,8 +22,8 @@ public final class DocReference implements ReferenceTree {
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitReference(this, data);
+    public String getSignature() {
+        return signature;
     }
 
 }

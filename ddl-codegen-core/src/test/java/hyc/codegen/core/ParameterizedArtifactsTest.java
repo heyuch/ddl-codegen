@@ -56,15 +56,11 @@ class ParameterizedArtifactsTest {
 
     private @Nullable CodeGenerator generator;
 
-    /**
-     * 注入目录（@TempDir 注入，标注 @Nullable，使用点经此显式校验）。
-     */
-    private Path tempDir() {
-        Path dir = temp;
-        if (dir == null) {
-            throw new AssertionError("JUnit 未注入 @TempDir");
-        }
-        return dir;
+    private static ArtifactConfig artifact(String name, String generator) {
+        ArtifactConfig a = new ArtifactConfig(name);
+        a.setGenerator(generator);
+        a.setModule("");
+        return a;
     }
 
     /** setUp 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
@@ -75,60 +71,8 @@ class ParameterizedArtifactsTest {
         return config;
     }
 
-    /** setUp 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
-    private CodeGenerator generator() {
-        if (generator == null) {
-            throw new AssertionError("setUp 未初始化 generator");
-        }
-        return generator;
-    }
-
-    private void setUp(ArtifactConfig... artifacts) {
-        config = new DdlConfig();
-        config().setRoot(tempDir());
-        for (ArtifactConfig artifact : artifacts) {
-            config().addArtifact(artifact);
-        }
-        List<Generator> generators = Arrays.asList(
-                new PojoGenerator(),
-                new EnumGenerator(),
-                new MapperGenerator(),
-                new MapperXmlGenerator(),
-                new RepositoryGenerator(),
-                new MybatisRepositoryImplGenerator(),
-                new ConverterGenerator());
-        generator = new CodeGenerator(generators);
-    }
-
-    private void generate() {
-        DdlParser parser = new DruidDdlParser();
-        Schema schema = new Schema();
-        ApplyResult result = new StatementApplier().apply(schema, parser.parse(DDL));
-        ChangeReport report = generator().generate(config(), schema, result, Collections.emptyList());
-        assertTrue(report.hasChanges(), "应产生变更: " + report.summary());
-    }
-
-    private String read(String relative) throws Exception {
-        return new String(Files.readAllBytes(tempDir().resolve(relative)), StandardCharsets.UTF_8);
-    }
-
-    private ArtifactConfig enumArtifact() {
-        ArtifactConfig a = new ArtifactConfig("enum");
-        a.setGenerator("enum");
-        a.setModule("");
-        a.setPkg("com.demo.enums");
-        return a;
-    }
-
-    private static ArtifactConfig artifact(String name, String generator) {
-        ArtifactConfig a = new ArtifactConfig(name);
-        a.setGenerator(generator);
-        a.setModule("");
-        return a;
-    }
-
     @Test
-    void mapperTargetCanBeEntityWithoutPo() throws Exception {
+    void converterDirectWithoutPoUsesEntity() throws Exception {
         ArtifactConfig entity = artifact("entity", "pojo");
         entity.setPkg("com.demo.entity");
         entity.putOption("enums", "true");
@@ -136,13 +80,23 @@ class ParameterizedArtifactsTest {
         mapper.setPkg("com.demo.mapper");
         mapper.setSuffix("Mapper");
         mapper.setTarget("entity");
+        ArtifactConfig repository = artifact("repository", "repository");
+        repository.setPkg("com.demo.repository");
+        repository.setSuffix("Repository");
+        repository.setTarget("entity");
+        ArtifactConfig impl = artifact("repositoryImpl", "mybatisRepositoryImpl");
+        impl.setPkg("com.demo.repository.impl");
+        impl.setSuffix("RepositoryImpl");
+        impl.setTarget("entity");
+        impl.putOption("mapper", "mapper");
 
-        setUp(entity, enumArtifact(), mapper);
+        setUp(entity, enumArtifact(), mapper, repository, impl);
         generate();
 
-        String mapperCode = read("com/demo/mapper/UserMapper.java");
-        assertTrue(mapperCode.contains("int insert(User user)"), mapperCode);
-        assertTrue(mapperCode.contains("User findById"), mapperCode);
+        // mapper.target == impl.target → 直连，无 converter
+        String implCode = read("com/demo/repository/impl/UserRepositoryImpl.java");
+        assertFalse(implCode.contains("Converter"), implCode);
+        assertTrue(implCode.contains("return userMapper.findById(id);"), implCode);
     }
 
     @Test
@@ -161,6 +115,48 @@ class ParameterizedArtifactsTest {
         assertTrue(entityCode.contains("private Gender gender"), entityCode);
         String dtoCode = read("com/demo/dto/UserDto.java");
         assertTrue(dtoCode.contains("private String gender"), dtoCode);
+    }
+
+    private ArtifactConfig enumArtifact() {
+        ArtifactConfig a = new ArtifactConfig("enum");
+        a.setGenerator("enum");
+        a.setModule("");
+        a.setPkg("com.demo.enums");
+        return a;
+    }
+
+    private void generate() {
+        DdlParser parser = new DruidDdlParser();
+        Schema schema = new Schema();
+        ApplyResult result = new StatementApplier().apply(schema, parser.parse(DDL));
+        ChangeReport report = generator().generate(config(), schema, result, Collections.emptyList());
+        assertTrue(report.hasChanges(), "应产生变更: " + report.summary());
+    }
+
+    /** setUp 初始化字段：语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    private CodeGenerator generator() {
+        if (generator == null) {
+            throw new AssertionError("setUp 未初始化 generator");
+        }
+        return generator;
+    }
+
+    @Test
+    void mapperTargetCanBeEntityWithoutPo() throws Exception {
+        ArtifactConfig entity = artifact("entity", "pojo");
+        entity.setPkg("com.demo.entity");
+        entity.putOption("enums", "true");
+        ArtifactConfig mapper = artifact("mapper", "mybatisMapper");
+        mapper.setPkg("com.demo.mapper");
+        mapper.setSuffix("Mapper");
+        mapper.setTarget("entity");
+
+        setUp(entity, enumArtifact(), mapper);
+        generate();
+
+        String mapperCode = read("com/demo/mapper/UserMapper.java");
+        assertTrue(mapperCode.contains("int insert(User user)"), mapperCode);
+        assertTrue(mapperCode.contains("User findById"), mapperCode);
     }
 
     @Test
@@ -195,6 +191,10 @@ class ParameterizedArtifactsTest {
         assertTrue(converter.contains("public UserPo toUserPo(User target)"), converter);
         String dtoConverterCode = read("com/demo/converter/UserDtoConverter.java");
         assertTrue(dtoConverterCode.contains("public UserDto toUserDto(User source)"), dtoConverterCode);
+    }
+
+    private String read(String relative) throws Exception {
+        return new String(Files.readAllBytes(tempDir().resolve(relative)), StandardCharsets.UTF_8);
     }
 
     @Test
@@ -235,32 +235,32 @@ class ParameterizedArtifactsTest {
         assertTrue(message.contains("mapper"), message);
     }
 
-    @Test
-    void converterDirectWithoutPoUsesEntity() throws Exception {
-        ArtifactConfig entity = artifact("entity", "pojo");
-        entity.setPkg("com.demo.entity");
-        entity.putOption("enums", "true");
-        ArtifactConfig mapper = artifact("mapper", "mybatisMapper");
-        mapper.setPkg("com.demo.mapper");
-        mapper.setSuffix("Mapper");
-        mapper.setTarget("entity");
-        ArtifactConfig repository = artifact("repository", "repository");
-        repository.setPkg("com.demo.repository");
-        repository.setSuffix("Repository");
-        repository.setTarget("entity");
-        ArtifactConfig impl = artifact("repositoryImpl", "mybatisRepositoryImpl");
-        impl.setPkg("com.demo.repository.impl");
-        impl.setSuffix("RepositoryImpl");
-        impl.setTarget("entity");
-        impl.putOption("mapper", "mapper");
+    private void setUp(ArtifactConfig... artifacts) {
+        config = new DdlConfig();
+        config().setRoot(tempDir());
+        for (ArtifactConfig artifact : artifacts) {
+            config().addArtifact(artifact);
+        }
+        List<Generator> generators = Arrays.asList(
+                new PojoGenerator(),
+                new EnumGenerator(),
+                new MapperGenerator(),
+                new MapperXmlGenerator(),
+                new RepositoryGenerator(),
+                new MybatisRepositoryImplGenerator(),
+                new ConverterGenerator());
+        generator = new CodeGenerator(generators);
+    }
 
-        setUp(entity, enumArtifact(), mapper, repository, impl);
-        generate();
-
-        // mapper.target == impl.target → 直连，无 converter
-        String implCode = read("com/demo/repository/impl/UserRepositoryImpl.java");
-        assertFalse(implCode.contains("Converter"), implCode);
-        assertTrue(implCode.contains("return userMapper.findById(id);"), implCode);
+    /**
+     * 注入目录（@TempDir 注入，标注 @Nullable，使用点经此显式校验）。
+     */
+    private Path tempDir() {
+        Path dir = temp;
+        if (dir == null) {
+            throw new AssertionError("JUnit 未注入 @TempDir");
+        }
+        return dir;
     }
 
     @Test

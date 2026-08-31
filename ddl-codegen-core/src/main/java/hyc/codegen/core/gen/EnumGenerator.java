@@ -26,35 +26,50 @@ public final class EnumGenerator extends AbstractJavaGenerator {
      */
     public static final String NAME = "enum";
 
-    @Override
-    public String kind() {
-        return NAME;
-    }
+    /**
+     * 枚举常量名：非标识符字符转下划线、大写；空串 → EMPTY；数字开头加前缀。
+     */
+    static String constantName(String value) {
+        if (value == null || value.isEmpty()) {
+            return "EMPTY";
+        }
 
-    @Override
-    protected boolean shouldGenerate(TableContext ctx) {
-        for (Column column : ctx.columns()) {
-            if (!column.getEnumValues().isEmpty()) {
-                return true;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == '_') {
+                sb.append(c);
+            } else {
+                sb.append('_');
             }
         }
-        return false;
+
+        String name = sb.toString().toUpperCase(Locale.ROOT);
+        if (Character.isDigit(name.charAt(0))) {
+            name = "_" + name;
+        }
+
+        return name;
     }
 
-    @Override
-    public void generate(TableContext ctx, GenerationContext gctx) {
-        if (!shouldGenerate(ctx)) {
-            deleteIfExists(ctx, gctx);
-            return;
-        }
+    private static String escape(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
 
-        for (Column column : ctx.columns()) {
-            if (column.getEnumValues().isEmpty()) {
-                continue;
-            }
-            String enumName = ctx.enumClassName(column);
-            generateClass(ctx, gctx, enumName, builder -> buildEnum(builder, ctx, column, enumName));
+    private static String fromValueBody(List<String> values, String enumName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("if (value == null) {\n");
+        sb.append("    return null;\n");
+        sb.append("}\n");
+        sb.append("switch (value) {\n");
+        for (String value : values) {
+            sb.append("    case \"").append(escape(value)).append("\":\n");
+            sb.append("        return ").append(constantName(value)).append(";\n");
         }
+        sb.append("    default:\n");
+        sb.append("        throw new IllegalArgumentException(\"未知枚举值: \" + value);\n");
+        sb.append("}");
+        return sb.toString();
     }
 
     @Override
@@ -108,50 +123,35 @@ public final class EnumGenerator extends AbstractJavaGenerator {
                 .build());
     }
 
-    /**
-     * 枚举常量名：非标识符字符转下划线、大写；空串 → EMPTY；数字开头加前缀。
-     */
-    static String constantName(String value) {
-        if (value == null || value.isEmpty()) {
-            return "EMPTY";
+    @Override
+    public void generate(TableContext ctx, GenerationContext gctx) {
+        if (!shouldGenerate(ctx)) {
+            deleteIfExists(ctx, gctx);
+            return;
         }
 
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (Character.isLetterOrDigit(c) || c == '_') {
-                sb.append(c);
-            } else {
-                sb.append('_');
+        for (Column column : ctx.columns()) {
+            if (column.getEnumValues().isEmpty()) {
+                continue;
+            }
+            String enumName = ctx.enumClassName(column);
+            generateClass(ctx, gctx, enumName, builder -> buildEnum(builder, ctx, column, enumName));
+        }
+    }
+
+    @Override
+    public String kind() {
+        return NAME;
+    }
+
+    @Override
+    protected boolean shouldGenerate(TableContext ctx) {
+        for (Column column : ctx.columns()) {
+            if (!column.getEnumValues().isEmpty()) {
+                return true;
             }
         }
-
-        String name = sb.toString().toUpperCase(Locale.ROOT);
-        if (Character.isDigit(name.charAt(0))) {
-            name = "_" + name;
-        }
-
-        return name;
-    }
-
-    private static String escape(String value) {
-        return value.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
-
-    private static String fromValueBody(List<String> values, String enumName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("if (value == null) {\n");
-        sb.append("    return null;\n");
-        sb.append("}\n");
-        sb.append("switch (value) {\n");
-        for (String value : values) {
-            sb.append("    case \"").append(escape(value)).append("\":\n");
-            sb.append("        return ").append(constantName(value)).append(";\n");
-        }
-        sb.append("    default:\n");
-        sb.append("        throw new IllegalArgumentException(\"未知枚举值: \" + value);\n");
-        sb.append("}");
-        return sb.toString();
+        return false;
     }
 
 }

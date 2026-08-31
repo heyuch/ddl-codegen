@@ -37,6 +37,11 @@ public final class JavaParser {
         return parseFileObjects(fileObjects);
     }
 
+    public List<CompileUnit> parseCode(String code) throws IOException {
+        SourceJavaFileObject object = new SourceJavaFileObject("__Mock", code);
+        return parseFileObjects(Arrays.asList(object));
+    }
+
     private List<CompileUnit> parseFileObjects(Iterable<? extends JavaFileObject> objects) throws IOException {
         JavacTask task = (JavacTask)compiler.getTask(null, fileManager, null, null, null, objects);
 
@@ -50,11 +55,6 @@ public final class JavaParser {
         }
 
         return result;
-    }
-
-    public List<CompileUnit> parseCode(String code) throws IOException {
-        SourceJavaFileObject object = new SourceJavaFileObject("__Mock", code);
-        return parseFileObjects(Arrays.asList(object));
     }
 
 }

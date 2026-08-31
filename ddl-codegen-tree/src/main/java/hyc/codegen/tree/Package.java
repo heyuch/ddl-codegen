@@ -30,6 +30,26 @@ public final class Package implements PackageTree {
         return new Package(path);
     }
 
+    @Override
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitPackage(this, data);
+    }
+
+    @Override
+    public List<? extends AnnotationTree> getAnnotations() {
+        return new ArrayList<>(annotations);
+    }
+
+    @Override
+    public Kind getKind() {
+        return Kind.PACKAGE;
+    }
+
+    @Override
+    public ExpressionTree getPackageName() {
+        return new SourceExpr(path);
+    }
+
     /**
      * 返回包路径。
      */
@@ -39,26 +59,6 @@ public final class Package implements PackageTree {
 
     public Package subPackage(String path) {
         return new Package(this.path + "." + path);
-    }
-
-    @Override
-    public List<? extends AnnotationTree> getAnnotations() {
-        return new ArrayList<>(annotations);
-    }
-
-    @Override
-    public ExpressionTree getPackageName() {
-        return new SourceExpr(path);
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.PACKAGE;
-    }
-
-    @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitPackage(this, data);
     }
 
 }

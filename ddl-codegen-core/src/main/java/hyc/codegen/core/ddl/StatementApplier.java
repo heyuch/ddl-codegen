@@ -16,33 +16,6 @@ import hyc.codegen.core.model.Table;
 public final class StatementApplier {
 
     /**
-     * 应用一批操作。
-     *
-     * @param schema     目标模式（就地修改）
-     * @param operations 按语句顺序的操作列表
-     * 
-     * @return 应用结果（受影响表、改名/删除记录）
-     */
-    public ApplyResult apply(Schema schema, List<DdlOperation> operations) {
-        ApplyResult result = applyOps(schema, operations);
-        pruneIgnored(schema);
-        return result;
-    }
-
-    private ApplyResult applyOps(Schema schema, List<DdlOperation> operations) {
-        ApplyResult result = new ApplyResult();
-        for (DdlOperation operation : operations) {
-            applyOne(schema, operation, result);
-        }
-        return result;
-    }
-
-    private void applyOne(Schema schema, DdlOperation operation, ApplyResult result) {
-        // 多态分发：每种操作实现自己的 apply（见 DdlOperation#apply），此处无需理解具体类型
-        operation.apply(schema, result);
-    }
-
-    /**
      * 模型级语义：{@code @ignore} 注解的列/索引在解析应用后从模型移除
      * （一处解决所有产物含 XML；自定义生成器也不再见到被忽略的成员）。
      */
@@ -59,6 +32,33 @@ public final class StatementApplier {
                 }
             }
         }
+    }
+
+    /**
+     * 应用一批操作。
+     *
+     * @param schema     目标模式（就地修改）
+     * @param operations 按语句顺序的操作列表
+     * 
+     * @return 应用结果（受影响表、改名/删除记录）
+     */
+    public ApplyResult apply(Schema schema, List<DdlOperation> operations) {
+        ApplyResult result = applyOps(schema, operations);
+        pruneIgnored(schema);
+        return result;
+    }
+
+    private void applyOne(Schema schema, DdlOperation operation, ApplyResult result) {
+        // 多态分发：每种操作实现自己的 apply（见 DdlOperation#apply），此处无需理解具体类型
+        operation.apply(schema, result);
+    }
+
+    private ApplyResult applyOps(Schema schema, List<DdlOperation> operations) {
+        ApplyResult result = new ApplyResult();
+        for (DdlOperation operation : operations) {
+            applyOne(schema, operation, result);
+        }
+        return result;
     }
 
 }

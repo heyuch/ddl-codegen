@@ -42,13 +42,8 @@ public final class TypeParameter implements TypeParameterTree {
     }
 
     @Override
-    public Name getName() {
-        return name;
-    }
-
-    @Override
-    public List<? extends Tree> getBounds() {
-        return new ArrayList<>(bounds);
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitTypeParameter(this, data);
     }
 
     @Override
@@ -57,18 +52,8 @@ public final class TypeParameter implements TypeParameterTree {
     }
 
     @Override
-    public Kind getKind() {
-        return Kind.TYPE_PARAMETER;
-    }
-
-    @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitTypeParameter(this, data);
-    }
-
-    @Override
-    public String toString() {
-        return name.toString();
+    public List<? extends Tree> getBounds() {
+        return new ArrayList<>(bounds);
     }
 
     public List<Import> getImports() {
@@ -83,6 +68,21 @@ public final class TypeParameter implements TypeParameterTree {
         }
 
         return imports;
+    }
+
+    @Override
+    public Kind getKind() {
+        return Kind.TYPE_PARAMETER;
+    }
+
+    @Override
+    public Name getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return name.toString();
     }
 
 }

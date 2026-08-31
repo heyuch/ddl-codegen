@@ -18,6 +18,16 @@ public final class RenameIndexOp implements DdlOperation {
         this.to = to;
     }
 
+    @Override
+    public void apply(Schema schema, ApplyResult result) {
+        Table table = schema.getTable(tableName);
+        if (table != null) {
+            table.renameIndex(from, to);
+            result.affect(tableName);
+            result.indexRenamed(tableName, from, to);
+        }
+    }
+
     /** 旧索引名。 */
     public String getFrom() {
         return from;
@@ -31,16 +41,6 @@ public final class RenameIndexOp implements DdlOperation {
     @Override
     public String tableName() {
         return tableName;
-    }
-
-    @Override
-    public void apply(Schema schema, ApplyResult result) {
-        Table table = schema.getTable(tableName);
-        if (table != null) {
-            table.renameIndex(from, to);
-            result.affect(tableName);
-            result.indexRenamed(tableName, from, to);
-        }
     }
 
 }

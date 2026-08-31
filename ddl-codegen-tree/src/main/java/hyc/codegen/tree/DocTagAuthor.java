@@ -17,6 +17,16 @@ public final class DocTagAuthor implements AuthorTree {
     }
 
     @Override
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitAuthor(this, data);
+    }
+
+    @Override
+    public Kind getKind() {
+        return Kind.AUTHOR;
+    }
+
+    @Override
     public List<? extends DocTree> getName() {
         if (author == null) {
             return new ArrayList<>();
@@ -28,16 +38,6 @@ public final class DocTagAuthor implements AuthorTree {
     @Override
     public String getTagName() {
         return getKind().tagName;
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.AUTHOR;
-    }
-
-    @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitAuthor(this, data);
     }
 
 }

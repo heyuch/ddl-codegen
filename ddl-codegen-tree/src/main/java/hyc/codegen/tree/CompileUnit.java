@@ -28,29 +28,22 @@ public final class CompileUnit implements CompilationUnitTree {
     private List<ClassTree> classes = new ArrayList<>();
 
     @Override
-    public List<? extends AnnotationTree> getPackageAnnotations() {
-        return new ArrayList<>(pkgAnnotations);
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitCompilationUnit(this, data);
     }
 
-    @Override
-    @Nullable
-    // javac tree API 语义：无 package 声明的编译单元 getPackageName 返回 null
-    @SuppressWarnings("override.return")
-    public ExpressionTree getPackageName() {
-        PackageTree p = pkg;
-        return p == null ? null : p.getPackageName();
-    }
+    public void addClass(Class c) {
+        if (pkg == null) {
+            pkg = c.getPkg();
+        }
 
-    @Override
-    @Nullable
-    // javac tree API 语义：无 package 声明的编译单元 getPackage 返回 null
-    @SuppressWarnings("override.return")
-    public PackageTree getPackage() {
-        return pkg;
-    }
+        Class exist = getClass(c.getSimpleName());
+        if (exist != null) {
+            classes.remove(exist);
+        }
 
-    public void setPackage(PackageTree pkg) {
-        this.pkg = pkg;
+        classes.add(c);
+        imports.addAll(c.getImports());
     }
 
     /**
@@ -58,16 +51,6 @@ public final class CompileUnit implements CompilationUnitTree {
      */
     public void addImport(ImportTree imp) {
         this.imports.add(imp);
-    }
-
-    @Override
-    public List<? extends ImportTree> getImports() {
-        return new ArrayList<>(imports);
-    }
-
-    @Override
-    public List<? extends Tree> getTypeDecls() {
-        return new ArrayList<>(classes);
     }
 
     public @Nullable Class getClass(CharSequence name) {
@@ -91,11 +74,13 @@ public final class CompileUnit implements CompilationUnitTree {
     }
 
     @Override
-    @Nullable
-    // javac tree API 语义：本库不追踪源码位置（生成的 AST 无源文件/行号）
-    @SuppressWarnings("override.return")
-    public JavaFileObject getSourceFile() {
-        return null;
+    public List<? extends ImportTree> getImports() {
+        return new ArrayList<>(imports);
+    }
+
+    @Override
+    public Kind getKind() {
+        return Kind.COMPILATION_UNIT;
     }
 
     @Override
@@ -107,27 +92,42 @@ public final class CompileUnit implements CompilationUnitTree {
     }
 
     @Override
-    public Kind getKind() {
-        return Kind.COMPILATION_UNIT;
+    @Nullable
+    // javac tree API 语义：无 package 声明的编译单元 getPackage 返回 null
+    @SuppressWarnings("override.return")
+    public PackageTree getPackage() {
+        return pkg;
     }
 
     @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitCompilationUnit(this, data);
+    public List<? extends AnnotationTree> getPackageAnnotations() {
+        return new ArrayList<>(pkgAnnotations);
     }
 
-    public void addClass(Class c) {
-        if (pkg == null) {
-            pkg = c.getPkg();
-        }
+    @Override
+    @Nullable
+    // javac tree API 语义：无 package 声明的编译单元 getPackageName 返回 null
+    @SuppressWarnings("override.return")
+    public ExpressionTree getPackageName() {
+        PackageTree p = pkg;
+        return p == null ? null : p.getPackageName();
+    }
 
-        Class exist = getClass(c.getSimpleName());
-        if (exist != null) {
-            classes.remove(exist);
-        }
+    @Override
+    @Nullable
+    // javac tree API 语义：本库不追踪源码位置（生成的 AST 无源文件/行号）
+    @SuppressWarnings("override.return")
+    public JavaFileObject getSourceFile() {
+        return null;
+    }
 
-        classes.add(c);
-        imports.addAll(c.getImports());
+    @Override
+    public List<? extends Tree> getTypeDecls() {
+        return new ArrayList<>(classes);
+    }
+
+    public void setPackage(PackageTree pkg) {
+        this.pkg = pkg;
     }
 
 }

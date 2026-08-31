@@ -46,164 +46,13 @@ public final class Class implements ClassTree {
 
     private List<ClassTree> innerClasses = new ArrayList<>();
 
-    /**
-     * 返回类 javadoc 注释。
-     */
-    public @Nullable DocComment getJavadoc() {
-        return javadoc;
-    }
-
-    /**
-     * 设置类 javadoc 注释。
-     */
-    public void setJavadoc(@Nullable DocComment javadoc) {
-        this.javadoc = javadoc;
-    }
-
-    /**
-     * 返回所属包。
-     */
-    public @Nullable Package getPkg() {
-        return pkg;
-    }
-
-    /**
-     * 设置所属包。
-     */
-    public void setPkg(@Nullable Package pkg) {
-        this.pkg = pkg;
-    }
-
-    /**
-     * 设置修饰符。
-     */
-    public void setModifiers(ModifiersTree modifiers) {
-        this.modifiers = modifiers;
-    }
-
-    /**
-     * 设置类类型（CLASS/ENUM/INTERFACE）。
-     */
-    public void setKind(Kind kind) {
-        this.kind = kind;
-    }
-
-    /**
-     * 设置类名。
-     */
-    public void setName(Name name) {
-        this.name = name;
-    }
-
-    /**
-     * 设置类型参数。
-     */
-    public void setTypeParameters(List<? extends TypeParameterTree> typeParameters) {
-        this.typeParameters = new ArrayList<>(typeParameters);
-    }
-
-    /**
-     * 设置父类。
-     */
-    public void setExtendsClause(@Nullable Tree extend) {
-        this.extend = extend;
-    }
-
-    /**
-     * 添加实现接口。
-     */
-    public void addImplements(Tree impl) {
-        this.impls.add(impl);
-    }
-
-    @Override
-    public ModifiersTree getModifiers() {
-        if (modifiers == null) {
-            throw new IllegalStateException("modifiers 未初始化（构建器/转换器未设置）");
-        }
-        return modifiers;
-    }
-
-    @Override
-    public Name getSimpleName() {
-        if (name == null) {
-            throw new IllegalStateException("name 未初始化（构建器/转换器未设置）");
-        }
-        return name;
-    }
-
-    @Override
-    public List<? extends TypeParameterTree> getTypeParameters() {
-        return new ArrayList<>(typeParameters);
-    }
-
-    @Override
-    @Nullable
-    // javac tree API 语义：无继承子句时 getExtendsClause 返回 null
-    @SuppressWarnings("override.return")
-    public Tree getExtendsClause() {
-        return extend;
-    }
-
-    @Override
-    public List<? extends Tree> getImplementsClause() {
-        return new ArrayList<>(impls);
-    }
-
-    @Override
-    public List<? extends Tree> getMembers() {
-        List<Tree> members = new ArrayList<>();
-
-        members.addAll(fields);
-        members.addAll(methods);
-        members.addAll(innerClasses);
-
-        return members;
-    }
-
-    /** 字段列表（防御性拷贝；存储元素均为 {@link Variable} 模型实例）。 */
-    public List<Variable> getFields() {
-        List<Variable> result = new ArrayList<>();
-        for (VariableTree field : fields) {
-            result.add((Variable)field);
-        }
-        return result;
-    }
-
-    /** 方法列表（防御性拷贝；存储元素均为 {@link Method} 模型实例）。 */
-    public List<Method> getMethods() {
-        List<Method> result = new ArrayList<>();
-        for (MethodTree method : methods) {
-            result.add((Method)method);
-        }
-        return result;
-    }
-
-    public void addMember(Tree member) {
-        if (member instanceof VariableTree) {
-            fields.add((VariableTree)member);
-        } else if (member instanceof MethodTree) {
-            methods.add((MethodTree)member);
-        } else if (member instanceof ClassTree) {
-            innerClasses.add((ClassTree)member);
-        }
-    }
-
-    @Override
-    public Kind getKind() {
-        if (kind == null) {
-            throw new IllegalStateException("kind 未初始化（构建器/转换器未设置）");
-        }
-        return kind;
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
     public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
         return visitor.visitClass(this, data);
-    }
-
-    public List<Import> getImports() {
-        return ImportCollector.collect(this);
     }
 
     public void addAnnotation(AnnotationTree a) {
@@ -233,11 +82,6 @@ public final class Class implements ClassTree {
         fields.add(field);
     }
 
-    /** 移除指定字段（按实例相等）；存在返回 true。 */
-    public boolean removeField(VariableTree field) {
-        return fields.remove(field);
-    }
-
     public void addGetter(VariableTree prop, @Nullable Consumer<Method> fn) {
         String propName = String.valueOf(prop.getName());
         Method getter = Method.builder()
@@ -252,6 +96,30 @@ public final class Class implements ClassTree {
         }
 
         addMethod(getter);
+    }
+
+    /**
+     * 添加实现接口。
+     */
+    public void addImplements(Tree impl) {
+        this.impls.add(impl);
+    }
+
+    public void addMember(Tree member) {
+        if (member instanceof VariableTree) {
+            fields.add((VariableTree)member);
+        } else if (member instanceof MethodTree) {
+            methods.add((MethodTree)member);
+        } else if (member instanceof ClassTree) {
+            innerClasses.add((ClassTree)member);
+        }
+    }
+
+    public void addMethod(MethodTree method) {
+        if (method == null) {
+            return;
+        }
+        this.methods.add(method);
     }
 
     public void addSetter(VariableTree prop, @Nullable Consumer<Method> fn) {
@@ -274,11 +142,98 @@ public final class Class implements ClassTree {
         addMethod(setter);
     }
 
-    public void addMethod(MethodTree method) {
-        if (method == null) {
-            return;
+    @Override
+    @Nullable
+    // javac tree API 语义：无继承子句时 getExtendsClause 返回 null
+    @SuppressWarnings("override.return")
+    public Tree getExtendsClause() {
+        return extend;
+    }
+
+    /** 字段列表（防御性拷贝；存储元素均为 {@link Variable} 模型实例）。 */
+    public List<Variable> getFields() {
+        List<Variable> result = new ArrayList<>();
+        for (VariableTree field : fields) {
+            result.add((Variable)field);
         }
-        this.methods.add(method);
+        return result;
+    }
+
+    @Override
+    public List<? extends Tree> getImplementsClause() {
+        return new ArrayList<>(impls);
+    }
+
+    public List<Import> getImports() {
+        return ImportCollector.collect(this);
+    }
+
+    /**
+     * 返回类 javadoc 注释。
+     */
+    public @Nullable DocComment getJavadoc() {
+        return javadoc;
+    }
+
+    @Override
+    public Kind getKind() {
+        if (kind == null) {
+            throw new IllegalStateException("kind 未初始化（构建器/转换器未设置）");
+        }
+        return kind;
+    }
+
+    @Override
+    public List<? extends Tree> getMembers() {
+        List<Tree> members = new ArrayList<>();
+
+        members.addAll(fields);
+        members.addAll(methods);
+        members.addAll(innerClasses);
+
+        return members;
+    }
+
+    /** 方法列表（防御性拷贝；存储元素均为 {@link Method} 模型实例）。 */
+    public List<Method> getMethods() {
+        List<Method> result = new ArrayList<>();
+        for (MethodTree method : methods) {
+            result.add((Method)method);
+        }
+        return result;
+    }
+
+    @Override
+    public ModifiersTree getModifiers() {
+        if (modifiers == null) {
+            throw new IllegalStateException("modifiers 未初始化（构建器/转换器未设置）");
+        }
+        return modifiers;
+    }
+
+    /**
+     * 返回所属包。
+     */
+    public @Nullable Package getPkg() {
+        return pkg;
+    }
+
+    @Override
+    public Name getSimpleName() {
+        if (name == null) {
+            throw new IllegalStateException("name 未初始化（构建器/转换器未设置）");
+        }
+        return name;
+    }
+
+    @Override
+    public List<? extends TypeParameterTree> getTypeParameters() {
+        return new ArrayList<>(typeParameters);
+    }
+
+    /** 移除指定字段（按实例相等）；存在返回 true。 */
+    public boolean removeField(VariableTree field) {
+        return fields.remove(field);
     }
 
     /** 移除指定方法（按实例相等）；存在返回 true。 */
@@ -286,8 +241,53 @@ public final class Class implements ClassTree {
         return methods.remove(method);
     }
 
-    public static Builder builder() {
-        return new Builder();
+    /**
+     * 设置父类。
+     */
+    public void setExtendsClause(@Nullable Tree extend) {
+        this.extend = extend;
+    }
+
+    /**
+     * 设置类 javadoc 注释。
+     */
+    public void setJavadoc(@Nullable DocComment javadoc) {
+        this.javadoc = javadoc;
+    }
+
+    /**
+     * 设置类类型（CLASS/ENUM/INTERFACE）。
+     */
+    public void setKind(Kind kind) {
+        this.kind = kind;
+    }
+
+    /**
+     * 设置修饰符。
+     */
+    public void setModifiers(ModifiersTree modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    /**
+     * 设置类名。
+     */
+    public void setName(Name name) {
+        this.name = name;
+    }
+
+    /**
+     * 设置所属包。
+     */
+    public void setPkg(@Nullable Package pkg) {
+        this.pkg = pkg;
+    }
+
+    /**
+     * 设置类型参数。
+     */
+    public void setTypeParameters(List<? extends TypeParameterTree> typeParameters) {
+        this.typeParameters = new ArrayList<>(typeParameters);
     }
 
     public static final class Builder {
@@ -300,29 +300,6 @@ public final class Class implements ClassTree {
             c.modifiers = new Modifiers();
         }
 
-        public Builder pkg(String path) {
-            if (path == null) {
-                return this;
-            }
-            c.pkg = Package.of(path);
-            return this;
-        }
-
-        public Builder pkg(Package pkg) {
-            c.pkg = pkg;
-            return this;
-        }
-
-        public Builder kind(Kind kind) {
-            c.kind = kind;
-            return this;
-        }
-
-        public Builder javadoc(DocComment doc) {
-            c.javadoc = doc;
-            return this;
-        }
-
         public Builder annotation(Annotation anno) {
             if (c.modifiers == null) {
                 c.modifiers = new Modifiers();
@@ -332,6 +309,61 @@ public final class Class implements ClassTree {
                 ((Modifiers)c.modifiers).addAnnotation(anno);
             }
 
+            return this;
+        }
+
+        public Class build() {
+            return c;
+        }
+
+        public Builder enumConstant(Variable f) {
+            if (f.getVariableKind() == null) {
+                f.setVariableKind(VariableKind.ENUM_CONSTANT);
+            }
+            c.fields.add(f);
+            return this;
+        }
+
+        public Builder extend(ParameterizedType p) {
+            c.extend = p;
+            return this;
+        }
+
+        public Builder extend(TypeReference p) {
+            c.extend = p;
+            return this;
+        }
+
+        public Builder field(Variable f) {
+            if (f.getVariableKind() == null) {
+                f.setVariableKind(VariableKind.FIELD);
+            }
+            c.addField(f);
+            return this;
+        }
+
+        public Builder implement(ParameterizedType i) {
+            c.impls.add(i);
+            return this;
+        }
+
+        public Builder implement(TypeReference i) {
+            c.impls.add(i);
+            return this;
+        }
+
+        public Builder javadoc(DocComment doc) {
+            c.javadoc = doc;
+            return this;
+        }
+
+        public Builder kind(Kind kind) {
+            c.kind = kind;
+            return this;
+        }
+
+        public Builder method(Method m) {
+            c.addMethod(m);
             return this;
         }
 
@@ -351,54 +383,22 @@ public final class Class implements ClassTree {
             return this;
         }
 
+        public Builder pkg(Package pkg) {
+            c.pkg = pkg;
+            return this;
+        }
+
+        public Builder pkg(String path) {
+            if (path == null) {
+                return this;
+            }
+            c.pkg = Package.of(path);
+            return this;
+        }
+
         public Builder typeParameter(TypeParameter p) {
             c.typeParameters.add(p);
             return this;
-        }
-
-        public Builder extend(TypeReference p) {
-            c.extend = p;
-            return this;
-        }
-
-        public Builder extend(ParameterizedType p) {
-            c.extend = p;
-            return this;
-        }
-
-        public Builder implement(TypeReference i) {
-            c.impls.add(i);
-            return this;
-        }
-
-        public Builder implement(ParameterizedType i) {
-            c.impls.add(i);
-            return this;
-        }
-
-        public Builder enumConstant(Variable f) {
-            if (f.getVariableKind() == null) {
-                f.setVariableKind(VariableKind.ENUM_CONSTANT);
-            }
-            c.fields.add(f);
-            return this;
-        }
-
-        public Builder field(Variable f) {
-            if (f.getVariableKind() == null) {
-                f.setVariableKind(VariableKind.FIELD);
-            }
-            c.addField(f);
-            return this;
-        }
-
-        public Builder method(Method m) {
-            c.addMethod(m);
-            return this;
-        }
-
-        public Class build() {
-            return c;
         }
 
     }

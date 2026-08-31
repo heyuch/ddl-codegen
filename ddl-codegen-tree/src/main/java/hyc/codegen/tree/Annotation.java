@@ -26,14 +26,6 @@ public final class Annotation implements AnnotationTree {
         return of(new TypeReference(qname));
     }
 
-    public static Annotation of(TypeReference type) {
-        return new Annotation(type, new ArrayList<>());
-    }
-
-    public static Annotation of(String qname, String argument) {
-        return of(new TypeReference(qname), argument);
-    }
-
     public static Annotation of(String qname, Map<String, Object> arguments) {
         List<String> args = new ArrayList<>();
         arguments.forEach((k, v) -> {
@@ -47,8 +39,12 @@ public final class Annotation implements AnnotationTree {
         return of(new TypeReference(qname), args);
     }
 
-    public static Annotation of(TypeReference type, String argument) {
-        return new Annotation(type, Arrays.asList(new SourceExpr(argument)));
+    public static Annotation of(String qname, String argument) {
+        return of(new TypeReference(qname), argument);
+    }
+
+    public static Annotation of(TypeReference type) {
+        return new Annotation(type, new ArrayList<>());
     }
 
     public static Annotation of(TypeReference type, List<String> arguments) {
@@ -56,6 +52,15 @@ public final class Annotation implements AnnotationTree {
                 .map(arg -> new SourceExpr(arg))
                 .collect(Collectors.toList());
         return new Annotation(type, args);
+    }
+
+    public static Annotation of(TypeReference type, String argument) {
+        return new Annotation(type, Arrays.asList(new SourceExpr(argument)));
+    }
+
+    @Override
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitAnnotation(this, data);
     }
 
     @Override
@@ -66,12 +71,6 @@ public final class Annotation implements AnnotationTree {
     @Override
     public List<? extends ExpressionTree> getArguments() {
         return new ArrayList<>(arguments);
-    }
-
-    @Override
-    public Kind getKind() {
-        // Kind.TYPE_ANNOTATION;
-        return Kind.ANNOTATION;
     }
 
     public List<Import> getImports() {
@@ -91,8 +90,9 @@ public final class Annotation implements AnnotationTree {
     }
 
     @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitAnnotation(this, data);
+    public Kind getKind() {
+        // Kind.TYPE_ANNOTATION;
+        return Kind.ANNOTATION;
     }
 
 }

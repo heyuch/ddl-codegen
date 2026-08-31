@@ -50,16 +50,16 @@ public final class DdlFileRange {
         return new DdlFileRange(path, start, end);
     }
 
+    public int getEndLine() {
+        return endLine;
+    }
+
     public String getPath() {
         return path;
     }
 
     public int getStartLine() {
         return startLine;
-    }
-
-    public int getEndLine() {
-        return endLine;
     }
 
 }

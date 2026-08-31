@@ -16,27 +16,18 @@ public final class Import implements ImportTree {
         this(new TypeReference(qname), false);
     }
 
+    public Import(TypeReference type) {
+        this(type, false);
+    }
+
     public Import(TypeReference type, boolean isStatic) {
         this.type = type;
         this.isStatic = isStatic;
     }
 
-    public Import(TypeReference type) {
-        this(type, false);
-    }
-
     @Override
-    public boolean isStatic() {
-        return isStatic;
-    }
-
-    public boolean isModule() {
-        return false;
-    }
-
-    @Override
-    public Tree getQualifiedIdentifier() {
-        return type;
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitImport(this, data);
     }
 
     @Override
@@ -45,8 +36,17 @@ public final class Import implements ImportTree {
     }
 
     @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitImport(this, data);
+    public Tree getQualifiedIdentifier() {
+        return type;
+    }
+
+    public boolean isModule() {
+        return false;
+    }
+
+    @Override
+    public boolean isStatic() {
+        return isStatic;
     }
 
     @Override

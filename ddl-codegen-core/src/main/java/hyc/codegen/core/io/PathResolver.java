@@ -25,6 +25,13 @@ public final class PathResolver {
         return modulePath(root, module).resolve(pkg.replace('.', '/')).resolve(className + ".java");
     }
 
+    private static Path modulePath(Path root, @Nullable String module) {
+        if (module == null || module.isEmpty()) {
+            return root;
+        }
+        return root.resolve(module);
+    }
+
     /**
      * 资源文件路径（XML 等）：{@code 根/module/相对资源路径/文件名}。
      *
@@ -35,13 +42,6 @@ public final class PathResolver {
      */
     public static Path xmlFile(Path root, @Nullable String module, String resourcePath, String fileName) {
         return modulePath(root, module).resolve(resourcePath).resolve(fileName);
-    }
-
-    private static Path modulePath(Path root, @Nullable String module) {
-        if (module == null || module.isEmpty()) {
-            return root;
-        }
-        return root.resolve(module);
     }
 
 }

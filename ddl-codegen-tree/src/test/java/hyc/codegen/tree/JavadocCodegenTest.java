@@ -48,6 +48,68 @@ public class JavadocCodegenTest {
     }
 
     @Test
+    public void fieldDoc() {
+        StringJoiner j = new StringJoiner(System.lineSeparator());
+        j.add("/**");
+        j.add(" * 字段概述");
+        j.add(" */");
+        j.add("");
+
+        DocComment doc = DocComment.builder()
+                .summary("字段概述")
+                .build();
+
+        String s = codegen(doc);
+        Assertions.assertEquals(j.toString(), s);
+    }
+
+    @Test
+    public void htmlTags() {
+        StringJoiner j = new StringJoiner(System.lineSeparator());
+        j.add("/**");
+        j.add(" * 这是一个包含HTML标签的Javadoc。");
+        j.add(" * <p>这是一个段落。</p>");
+        j.add(" * <ul>");
+        j.add(" *   <li>列表项1</li>");
+        j.add(" *   <li>列表项2</li>");
+        j.add(" * </ul>");
+        j.add(" */");
+        j.add("");
+
+        DocComment doc = DocComment.builder()
+                .summary("这是一个包含HTML标签的Javadoc。")
+                .body(Docs.html("p", "这是一个段落。"))
+                .body(new DocElemStart("ul"))
+                .body("  ", Docs.html("li", "列表项1"))
+                .body("  ", Docs.html("li", "列表项2"))
+                .body(new DocElemEnd("ul"))
+                .build();
+
+        String s = codegen(doc);
+        Assertions.assertEquals(j.toString(), s);
+    }
+
+    @Test
+    public void inlineTags() {
+        StringJoiner j = new StringJoiner(System.lineSeparator());
+        j.add("/**");
+        j.add(" * 使用 {@code code} 标签来表示代码片段。");
+        j.add(" * 使用 {@link java.lang.String} 来链接到其他类或方法。");
+        j.add(" * 也可以使用 {@link #inlineTags()} 链接到本类的方法。");
+        j.add(" */");
+        j.add("");
+
+        DocComment doc = DocComment.builder()
+                .summary("使用 ", new DocCode("code"), " 标签来表示代码片段。")
+                .body("使用 ", new DocLink("java.lang.String"), " 来链接到其他类或方法。")
+                .body("也可以使用 ", new DocLink("#inlineTags()"), " 链接到本类的方法。")
+                .build();
+
+        String s = codegen(doc);
+        Assertions.assertEquals(j.toString(), s);
+    }
+
+    @Test
     public void methodDoc() {
         StringJoiner j = new StringJoiner(System.lineSeparator());
         j.add("/**");
@@ -77,68 +139,6 @@ public class JavadocCodegenTest {
                         new DocText("请使用 "),
                         new DocLink("DemoStatus#code"),
                         new DocText(" 方法"))))
-                .build();
-
-        String s = codegen(doc);
-        Assertions.assertEquals(j.toString(), s);
-    }
-
-    @Test
-    public void fieldDoc() {
-        StringJoiner j = new StringJoiner(System.lineSeparator());
-        j.add("/**");
-        j.add(" * 字段概述");
-        j.add(" */");
-        j.add("");
-
-        DocComment doc = DocComment.builder()
-                .summary("字段概述")
-                .build();
-
-        String s = codegen(doc);
-        Assertions.assertEquals(j.toString(), s);
-    }
-
-    @Test
-    public void inlineTags() {
-        StringJoiner j = new StringJoiner(System.lineSeparator());
-        j.add("/**");
-        j.add(" * 使用 {@code code} 标签来表示代码片段。");
-        j.add(" * 使用 {@link java.lang.String} 来链接到其他类或方法。");
-        j.add(" * 也可以使用 {@link #inlineTags()} 链接到本类的方法。");
-        j.add(" */");
-        j.add("");
-
-        DocComment doc = DocComment.builder()
-                .summary("使用 ", new DocCode("code"), " 标签来表示代码片段。")
-                .body("使用 ", new DocLink("java.lang.String"), " 来链接到其他类或方法。")
-                .body("也可以使用 ", new DocLink("#inlineTags()"), " 链接到本类的方法。")
-                .build();
-
-        String s = codegen(doc);
-        Assertions.assertEquals(j.toString(), s);
-    }
-
-    @Test
-    public void htmlTags() {
-        StringJoiner j = new StringJoiner(System.lineSeparator());
-        j.add("/**");
-        j.add(" * 这是一个包含HTML标签的Javadoc。");
-        j.add(" * <p>这是一个段落。</p>");
-        j.add(" * <ul>");
-        j.add(" *   <li>列表项1</li>");
-        j.add(" *   <li>列表项2</li>");
-        j.add(" * </ul>");
-        j.add(" */");
-        j.add("");
-
-        DocComment doc = DocComment.builder()
-                .summary("这是一个包含HTML标签的Javadoc。")
-                .body(Docs.html("p", "这是一个段落。"))
-                .body(new DocElemStart("ul"))
-                .body("  ", Docs.html("li", "列表项1"))
-                .body("  ", Docs.html("li", "列表项2"))
-                .body(new DocElemEnd("ul"))
                 .build();
 
         String s = codegen(doc);

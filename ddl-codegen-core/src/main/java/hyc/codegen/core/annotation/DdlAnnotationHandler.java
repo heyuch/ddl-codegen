@@ -18,9 +18,6 @@ public interface DdlAnnotationHandler {
     /** 注解名（config/DDL 中 {@code @name} 的名字，不含 {@code @} 与冒号）。 */
     String name();
 
-    /** 允许出现的位置；目标不符时处理器不会被调用（记 warning 忽略）。 */
-    Set<MetaTarget> targets();
-
     /**
      * 解析注解值并写入节点元数据。
      *
@@ -43,5 +40,8 @@ public interface DdlAnnotationHandler {
     default String resolveType(Column column, String defaultType) {
         return defaultType;
     }
+
+    /** 允许出现的位置；目标不符时处理器不会被调用（记 warning 忽略）。 */
+    Set<MetaTarget> targets();
 
 }

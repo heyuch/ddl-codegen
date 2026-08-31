@@ -17,13 +17,18 @@ public final class FileWriter {
         throw new AssertionError("no instances");
     }
 
-    /** 开启/关闭 dry-run（计算状态但不落盘，CLI --dry-run 使用）。 */
-    public static void setDryRun(boolean dryRun) {
-        FileWriter.dryRun = dryRun;
+    /** 无条件删除文件；不存在时静默返回。 */
+    public static boolean deleteIfExists(Path file) throws IOException {
+        return Files.deleteIfExists(file);
     }
 
     public static boolean isDryRun() {
         return dryRun;
+    }
+
+    /** 开启/关闭 dry-run（计算状态但不落盘，CLI --dry-run 使用）。 */
+    public static void setDryRun(boolean dryRun) {
+        FileWriter.dryRun = dryRun;
     }
 
     /**
@@ -53,11 +58,6 @@ public final class FileWriter {
         }
         Files.write(file, bytes);
         return existed ? ChangeStatus.UPDATED : ChangeStatus.CREATED;
-    }
-
-    /** 无条件删除文件；不存在时静默返回。 */
-    public static boolean deleteIfExists(Path file) throws IOException {
-        return Files.deleteIfExists(file);
     }
 
 }

@@ -60,18 +60,51 @@ class EndToEndTest {
 
     private @Nullable CodeGenerator generator;
 
-    /**
-     * JUnit @TempDir 注入目录。
-     * 
-     * @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。
-     */
+    private void add(String name, String generator, @Nullable String pkg, @Nullable String suffix, String use) {
+        ArtifactConfig artifact = new ArtifactConfig(name);
+        artifact.setGenerator(generator);
+        artifact.setModule("");
+        artifact.setPkg(pkg);
+        artifact.setSuffix(suffix);
+        config().addArtifact(artifact);
+    }
 
-    private Path tempDir() {
-        Path dir = temp;
-        if (dir == null) {
-            throw new AssertionError("JUnit 未注入 @TempDir");
+    @Test
+    void alterFlowUpdatesArtifacts() throws Exception {
+        DdlParser parser = new DruidDdlParser();
+        Schema schema = new Schema();
+        generate(parser, schema, DDL);
+
+        // rename column：create_time → created_at（非索引列，避免索引引用牵连）
+        generate(parser, schema, "alter table t_user rename column create_time to created_at");
+        String entity = read("com/demo/entity/User.java");
+        assertTrue(entity.contains("private LocalDateTime createdAt"), entity);
+        assertFalse(entity.contains("createTime"), "entity 不应残留旧字段名");
+        String xml = read("src/main/resources/mapper/UserMapper.xml");
+        assertTrue(xml.contains("created_at"), xml);
+        assertFalse(xml.contains("create_time"), "XML 不应残留旧列引用");
+
+        // add index（无 @ignore）→ mapper/XML 出现 findByStatus
+        generate(parser, schema, "alter table t_user add index idx_status (status)");
+        String mapper = read("com/demo/mapper/UserMapper.java");
+        assertTrue(mapper.contains("findByStatus"), mapper);
+        assertTrue(read("src/main/resources/mapper/UserMapper.xml").contains("<select id=\"findByStatus\""));
+
+        // drop index → findByStatus 消失（@Generated 方法随模型移除）
+        generate(parser, schema, "alter table t_user drop index idx_status");
+        assertFalse(read("com/demo/mapper/UserMapper.java").contains("findByStatus"));
+        assertFalse(read("src/main/resources/mapper/UserMapper.xml").contains("<select id=\"findByStatus\""));
+    }
+
+    /**
+     * 按产物名取配置（测试约定产物已配置）。
+     */
+    private ArtifactConfig artifact(String name) {
+        ArtifactConfig artifactConfig = config().artifact(name);
+        if (artifactConfig == null) {
+            throw new AssertionError("产物未配置: " + name);
         }
-        return dir;
+        return artifactConfig;
     }
 
     private DdlConfig config() {
@@ -79,6 +112,65 @@ class EndToEndTest {
             throw new AssertionError("@BeforeEach 未初始化 config");
         }
         return config;
+    }
+
+    @Test
+    void converterGenerated() throws Exception {
+        generate(DDL);
+
+        // Converter：逐字段 + enum 双向转换
+        String converter = read("com/demo/converter/UserConverter.java");
+        assertTrue(converter.contains("User user = new User();"), converter);
+        assertTrue(converter.contains(
+                "user.setGender(source.getGender() == null ? null : Gender.fromValue(source.getGender()));"),
+                converter);
+        assertTrue(converter.contains(
+                "userPo.setGender(target.getGender() == null ? null : target.getGender().value());"),
+                converter);
+    }
+
+    @Test
+    void entityGenerated() throws Exception {
+        generate(DDL);
+
+        // Entity：字段、@Generated、lombok、jsr303、@ignore 排除、@as 枚举
+        String entity = read("com/demo/entity/User.java");
+        assertTrue(entity.contains("private Long id"), entity);
+        assertTrue(entity.contains("private String name"), entity);
+        assertTrue(entity.contains("private Gender gender"), entity);
+        assertTrue(entity.contains("private BigDecimal credits"), entity);
+        assertTrue(entity.contains("private LocalDateTime createTime"), entity);
+        assertFalse(entity.contains("extInfo"), entity);
+        assertTrue(entity.contains("@Data"), entity);
+        assertTrue(entity.contains("@NotNull"), entity);
+        assertTrue(entity.contains("@Size(max = 50)"), entity);
+        assertTrue(entity.contains("@Generated"), entity);
+        assertTrue(entity.contains("public class User"), entity);
+    }
+
+    @Test
+    void enumGenerated() throws Exception {
+        generate(DDL);
+
+        // Enum：@as 命名 + 常量 + value/fromValue
+        String gender = read("com/demo/enums/Gender.java");
+        assertTrue(gender.contains("MALE(\"male\")"), gender);
+        assertTrue(gender.contains("FEMALE(\"female\")"), gender);
+        assertTrue(gender.contains("fromValue"), gender);
+        assertTrue(gender.contains("public String value()"), gender);
+    }
+
+    /**
+     * 在同一 schema 上连续应用 DDL（alter 流程测试用：create 后 alter 需复用模型状态）。
+     */
+    private void generate(DdlParser parser, Schema schema, String ddl) {
+        ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
+        ChangeReport report = generator().generate(config(), schema, result, Collections.emptyList());
+        assertTrue(report.hasChanges(), "应产生变更: " + report.summary());
+    }
+
+    private void generate(String ddl) {
+        generate(new DruidDdlParser(), new Schema(), ddl);
     }
 
     /**
@@ -91,15 +183,57 @@ class EndToEndTest {
         return generator;
     }
 
-    /**
-     * 按产物名取配置（测试约定产物已配置）。
-     */
-    private ArtifactConfig artifact(String name) {
-        ArtifactConfig artifactConfig = config().artifact(name);
-        if (artifactConfig == null) {
-            throw new AssertionError("产物未配置: " + name);
-        }
-        return artifactConfig;
+    @Test
+    void mapperGenerated() throws Exception {
+        generate(DDL);
+
+        // Mapper：CRUD + 唯一键 @Nullable + @ignore 索引跳过
+        String mapper = read("com/demo/mapper/UserMapper.java");
+        assertTrue(mapper.contains("int insert(UserPo userPo)"), mapper);
+        assertTrue(mapper.contains("int update(UserPo userPo)"), mapper);
+        assertTrue(mapper.contains("int deleteById(@Param(\"id\") Long id)"), mapper);
+        assertTrue(mapper.contains("@Nullable"), mapper);
+        assertTrue(mapper.contains("UserPo findById(@Param(\"id\") Long id)"), mapper);
+        assertTrue(mapper.contains("UserPo findByName(@Param(\"name\") String name)"), mapper);
+        assertFalse(mapper.contains("findByStatus"), mapper);
+    }
+
+    @Test
+    void pojoGenerated() throws Exception {
+        generate(DDL);
+
+        // Pojo：enum → String，@type 不影响 pojo
+        String pojo = read("com/demo/pojo/UserPo.java");
+        assertTrue(pojo.contains("private String gender"), pojo);
+        assertTrue(pojo.contains("private BigDecimal credits"), pojo);
+    }
+
+    private String read(String relative) throws Exception {
+        return new String(Files.readAllBytes(tempDir().resolve(relative)), StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void repositoryGenerated() throws Exception {
+        generate(DDL);
+
+        // Repository：entity 视图（enum 参数用枚举类）
+        String repository = read("com/demo/repository/UserRepository.java");
+        assertTrue(repository.contains("@Nullable"), repository);
+        assertTrue(repository.contains("User findById(Long id)"), repository);
+        assertTrue(repository.contains("User findByName(String name)"), repository);
+        assertFalse(repository.contains("findByStatus"), repository);
+    }
+
+    @Test
+    void repositoryImplGenerated() throws Exception {
+        generate(DDL);
+
+        // RepositoryImpl：桥接 + enum 转换
+        String impl = read("com/demo/repository/impl/UserRepositoryImpl.java");
+        assertTrue(impl.contains("private UserMapper userMapper;"), impl);
+        assertTrue(impl.contains("private UserConverter userConverter;"), impl);
+        assertTrue(impl.contains("return userConverter.toUser(userMapper.findById(id));"), impl);
+        assertTrue(impl.contains("return userConverter.toUser(userMapper.findByName(name));"), impl);
     }
 
     @BeforeEach
@@ -141,86 +275,18 @@ class EndToEndTest {
         generator = new CodeGenerator(generators);
     }
 
-    private void add(String name, String generator, @Nullable String pkg, @Nullable String suffix, String use) {
-        ArtifactConfig artifact = new ArtifactConfig(name);
-        artifact.setGenerator(generator);
-        artifact.setModule("");
-        artifact.setPkg(pkg);
-        artifact.setSuffix(suffix);
-        config().addArtifact(artifact);
-    }
-
-    private void generate(String ddl) {
-        generate(new DruidDdlParser(), new Schema(), ddl);
-    }
-
     /**
-     * 在同一 schema 上连续应用 DDL（alter 流程测试用：create 后 alter 需复用模型状态）。
+     * JUnit @TempDir 注入目录。
+     * 
+     * @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。
      */
-    private void generate(DdlParser parser, Schema schema, String ddl) {
-        ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
-        ChangeReport report = generator().generate(config(), schema, result, Collections.emptyList());
-        assertTrue(report.hasChanges(), "应产生变更: " + report.summary());
-    }
 
-    private String read(String relative) throws Exception {
-        return new String(Files.readAllBytes(tempDir().resolve(relative)), StandardCharsets.UTF_8);
-    }
-
-    @Test
-    void entityGenerated() throws Exception {
-        generate(DDL);
-
-        // Entity：字段、@Generated、lombok、jsr303、@ignore 排除、@as 枚举
-        String entity = read("com/demo/entity/User.java");
-        assertTrue(entity.contains("private Long id"), entity);
-        assertTrue(entity.contains("private String name"), entity);
-        assertTrue(entity.contains("private Gender gender"), entity);
-        assertTrue(entity.contains("private BigDecimal credits"), entity);
-        assertTrue(entity.contains("private LocalDateTime createTime"), entity);
-        assertFalse(entity.contains("extInfo"), entity);
-        assertTrue(entity.contains("@Data"), entity);
-        assertTrue(entity.contains("@NotNull"), entity);
-        assertTrue(entity.contains("@Size(max = 50)"), entity);
-        assertTrue(entity.contains("@Generated"), entity);
-        assertTrue(entity.contains("public class User"), entity);
-    }
-
-    @Test
-    void enumGenerated() throws Exception {
-        generate(DDL);
-
-        // Enum：@as 命名 + 常量 + value/fromValue
-        String gender = read("com/demo/enums/Gender.java");
-        assertTrue(gender.contains("MALE(\"male\")"), gender);
-        assertTrue(gender.contains("FEMALE(\"female\")"), gender);
-        assertTrue(gender.contains("fromValue"), gender);
-        assertTrue(gender.contains("public String value()"), gender);
-    }
-
-    @Test
-    void pojoGenerated() throws Exception {
-        generate(DDL);
-
-        // Pojo：enum → String，@type 不影响 pojo
-        String pojo = read("com/demo/pojo/UserPo.java");
-        assertTrue(pojo.contains("private String gender"), pojo);
-        assertTrue(pojo.contains("private BigDecimal credits"), pojo);
-    }
-
-    @Test
-    void mapperGenerated() throws Exception {
-        generate(DDL);
-
-        // Mapper：CRUD + 唯一键 @Nullable + @ignore 索引跳过
-        String mapper = read("com/demo/mapper/UserMapper.java");
-        assertTrue(mapper.contains("int insert(UserPo userPo)"), mapper);
-        assertTrue(mapper.contains("int update(UserPo userPo)"), mapper);
-        assertTrue(mapper.contains("int deleteById(@Param(\"id\") Long id)"), mapper);
-        assertTrue(mapper.contains("@Nullable"), mapper);
-        assertTrue(mapper.contains("UserPo findById(@Param(\"id\") Long id)"), mapper);
-        assertTrue(mapper.contains("UserPo findByName(@Param(\"name\") String name)"), mapper);
-        assertFalse(mapper.contains("findByStatus"), mapper);
+    private Path tempDir() {
+        Path dir = temp;
+        if (dir == null) {
+            throw new AssertionError("JUnit 未注入 @TempDir");
+        }
+        return dir;
     }
 
     @Test
@@ -238,72 +304,6 @@ class EndToEndTest {
         assertFalse(xml.contains("findByStatus"), xml);
         assertTrue(xml.contains("useGeneratedKeys=\"true\""), xml);
         assertFalse(xml.contains("t.id,\n        id"), xml);
-    }
-
-    @Test
-    void repositoryGenerated() throws Exception {
-        generate(DDL);
-
-        // Repository：entity 视图（enum 参数用枚举类）
-        String repository = read("com/demo/repository/UserRepository.java");
-        assertTrue(repository.contains("@Nullable"), repository);
-        assertTrue(repository.contains("User findById(Long id)"), repository);
-        assertTrue(repository.contains("User findByName(String name)"), repository);
-        assertFalse(repository.contains("findByStatus"), repository);
-    }
-
-    @Test
-    void repositoryImplGenerated() throws Exception {
-        generate(DDL);
-
-        // RepositoryImpl：桥接 + enum 转换
-        String impl = read("com/demo/repository/impl/UserRepositoryImpl.java");
-        assertTrue(impl.contains("private UserMapper userMapper;"), impl);
-        assertTrue(impl.contains("private UserConverter userConverter;"), impl);
-        assertTrue(impl.contains("return userConverter.toUser(userMapper.findById(id));"), impl);
-        assertTrue(impl.contains("return userConverter.toUser(userMapper.findByName(name));"), impl);
-    }
-
-    @Test
-    void converterGenerated() throws Exception {
-        generate(DDL);
-
-        // Converter：逐字段 + enum 双向转换
-        String converter = read("com/demo/converter/UserConverter.java");
-        assertTrue(converter.contains("User user = new User();"), converter);
-        assertTrue(converter.contains(
-                "user.setGender(source.getGender() == null ? null : Gender.fromValue(source.getGender()));"),
-                converter);
-        assertTrue(converter.contains(
-                "userPo.setGender(target.getGender() == null ? null : target.getGender().value());"),
-                converter);
-    }
-
-    @Test
-    void alterFlowUpdatesArtifacts() throws Exception {
-        DdlParser parser = new DruidDdlParser();
-        Schema schema = new Schema();
-        generate(parser, schema, DDL);
-
-        // rename column：create_time → created_at（非索引列，避免索引引用牵连）
-        generate(parser, schema, "alter table t_user rename column create_time to created_at");
-        String entity = read("com/demo/entity/User.java");
-        assertTrue(entity.contains("private LocalDateTime createdAt"), entity);
-        assertFalse(entity.contains("createTime"), "entity 不应残留旧字段名");
-        String xml = read("src/main/resources/mapper/UserMapper.xml");
-        assertTrue(xml.contains("created_at"), xml);
-        assertFalse(xml.contains("create_time"), "XML 不应残留旧列引用");
-
-        // add index（无 @ignore）→ mapper/XML 出现 findByStatus
-        generate(parser, schema, "alter table t_user add index idx_status (status)");
-        String mapper = read("com/demo/mapper/UserMapper.java");
-        assertTrue(mapper.contains("findByStatus"), mapper);
-        assertTrue(read("src/main/resources/mapper/UserMapper.xml").contains("<select id=\"findByStatus\""));
-
-        // drop index → findByStatus 消失（@Generated 方法随模型移除）
-        generate(parser, schema, "alter table t_user drop index idx_status");
-        assertFalse(read("com/demo/mapper/UserMapper.java").contains("findByStatus"));
-        assertFalse(read("src/main/resources/mapper/UserMapper.xml").contains("<select id=\"findByStatus\""));
     }
 
 }

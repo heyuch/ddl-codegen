@@ -16,21 +16,6 @@ public final class SourceBlock implements BlockTree {
     }
 
     @Override
-    public boolean isStatic() {
-        return false;
-    }
-
-    @Override
-    public List<? extends StatementTree> getStatements() {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public Kind getKind() {
-        return Kind.BLOCK;
-    }
-
-    @Override
     public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
         return visitor.visitBlock(this, data);
     }
@@ -40,6 +25,21 @@ public final class SourceBlock implements BlockTree {
      */
     public String getCode() {
         return code;
+    }
+
+    @Override
+    public Kind getKind() {
+        return Kind.BLOCK;
+    }
+
+    @Override
+    public List<? extends StatementTree> getStatements() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public boolean isStatic() {
+        return false;
     }
 
     @Override

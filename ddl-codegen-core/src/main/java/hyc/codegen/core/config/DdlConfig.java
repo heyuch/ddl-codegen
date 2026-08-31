@@ -41,15 +41,16 @@ public final class DdlConfig {
     /** {@code @Nullable} 注解全限定名（默认 checkerframework 的 Nullable，config {@code annotations.nullable} 可配）。 */
     private String nullableAnnotation = "org.checkerframework.checker.nullness.qual.Nullable";
 
-    public Path getRoot() {
-        if (root == null) {
-            throw new IllegalStateException("项目根未设置（需先经 PropertiesConfigLoader 加载或 setRoot）");
-        }
-        return root;
-    }
-
     public void addArtifact(ArtifactConfig artifact) {
         artifacts.put(artifact.getName(), artifact);
+    }
+
+    public void addCustomAnnotationHandler(String className) {
+        customAnnotationHandlers.add(className);
+    }
+
+    public void addTableStripPrefix(String prefix) {
+        tableStripPrefixes.add(prefix);
     }
 
     /** 按产物名取配置；未配置时返回 {@code null}。 */
@@ -68,20 +69,19 @@ public final class DdlConfig {
         return new LinkedHashMap<>(artifacts);
     }
 
-    public List<String> getTableStripPrefixes() {
-        return new ArrayList<>(tableStripPrefixes);
-    }
-
-    public void addTableStripPrefix(String prefix) {
-        tableStripPrefixes.add(prefix);
-    }
-
     public List<String> getCustomAnnotationHandlers() {
         return new ArrayList<>(customAnnotationHandlers);
     }
 
-    public void addCustomAnnotationHandler(String className) {
-        customAnnotationHandlers.add(className);
+    public Path getRoot() {
+        if (root == null) {
+            throw new IllegalStateException("项目根未设置（需先经 PropertiesConfigLoader 加载或 setRoot）");
+        }
+        return root;
+    }
+
+    public List<String> getTableStripPrefixes() {
+        return new ArrayList<>(tableStripPrefixes);
     }
 
 }

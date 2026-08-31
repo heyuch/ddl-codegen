@@ -13,12 +13,17 @@ public final class DocTagReturn implements ReturnTree {
 
     private List<? extends DocTree> descs;
 
+    public DocTagReturn(List<? extends DocTree> descs) {
+        this.descs = new ArrayList<@UnknownKeyFor DocTree>(descs);
+    }
+
     public DocTagReturn(String desc) {
         this(Arrays.asList(new DocText(desc)));
     }
 
-    public DocTagReturn(List<? extends DocTree> descs) {
-        this.descs = new ArrayList<@UnknownKeyFor DocTree>(descs);
+    @Override
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitReturn(this, data);
     }
 
     @Override
@@ -27,18 +32,13 @@ public final class DocTagReturn implements ReturnTree {
     }
 
     @Override
-    public String getTagName() {
-        return getKind().tagName;
-    }
-
-    @Override
     public Kind getKind() {
         return Kind.RETURN;
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitReturn(this, data);
+    public String getTagName() {
+        return getKind().tagName;
     }
 
 }

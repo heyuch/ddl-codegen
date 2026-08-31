@@ -50,28 +50,6 @@ public final class TableContext {
         this.nullableAnnotation = gctx.getConfig().getNullableAnnotation();
     }
 
-    public Table getTable() {
-        return table;
-    }
-
-    /**
-     * 产物名。
-     */
-    public String getArtifactName() {
-        return artifactName;
-    }
-
-    /**
-     * {@code @Nullable} 注解全限定名（config {@code annotations.nullable}）。
-     */
-    public String getNullableAnnotation() {
-        return nullableAnnotation;
-    }
-
-    public ArtifactConfig getArtifactConfig() {
-        return artifactConfig;
-    }
-
     /**
      * 类名（基类名 + 该 artifact 配置的后缀；表注释 {@code @as} 可整体覆盖基类名）。
      */
@@ -84,29 +62,21 @@ public final class TableContext {
     }
 
     /**
-     * 包名（artifact 配置；Java 类产物必须配置，缺失即配置错误）。
+     * 该表的字段列表（列序）。
      */
-    public String packageName() {
-        String pkg = artifactConfig.getPkg();
-        if (pkg == null) {
-            throw new IllegalStateException(
-                    "产物 '" + artifactConfig.getName() + "' 缺少 package 配置（Java 类产物必须配置 package）");
+    public List<Column> columns() {
+        return new ArrayList<>(table.getColumns());
+    }
+
+    /**
+     * enum 列 → 枚举类名（列注释 {@code @as} 优先，否则按命名策略）。
+     */
+    public String enumClassName(Column column) {
+        Object as = column.getMeta().get("as");
+        if (as != null) {
+            return as.toString();
         }
-        return pkg;
-    }
-
-    /**
-     * Java 类文件路径：根 + module + package 路径 + 类名。
-     */
-    public Path javaFile(Path projectRoot) {
-        return PathResolver.javaFile(projectRoot, artifactConfig.getModule(), packageName(), className());
-    }
-
-    /**
-     * 资源文件路径：根 + module + 相对资源路径 + 文件名。
-     */
-    public Path xmlFile(Path projectRoot, String resourcePath, String fileName) {
-        return PathResolver.xmlFile(projectRoot, artifactConfig.getModule(), resourcePath, fileName);
+        return naming.enumClassName(table.getName(), column.getName());
     }
 
     /**
@@ -114,28 +84,6 @@ public final class TableContext {
      */
     public String fieldName(Column column) {
         return naming.columnFieldName(column.getName());
-    }
-
-    /**
-     * 列 → 成员类型（查询契约：路由到本产物生成器的 fieldType，type/enums 特性生效）。
-     */
-    public String typeOf(Column column) {
-        return gctx.generatorFor(artifactName).fieldType(column, this);
-    }
-
-    public NamingService getNaming() {
-        return naming;
-    }
-
-    public TypeMapper getTypeMapper() {
-        return types;
-    }
-
-    /**
-     * enum 产物包（enums 特性开启时已校验存在）。
-     */
-    public @Nullable String getEnumPackage() {
-        return enumPackage;
     }
 
     /**
@@ -150,11 +98,55 @@ public final class TableContext {
         return null;
     }
 
+    public ArtifactConfig getArtifactConfig() {
+        return artifactConfig;
+    }
+
     /**
-     * enums 特性开关（enum 列 → 枚举类视图）。
+     * 产物名。
      */
-    public boolean usesEnums() {
-        return Boolean.parseBoolean(artifactConfig.getOption("enums"));
+    public String getArtifactName() {
+        return artifactName;
+    }
+
+    /**
+     * enum 产物包（enums 特性开启时已校验存在）。
+     */
+    public @Nullable String getEnumPackage() {
+        return enumPackage;
+    }
+
+    public NamingService getNaming() {
+        return naming;
+    }
+
+    /**
+     * {@code @Nullable} 注解全限定名（config {@code annotations.nullable}）。
+     */
+    public String getNullableAnnotation() {
+        return nullableAnnotation;
+    }
+
+    public Table getTable() {
+        return table;
+    }
+
+    public TypeMapper getTypeMapper() {
+        return types;
+    }
+
+    /**
+     * 该表的索引列表。
+     */
+    public List<Index> indexes() {
+        return new ArrayList<>(table.getIndexes());
+    }
+
+    /**
+     * Java 类文件路径：根 + module + package 路径 + 类名。
+     */
+    public Path javaFile(Path projectRoot) {
+        return PathResolver.javaFile(projectRoot, artifactConfig.getModule(), packageName(), className());
     }
 
     /**
@@ -172,32 +164,40 @@ public final class TableContext {
     }
 
     /**
-     * enum 列 → 枚举类名（列注释 {@code @as} 优先，否则按命名策略）。
+     * 包名（artifact 配置；Java 类产物必须配置，缺失即配置错误）。
      */
-    public String enumClassName(Column column) {
-        Object as = column.getMeta().get("as");
-        if (as != null) {
-            return as.toString();
+    public String packageName() {
+        String pkg = artifactConfig.getPkg();
+        if (pkg == null) {
+            throw new IllegalStateException(
+                    "产物 '" + artifactConfig.getName() + "' 缺少 package 配置（Java 类产物必须配置 package）");
         }
-        return naming.enumClassName(table.getName(), column.getName());
-    }
-
-    /**
-     * 该表的字段列表（列序）。
-     */
-    public List<Column> columns() {
-        return new ArrayList<>(table.getColumns());
-    }
-
-    /**
-     * 该表的索引列表。
-     */
-    public List<Index> indexes() {
-        return new ArrayList<>(table.getIndexes());
+        return pkg;
     }
 
     public @Nullable String tableComment() {
         return table.getComment();
+    }
+
+    /**
+     * 列 → 成员类型（查询契约：路由到本产物生成器的 fieldType，type/enums 特性生效）。
+     */
+    public String typeOf(Column column) {
+        return gctx.generatorFor(artifactName).fieldType(column, this);
+    }
+
+    /**
+     * enums 特性开关（enum 列 → 枚举类视图）。
+     */
+    public boolean usesEnums() {
+        return Boolean.parseBoolean(artifactConfig.getOption("enums"));
+    }
+
+    /**
+     * 资源文件路径：根 + module + 相对资源路径 + 文件名。
+     */
+    public Path xmlFile(Path projectRoot, String resourcePath, String fileName) {
+        return PathResolver.xmlFile(projectRoot, artifactConfig.getModule(), resourcePath, fileName);
     }
 
 }

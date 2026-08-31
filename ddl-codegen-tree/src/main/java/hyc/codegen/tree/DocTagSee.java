@@ -16,13 +16,8 @@ public final class DocTagSee implements SeeTree {
     }
 
     @Override
-    public List<? extends DocTree> getReference() {
-        return new ArrayList<>(refs);
-    }
-
-    @Override
-    public String getTagName() {
-        return getKind().tagName;
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitSee(this, data);
     }
 
     @Override
@@ -31,8 +26,13 @@ public final class DocTagSee implements SeeTree {
     }
 
     @Override
-    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
-        return visitor.visitSee(this, data);
+    public List<? extends DocTree> getReference() {
+        return new ArrayList<>(refs);
+    }
+
+    @Override
+    public String getTagName() {
+        return getKind().tagName;
     }
 
 }

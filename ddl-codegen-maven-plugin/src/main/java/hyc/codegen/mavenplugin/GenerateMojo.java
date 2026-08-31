@@ -90,25 +90,6 @@ public class GenerateMojo extends AbstractMojo {
         }
     }
 
-    /** 解析 DDL 文本：内联或文件（含行范围）；互斥校验。 */
-    private String resolveDdl() throws MojoExecutionException {
-        if (ddl != null && !ddl.isEmpty() && ddlFile != null && !ddlFile.isEmpty()) {
-            throw new MojoExecutionException("ddl 与 ddlFile 互斥，只能设置其中一个");
-        }
-        if (ddl != null && !ddl.isEmpty()) {
-            return ddl;
-        }
-        if (ddlFile != null && !ddlFile.isEmpty()) {
-            return readDdlFile(ddlFile);
-        }
-        throw new MojoExecutionException("必须设置 ddl 或 ddlFile 之一");
-    }
-
-    /** 项目根：Maven 未注入 projectRoot 时兜底当前工作目录（Maven 执行目录即项目目录）。 */
-    private Path rootPath() {
-        return projectRoot == null ? Paths.get("").toAbsolutePath() : projectRoot.toPath();
-    }
-
     /**
      * 读 DDL 文件：无范围 = 整文件；有范围 = 精确按行切片（越界钳制到文件边界 + warning）。
      * 调用方（resolveDdl）已校验 ddlFile 非空非空串，参数即非 null 契约。
@@ -136,6 +117,25 @@ public class GenerateMojo extends AbstractMojo {
         } catch (IOException e) {
             throw new MojoExecutionException("读取 DDL 文件失败: " + file, e);
         }
+    }
+
+    /** 解析 DDL 文本：内联或文件（含行范围）；互斥校验。 */
+    private String resolveDdl() throws MojoExecutionException {
+        if (ddl != null && !ddl.isEmpty() && ddlFile != null && !ddlFile.isEmpty()) {
+            throw new MojoExecutionException("ddl 与 ddlFile 互斥，只能设置其中一个");
+        }
+        if (ddl != null && !ddl.isEmpty()) {
+            return ddl;
+        }
+        if (ddlFile != null && !ddlFile.isEmpty()) {
+            return readDdlFile(ddlFile);
+        }
+        throw new MojoExecutionException("必须设置 ddl 或 ddlFile 之一");
+    }
+
+    /** 项目根：Maven 未注入 projectRoot 时兜底当前工作目录（Maven 执行目录即项目目录）。 */
+    private Path rootPath() {
+        return projectRoot == null ? Paths.get("").toAbsolutePath() : projectRoot.toPath();
     }
 
 }

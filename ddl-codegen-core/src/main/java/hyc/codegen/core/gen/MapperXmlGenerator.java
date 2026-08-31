@@ -24,51 +24,19 @@ public final class MapperXmlGenerator implements Generator {
     /** 生成器注册名。 */
     public static final String NAME = "mybatisXml";
 
-    @Override
-    public String kind() {
-        return NAME;
+    private static String simpleName(String fqn) {
+        int dot = fqn.lastIndexOf('.');
+        return dot < 0 ? fqn : fqn.substring(dot + 1);
     }
 
-    /** XML 无 Java 类/字段，查询契约不适用。 */
-    @Override
-    public String className(TableContext ctx) {
-        throw new UnsupportedOperationException("XML 产物无类名");
-    }
-
-    @Override
-    public String fieldName(Column column, TableContext ctx) {
-        throw new UnsupportedOperationException("XML 产物无字段");
-    }
-
-    @Override
-    public String fieldType(Column column, TableContext ctx) {
-        throw new UnsupportedOperationException("XML 产物无成员类型");
-    }
-
-    @Override
-    public void generate(TableContext ctx, GenerationContext gctx) {
-        hyc.codegen.core.config.ArtifactConfig mapper = gctx.resolveReference(
-                ctx.getArtifactName(), "mapper", MapperGenerator.NAME);
-        String mapperFqn = gctx.refFqn(ctx.getTable().getName(), mapper);
-        String mapperName = simpleName(mapperFqn);
-        String namespace = mapperFqn;
-        hyc.codegen.core.config.ArtifactConfig target = gctx.resolveReference(
-                ctx.getArtifactName(), "target", PojoGenerator.NAME);
-        String poType = gctx.refFqn(ctx.getTable().getName(), target);
-
-        String xml = build(ctx, gctx.getNaming(), poType, namespace);
-        String path = ctx.getArtifactConfig().getPath();
-        if (path == null) {
-            throw new IllegalStateException(
-                    "mybatisXml 产物 '" + ctx.getArtifactName() + "' 缺少 path 配置（XML 产物必须配置 path）");
+    private void baseColumnList(TableContext ctx, List<Column> columns, StringBuilder sb) {
+        sb.append("    <sql id=\"BaseColumnList\">\n");
+        for (int i = 0; i < columns.size(); i++) {
+            sb.append("        t.").append(columns.get(i).getName());
+            sb.append(i < columns.size() - 1 ? "," : "");
+            sb.append("\n");
         }
-        Path file = ctx.xmlFile(gctx.getProjectRoot(), path, mapperName + ".xml");
-        try {
-            ChangeStatus status = FileWriter.writeIfChanged(file, xml);
-            gctx.getReport().add(file, status, "mybatisXml " + mapperName);
-        } catch (IOException e) {
-            throw new IllegalStateException("写 XML 失败: " + file, e);
-        }
+        sb.append("    </sql>\n\n");
     }
 
     private String build(TableContext ctx, NamingService naming, String poType, String namespace) {
@@ -113,32 +81,65 @@ public final class MapperXmlGenerator implements Generator {
         return sb.toString();
     }
 
-    private void resultMap(TableContext ctx, List<Column> columns, @Nullable Column id, String poType,
-            StringBuilder sb) {
-        sb.append("    <resultMap id=\"BaseResultMap\" type=\"").append(poType).append("\">\n");
-        for (Column column : columns) {
-            boolean isId = column == id;
-            sb.append("        <")
-                    .append(isId ? "id" : "result")
-                    .append(" property=\"")
-                    .append(ctx.fieldName(column))
-                    .append("\" column=\"")
-                    .append(column.getName())
-                    .append("\" jdbcType=\"")
-                    .append(ctx.jdbcType(column))
-                    .append("\"/>\n");
-        }
-        sb.append("    </resultMap>\n\n");
+    /** XML 无 Java 类/字段，查询契约不适用。 */
+    @Override
+    public String className(TableContext ctx) {
+        throw new UnsupportedOperationException("XML 产物无类名");
     }
 
-    private void baseColumnList(TableContext ctx, List<Column> columns, StringBuilder sb) {
-        sb.append("    <sql id=\"BaseColumnList\">\n");
-        for (int i = 0; i < columns.size(); i++) {
-            sb.append("        t.").append(columns.get(i).getName());
-            sb.append(i < columns.size() - 1 ? "," : "");
-            sb.append("\n");
+    private String deleteXml(String tableName, Column id, TableContext ctx) {
+        return "    <delete id=\"deleteById\">\n"
+                + "        DELETE FROM\n"
+                + "        " + tableName + "\n"
+                + "        WHERE\n"
+                + "        " + id.getName() + " = #{" + ctx.fieldName(id) + ",jdbcType=" + ctx.jdbcType(id) + "}\n"
+                + "    </delete>\n";
+    }
+
+    @Override
+    public String fieldName(Column column, TableContext ctx) {
+        throw new UnsupportedOperationException("XML 产物无字段");
+    }
+
+    @Override
+    public String fieldType(Column column, TableContext ctx) {
+        throw new UnsupportedOperationException("XML 产物无成员类型");
+    }
+
+    @Override
+    public void generate(TableContext ctx, GenerationContext gctx) {
+        hyc.codegen.core.config.ArtifactConfig mapper = gctx.resolveReference(
+                ctx.getArtifactName(), "mapper", MapperGenerator.NAME);
+        String mapperFqn = gctx.refFqn(ctx.getTable().getName(), mapper);
+        String mapperName = simpleName(mapperFqn);
+        String namespace = mapperFqn;
+        hyc.codegen.core.config.ArtifactConfig target = gctx.resolveReference(
+                ctx.getArtifactName(), "target", PojoGenerator.NAME);
+        String poType = gctx.refFqn(ctx.getTable().getName(), target);
+
+        String xml = build(ctx, gctx.getNaming(), poType, namespace);
+        String path = ctx.getArtifactConfig().getPath();
+        if (path == null) {
+            throw new IllegalStateException(
+                    "mybatisXml 产物 '" + ctx.getArtifactName() + "' 缺少 path 配置（XML 产物必须配置 path）");
         }
-        sb.append("    </sql>\n\n");
+        Path file = ctx.xmlFile(gctx.getProjectRoot(), path, mapperName + ".xml");
+        try {
+            ChangeStatus status = FileWriter.writeIfChanged(file, xml);
+            gctx.getReport().add(file, status, "mybatisXml " + mapperName);
+        } catch (IOException e) {
+            throw new IllegalStateException("写 XML 失败: " + file, e);
+        }
+    }
+
+    /** 主键列（PRIMARY 索引首列；无则 null）。 */
+    private @Nullable Column idColumn(TableContext ctx) {
+        for (Index index : ctx.indexes()) {
+            if (index.isUnique() && "PRIMARY".equalsIgnoreCase(index.getName())) {
+                return ctx.getTable().getColumn(index.getColumns().get(0));
+            }
+        }
+        return null;
     }
 
     private String insertXml(TableContext ctx, String tableName, List<Column> columns, @Nullable Column id,
@@ -187,13 +188,62 @@ public final class MapperXmlGenerator implements Generator {
         return sb.toString();
     }
 
-    private String deleteXml(String tableName, Column id, TableContext ctx) {
-        return "    <delete id=\"deleteById\">\n"
-                + "        DELETE FROM\n"
-                + "        " + tableName + "\n"
-                + "        WHERE\n"
-                + "        " + id.getName() + " = #{" + ctx.fieldName(id) + ",jdbcType=" + ctx.jdbcType(id) + "}\n"
-                + "    </delete>\n";
+    @Override
+    public String kind() {
+        return NAME;
+    }
+
+    private void resultMap(TableContext ctx, List<Column> columns, @Nullable Column id, String poType,
+            StringBuilder sb) {
+        sb.append("    <resultMap id=\"BaseResultMap\" type=\"").append(poType).append("\">\n");
+        for (Column column : columns) {
+            boolean isId = column == id;
+            sb.append("        <")
+                    .append(isId ? "id" : "result")
+                    .append(" property=\"")
+                    .append(ctx.fieldName(column))
+                    .append("\" column=\"")
+                    .append(column.getName())
+                    .append("\" jdbcType=\"")
+                    .append(ctx.jdbcType(column))
+                    .append("\"/>\n");
+        }
+        sb.append("    </resultMap>\n\n");
+    }
+
+    private String selectXml(TableContext ctx, String tableName, String methodId, String... whereColumns) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("    <select id=\"").append(methodId).append("\" resultMap=\"BaseResultMap\">\n");
+        sb.append("        SELECT\n");
+        sb.append("        <include refid=\"BaseColumnList\"/>\n");
+        sb.append("        FROM\n");
+        sb.append("        ").append(tableName).append(" t\n");
+        sb.append("        WHERE\n");
+        for (int i = 0; i < whereColumns.length; i++) {
+            Column column = ctx.getTable().getColumn(whereColumns[i]);
+            if (column == null) {
+                throw new IllegalStateException("索引列 '" + whereColumns[i] + "' 在表 '" + ctx.getTable().getName()
+                        + "' 中不存在（DDL 索引引用了未定义的列）");
+            }
+            sb.append("        t.")
+                    .append(column.getName())
+                    .append(" = #{")
+                    .append(ctx.fieldName(column))
+                    .append(",jdbcType=")
+                    .append(ctx.jdbcType(column))
+                    .append("}");
+            sb.append(i < whereColumns.length - 1 ? "\n        AND\n" : "\n");
+        }
+        sb.append("    </select>\n");
+        return sb.toString();
+    }
+
+    private void stripTrailingComma(StringBuilder sb) {
+        int len = sb.length();
+        if (len >= 2 && sb.charAt(len - 2) == ',' && sb.charAt(len - 1) == '\n') {
+            sb.setLength(len - 2);
+            sb.append('\n');
+        }
     }
 
     private String updateXml(TableContext ctx, String tableName, List<Column> columns, Column id, String poType) {
@@ -227,62 +277,12 @@ public final class MapperXmlGenerator implements Generator {
         return sb.toString();
     }
 
-    private String selectXml(TableContext ctx, String tableName, String methodId, String... whereColumns) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("    <select id=\"").append(methodId).append("\" resultMap=\"BaseResultMap\">\n");
-        sb.append("        SELECT\n");
-        sb.append("        <include refid=\"BaseColumnList\"/>\n");
-        sb.append("        FROM\n");
-        sb.append("        ").append(tableName).append(" t\n");
-        sb.append("        WHERE\n");
-        for (int i = 0; i < whereColumns.length; i++) {
-            Column column = ctx.getTable().getColumn(whereColumns[i]);
-            if (column == null) {
-                throw new IllegalStateException("索引列 '" + whereColumns[i] + "' 在表 '" + ctx.getTable().getName()
-                        + "' 中不存在（DDL 索引引用了未定义的列）");
-            }
-            sb.append("        t.")
-                    .append(column.getName())
-                    .append(" = #{")
-                    .append(ctx.fieldName(column))
-                    .append(",jdbcType=")
-                    .append(ctx.jdbcType(column))
-                    .append("}");
-            sb.append(i < whereColumns.length - 1 ? "\n        AND\n" : "\n");
-        }
-        sb.append("    </select>\n");
-        return sb.toString();
-    }
-
-    /** 主键列（PRIMARY 索引首列；无则 null）。 */
-    private @Nullable Column idColumn(TableContext ctx) {
-        for (Index index : ctx.indexes()) {
-            if (index.isUnique() && "PRIMARY".equalsIgnoreCase(index.getName())) {
-                return ctx.getTable().getColumn(index.getColumns().get(0));
-            }
-        }
-        return null;
-    }
-
     private List<Column> visibleColumns(TableContext ctx) {
         List<Column> columns = new ArrayList<>();
         for (Column column : ctx.columns()) {
             columns.add(column);
         }
         return columns;
-    }
-
-    private void stripTrailingComma(StringBuilder sb) {
-        int len = sb.length();
-        if (len >= 2 && sb.charAt(len - 2) == ',' && sb.charAt(len - 1) == '\n') {
-            sb.setLength(len - 2);
-            sb.append('\n');
-        }
-    }
-
-    private static String simpleName(String fqn) {
-        int dot = fqn.lastIndexOf('.');
-        return dot < 0 ? fqn : fqn.substring(dot + 1);
     }
 
 }

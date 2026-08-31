@@ -19,14 +19,21 @@ public final class ApplyResult {
     private final List<IndexRename> indexRenames = new ArrayList<>();
     private final List<String> droppedTables = new ArrayList<>();
 
+    void affect(String tableName) {
+        affectedTables.add(tableName);
+    }
+
+    void columnRenamed(String tableName, String from, String to) {
+        columnRenames.add(new ColumnRename(tableName, from, to));
+    }
+
+    void dropped(String tableName) {
+        droppedTables.add(tableName);
+    }
+
     /** 受影响表（按首次变更顺序，去重）。 */
     public List<String> getAffectedTables() {
         return new ArrayList<>(affectedTables);
-    }
-
-    /** 表改名记录。 */
-    public List<TableRename> getTableRenames() {
-        return new ArrayList<>(tableRenames);
     }
 
     /** 列改名记录（表内）。 */
@@ -34,66 +41,33 @@ public final class ApplyResult {
         return new ArrayList<>(columnRenames);
     }
 
-    /** 索引改名记录（表内）。 */
-    public List<IndexRename> getIndexRenames() {
-        return new ArrayList<>(indexRenames);
-    }
-
     /** 被 drop 的表（按顺序）。 */
     public List<String> getDroppedTables() {
         return new ArrayList<>(droppedTables);
     }
 
-    void affect(String tableName) {
-        affectedTables.add(tableName);
+    /** 索引改名记录（表内）。 */
+    public List<IndexRename> getIndexRenames() {
+        return new ArrayList<>(indexRenames);
     }
 
-    void tableRenamed(String from, String to) {
-        tableRenames.add(new TableRename(from, to));
-    }
-
-    void columnRenamed(String tableName, String from, String to) {
-        columnRenames.add(new ColumnRename(tableName, from, to));
+    /** 表改名记录。 */
+    public List<TableRename> getTableRenames() {
+        return new ArrayList<>(tableRenames);
     }
 
     void indexRenamed(String tableName, String from, String to) {
         indexRenames.add(new IndexRename(tableName, from, to));
     }
 
-    void dropped(String tableName) {
-        droppedTables.add(tableName);
+    void tableRenamed(String from, String to) {
+        tableRenames.add(new TableRename(from, to));
     }
 
     @Override
     public String toString() {
         return "ApplyResult{affected=" + affectedTables + ", dropped=" + droppedTables
                 + ", renames=" + tableRenames + "}";
-    }
-
-    /** 表改名记录（{@code from → to}）。 */
-    public static final class TableRename {
-
-        private final String from;
-        private final String to;
-
-        TableRename(String from, String to) {
-            this.from = from;
-            this.to = to;
-        }
-
-        public String getFrom() {
-            return from;
-        }
-
-        public String getTo() {
-            return to;
-        }
-
-        @Override
-        public String toString() {
-            return from + " -> " + to;
-        }
-
     }
 
     /** 列改名记录（表内，{@code from → to}）。 */
@@ -109,12 +83,12 @@ public final class ApplyResult {
             this.to = to;
         }
 
-        public String getTableName() {
-            return tableName;
-        }
-
         public String getFrom() {
             return from;
+        }
+
+        public String getTableName() {
+            return tableName;
         }
 
         public String getTo() {
@@ -141,8 +115,34 @@ public final class ApplyResult {
             this.to = to;
         }
 
+        public String getFrom() {
+            return from;
+        }
+
         public String getTableName() {
             return tableName;
+        }
+
+        public String getTo() {
+            return to;
+        }
+
+        @Override
+        public String toString() {
+            return tableName + "." + from + " -> " + to;
+        }
+
+    }
+
+    /** 表改名记录（{@code from → to}）。 */
+    public static final class TableRename {
+
+        private final String from;
+        private final String to;
+
+        TableRename(String from, String to) {
+            this.from = from;
+            this.to = to;
         }
 
         public String getFrom() {
@@ -155,7 +155,7 @@ public final class ApplyResult {
 
         @Override
         public String toString() {
-            return tableName + "." + from + " -> " + to;
+            return from + " -> " + to;
         }
 
     }

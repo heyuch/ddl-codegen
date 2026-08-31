@@ -27,14 +27,6 @@ public final class SourceExpr implements LiteralTree {
         this.imports = new ArrayList<>(imports);
     }
 
-    public static SourceExpr of(String code, ParameterizedType type) {
-        return new SourceExpr(code, type.getImports());
-    }
-
-    public static SourceExpr of(String code, TypeReference type) {
-        return new SourceExpr(code, Arrays.asList(type.getImport()));
-    }
-
     public static SourceExpr of(String code, List<Object> types) {
         Set<Import> imports = new HashSet<>();
         for (Object type : types) {
@@ -48,9 +40,17 @@ public final class SourceExpr implements LiteralTree {
         return new SourceExpr(code, new ArrayList<>(imports));
     }
 
+    public static SourceExpr of(String code, ParameterizedType type) {
+        return new SourceExpr(code, type.getImports());
+    }
+
+    public static SourceExpr of(String code, TypeReference type) {
+        return new SourceExpr(code, Arrays.asList(type.getImport()));
+    }
+
     @Override
-    public Object getValue() {
-        return code;
+    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
+        return visitor.visitLiteral(this, data);
     }
 
     /**
@@ -60,18 +60,18 @@ public final class SourceExpr implements LiteralTree {
         return code;
     }
 
-    @Override
-    public Kind getKind() {
-        return Kind.STRING_LITERAL;
-    }
-
     public List<Import> getImports() {
         return new ArrayList<>(imports);
     }
 
     @Override
-    public <R, D> R accept(TreeVisitor<R, D> visitor, D data) {
-        return visitor.visitLiteral(this, data);
+    public Kind getKind() {
+        return Kind.STRING_LITERAL;
+    }
+
+    @Override
+    public Object getValue() {
+        return code;
     }
 
     @Override

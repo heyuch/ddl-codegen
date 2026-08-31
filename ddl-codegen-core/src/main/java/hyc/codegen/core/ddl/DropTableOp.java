@@ -14,15 +14,15 @@ public final class DropTableOp implements DdlOperation {
     }
 
     @Override
-    public String tableName() {
-        return tableName;
-    }
-
-    @Override
     public void apply(Schema schema, ApplyResult result) {
         schema.removeTable(tableName());
         result.affect(tableName());
         result.dropped(tableName());
+    }
+
+    @Override
+    public String tableName() {
+        return tableName;
     }
 
 }
