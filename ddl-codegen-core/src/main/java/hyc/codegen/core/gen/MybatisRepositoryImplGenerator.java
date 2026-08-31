@@ -108,7 +108,7 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
     }
 
     private Method bridgeMethod(QueryMethods.Spec spec, TableContext ctx, String targetFqn, String nullable,
-                                Bridge bridge) {
+            Bridge bridge) {
         List<String> args = new ArrayList<>();
         Method.Builder builder = Method.builder()
                 .modifiers(Modifier.PUBLIC)

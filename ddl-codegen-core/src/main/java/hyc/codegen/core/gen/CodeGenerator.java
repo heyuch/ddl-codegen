@@ -42,10 +42,11 @@ public final class CodeGenerator {
      * @param schema         应用 DDL 后的最终模型
      * @param result         语句应用结果（受影响表/改名/删除）
      * @param customHandlers 自定义注解处理器（config {@code annotations.custom} 解析出的实例）
+     * 
      * @return 变更报告
      */
     public ChangeReport generate(DdlConfig config, Schema schema, ApplyResult result,
-                                 List<DdlAnnotationHandler> customHandlers) {
+            List<DdlAnnotationHandler> customHandlers) {
         GenerationContext gctx = buildContext(config, customHandlers);
         ChangeReport report = gctx.getReport();
         Path root = config.getRoot();

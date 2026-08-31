@@ -116,7 +116,7 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
     }
 
     private Method listMethod(String methodName, String elementFqn, String fromType, String toType,
-                              String convertMethod, String listParam, String itemParam) {
+            String convertMethod, String listParam, String itemParam) {
         String elementSimple = simpleName(elementFqn);
         List<String> stmts = new ArrayList<>();
         stmts.add("java.util.List<" + elementSimple + "> list = new java.util.ArrayList<>();");

@@ -26,7 +26,7 @@ final class QueryMethodFactory {
      * @param withParam 是否给参数加 {@code @Param}（MyBatis 需要）
      */
     static Method findBy(QueryMethods.Spec spec, TableContext ctx, String returnFqn,
-                         String nullable, boolean withParam) {
+            String nullable, boolean withParam) {
         Method.Builder builder = Method.builder().name(spec.getMethodName());
 
         if (spec.isUniqueFull()) {

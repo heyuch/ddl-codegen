@@ -43,8 +43,8 @@ public final class GenerationContext {
     private final List<String> warnings = new ArrayList<>();
 
     GenerationContext(DdlConfig config, NamingService naming, TypeMapper typeMapper,
-                      AnnotationRegistry annotationRegistry, GeneratorRegistry artifactRegistry,
-                      Map<String, Generator> generators, ChangeReport report) {
+            AnnotationRegistry annotationRegistry, GeneratorRegistry artifactRegistry,
+            Map<String, Generator> generators, ChangeReport report) {
         this.config = config;
         this.projectRoot = config.getRoot();
         this.naming = naming;
