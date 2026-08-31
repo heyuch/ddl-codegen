@@ -31,6 +31,8 @@ public final class PropertiesConfigLoader implements ConfigLoader {
     /** 保留命名空间：naming.* 与 annotations.*；其余顶层键第一段 = 产物名。 */
     private static final List<String> RESERVED = Arrays.asList("naming", "annotations");
 
+    // artifact 属性 switch 分发：分支数 ≈ 属性键数（每键一 case，元素驱动）
+    @SuppressWarnings({"CyclomaticComplexity", "NPathComplexity"})
     private static void applyArtifactProperty(ArtifactConfig artifact, String prop, String value) {
         switch (prop) {
             case "generator":
@@ -100,6 +102,8 @@ public final class PropertiesConfigLoader implements ConfigLoader {
         return key.trim();
     }
 
+    // 属性收集+校验编排：分支 = 属性类型判定与缺省校验（元素驱动）
+    @SuppressWarnings({"CyclomaticComplexity", "NPathComplexity"})
     private static void loadArtifacts(Properties props, DdlConfig config, Path configFile) {
         // 产物顺序 = 配置文件出现顺序（Properties 底层是 Hashtable，迭代无序，需按文件行序收集）
         Map<String, ArtifactConfig> byName = new LinkedHashMap<>();

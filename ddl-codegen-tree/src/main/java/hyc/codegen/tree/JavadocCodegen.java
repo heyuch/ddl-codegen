@@ -29,7 +29,7 @@ import hyc.codegen.tree.utils.CodePrinter;
 
 // 扇出抑制依据（元素驱动而非逻辑混杂，见 docs/static-rules-review.md §6）：
 // DocTreeScanner 分发器，引用类型 ≈ doctree 节点类型数（20），无逻辑可抽取。
-@SuppressWarnings("ClassFanOutComplexity")
+@SuppressWarnings({"ClassFanOutComplexity", "NPathComplexity"})
 public final class JavadocCodegen extends DocTreeScanner<Boolean, CodePrinter> {
 
     public static void generate(DocTree node, CodePrinter out) {

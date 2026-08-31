@@ -17,6 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Druid 解析适配：create/alter/drop/rename 语句 → 规范化模型操作。
  */
+// 断言序列/组装：行数与语句数 ≈ 断言与期望文本行数（元素驱动）
+@SuppressWarnings({"MethodLength", "ExecutableStatementCount"})
 class DruidDdlParserTest {
 
     private final DruidDdlParser parser = new DruidDdlParser();

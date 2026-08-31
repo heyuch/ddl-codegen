@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 无 po（mapper.target=entity）、自定义产物（dto）、多 converter、一致性校验。
  */
 // 门面式集成测试：引用类型数 ≈ 被测场景涉及的生成器/模型类数（§6 元素驱动）
-@SuppressWarnings({"ClassFanOutComplexity", "ClassDataAbstractionCoupling"})
+@SuppressWarnings({"ClassFanOutComplexity", "ClassDataAbstractionCoupling", "MethodLength", "ExecutableStatementCount"})
 class ParameterizedArtifactsTest {
 
     // JUnit @TempDir 注入，语法层不保证非 null：标 @Nullable，使用点经 tempDir() 显式校验。

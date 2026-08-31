@@ -21,7 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * 比较时对两侧统一剥离注释。
  */
 // 语义比较的字符转义 normalize 逻辑：分支数 ≈ 转义字符表（每字符一分支，§6 元素驱动）；ModifiedControlVariable 为 normalize 循环固有形态（逐字符改写）
-@SuppressWarnings({"CyclomaticComplexity", "NPathComplexity", "ModifiedControlVariable", "NestedIfDepth"})
+@SuppressWarnings({"CyclomaticComplexity", "NPathComplexity", "ModifiedControlVariable", "NestedIfDepth", "JavaNCSS",
+    "MethodLength", "ExecutableStatementCount"})
 public class RoundTripSmokeTest {
 
     private static final Pattern LINE_COMMENT = Pattern.compile("//[^\\n]*");

@@ -40,7 +40,7 @@ import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
 // 扇出抑制依据（元素驱动而非逻辑混杂，见 docs/static-rules-review.md §6）：
 // 本类是 TreeScanner 分发器，每个节点类型对应一个 visit 方法，引用类型数 ≈ 节点类型数；
 // 已抽取 import 管理（ImportManager）后残余扇出仍 39，实证为结构性不可降；单方法引用类型 ≤3。
-@SuppressWarnings("ClassFanOutComplexity")
+@SuppressWarnings({"ClassFanOutComplexity", "NPathComplexity"})
 public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
     /**

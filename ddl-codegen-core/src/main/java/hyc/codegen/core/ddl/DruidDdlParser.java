@@ -45,7 +45,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 // ALTER 子项与操作类型），每种节点对应一个转换分支，单方法引用类型 ≤4；convertAlter 的
 // 分支数 ≈ ALTER 子句类型数（11 类）+ 畸形 DDL 判空跳过（SpotBugs 严格空指针修复引入），
 // 已做抽取（DruidAst）后残余指标仍结构性偏高，与 JavaTreeConverter 同属"分发器"类别。
-@SuppressWarnings({"ClassFanOutComplexity", "ClassDataAbstractionCoupling", "CyclomaticComplexity"})
+@SuppressWarnings({"ClassFanOutComplexity", "ClassDataAbstractionCoupling", "CyclomaticComplexity", "NPathComplexity",
+    "JavaNCSS", "MethodLength", "ExecutableStatementCount"})
 public final class DruidDdlParser implements DdlParser {
 
     private static final System.Logger LOG = System.getLogger(DruidDdlParser.class.getName());

@@ -21,6 +21,8 @@ import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
  * <p>
  * 从 JavaCodegen 拆出，让打印器只负责节点分发，import 策略收敛到单一职责类。
  */
+// 排序/分组逻辑：分支数 ≈ 前缀分组与隐式判定规则数（§6 元素驱动）
+@SuppressWarnings("NPathComplexity")
 final class ImportManager {
 
     private static final List<String> GROUP_PREFIXES = Arrays.asList("java");

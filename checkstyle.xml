@@ -22,7 +22,7 @@
     <module name="UniqueProperties"/>
     <!-- 限制每个源码文件行数 -->
     <module name="FileLength">
-        <property name="max" value="2000"/>
+        <property name="max" value="1500"/>
     </module>
     <!-- 限制 Java 代码每行长度 -->
     <module name="LineLength">
@@ -316,18 +316,18 @@
         </module>
         <!-- 非注释源码行数（方法/类/文件） -->
         <module name="JavaNCSS">
-            <property name="methodMaximum" value="100"/>
-            <property name="classMaximum" value="1500"/>
-            <property name="fileMaximum" value="2000"/>
+            <property name="methodMaximum" value="50"/>
+            <property name="classMaximum" value="800"/>
+            <property name="fileMaximum" value="1000"/>
             <property name="recordMaximum" value="150"/>
         </module>
         <!-- 循环复杂度 -->
         <module name="CyclomaticComplexity">
-            <property name="max" value="20"/>
+            <property name="max" value="10"/>
         </module>
         <!-- NPath 复杂度 -->
         <module name="NPathComplexity">
-            <property name="max" value="200"/>
+            <property name="max" value="100"/>
         </module>
         <!-- 类的数据抽象耦合度 -->
         <module name="ClassDataAbstractionCoupling">
@@ -443,7 +443,7 @@
         </module>
         <!-- 每个方法中最大语句数 -->
         <module name="ExecutableStatementCount">
-            <property name="max" value="60"/>
+            <property name="max" value="30"/>
         </module>
         <!-- Lambda 表达式最大行数 -->
         <module name="LambdaBodyLength">
@@ -451,12 +451,12 @@
         </module>
         <!-- 类定义的方法数量 -->
         <module name="MethodCount">
-            <property name="maxTotal" value="100"/>
-            <property name="maxPublic" value="100"/>
+            <property name="maxTotal" value="50"/>
+            <property name="maxPublic" value="50"/>
         </module>
         <!-- 每个方法最大行数 -->
         <module name="MethodLength">
-            <property name="max" value="200"/>
+            <property name="max" value="60"/>
         </module>
         <!-- 文件中外层类型数量 -->
         <module name="OuterTypeNumber"/>

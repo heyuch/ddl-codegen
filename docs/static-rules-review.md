@@ -30,17 +30,17 @@
 
 | 规则 | 当前阈值 | 评价 |
 |---|---|---|
-| MethodLength | 200 行 | 宽 |
-| MethodCount | maxTotal/maxPublic = 100 | 宽 |
-| ExecutableStatementCount | 60 条 | 宽 |
+| MethodLength | 60 行 | 已收紧（原 200） |
+| MethodCount | maxTotal/maxPublic = 50 | 已收紧（原 100） |
+| ExecutableStatementCount | 30 条 | 已收紧（原 60） |
 | ParameterNumber | 7（METHOD_DEF，忽略 override） | 标准 |
 | LambdaBodyLength | 30 行 | 标准 |
 | AnonInnerLength | 20 行 | 标准 |
 | NestedIf/For/TryDepth | 3 | 标准 |
-| CyclomaticComplexity | 20 | 宽 |
-| NPathComplexity | 200 | 宽 |
-| JavaNCSS | 方法 100 / 类 1500 / 文件 2000 | 宽 |
-| FileLength | 2000 行 | 宽 |
+| CyclomaticComplexity | 10 | 已收紧（原 20） |
+| NPathComplexity | 100 | 已收紧（原 200） |
+| JavaNCSS | 方法 50 / 类 800 / 文件 1000 | 已收紧 |
+| FileLength | 1500 行 | 已收紧（原 2000） |
 | LineLength | 120 | 宽 |
 | VariableDeclarationUsageDistance | allowedDistance=3 | 用户已确认保留：声明应靠近使用，可读性规则合理 |
 

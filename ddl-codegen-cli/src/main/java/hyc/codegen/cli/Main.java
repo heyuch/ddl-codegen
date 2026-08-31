@@ -19,7 +19,7 @@ import hyc.codegen.core.io.ChangeReport;
  * <p>
  * 扇出抑制依据（元素驱动，见 docs/static-rules-review.md §6）：薄壳类，只做参数解析与报告输出。
  */
-@SuppressWarnings("ClassFanOutComplexity")
+@SuppressWarnings({"ClassFanOutComplexity", "NPathComplexity"})
 public final class Main {
 
     private Main() {

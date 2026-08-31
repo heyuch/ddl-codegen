@@ -10,7 +10,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 // 组装型测试：引用类型数 ≈ 被测 AST 节点类型数（§6 元素驱动）；StringJoiner 先声明后逐行填充的组装模式使声明距使用远（VDUD 固有）
-@SuppressWarnings({"ClassDataAbstractionCoupling", "VariableDeclarationUsageDistance"})
+@SuppressWarnings({"ClassDataAbstractionCoupling", "VariableDeclarationUsageDistance", "MethodLength",
+    "ExecutableStatementCount"})
 public class JavaCodegenTest {
 
     @Test
