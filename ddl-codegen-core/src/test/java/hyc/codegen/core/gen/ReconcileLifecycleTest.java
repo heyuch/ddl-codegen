@@ -52,31 +52,6 @@ class ReconcileLifecycleTest {
     }
 
     /** 测试生成器：每列一个 private 字段 + 一个由表名驱动的 describe() 方法（覆盖方法级 reconcile）。 */
-    static final class TestGenerator extends AbstractJavaGenerator {
-
-        @Override
-        public String kind() {
-            return "test";
-        }
-
-        @Override
-        protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
-            for (Column column : ctx.columns()) {
-                builder.field(Variable.builder()
-                        .modifiers(Modifier.PRIVATE)
-                        .type(new TypeReference(ctx.typeOf(column)))
-                        .name(ctx.fieldName(column))
-                        .build());
-            }
-            builder.method(hyc.codegen.tree.Method.builder()
-                    .modifiers(Modifier.PUBLIC)
-                    .returnType(new TypeReference("java.lang.String"))
-                    .name("describe")
-                    .body("return \"" + ctx.getTable().getName() + "\";")
-                    .build());
-        }
-
-    }
 
     private DdlConfig config() {
         DdlConfig config = new DdlConfig();
@@ -211,6 +186,32 @@ class ReconcileLifecycleTest {
         assertTrue(oldContent.contains("public String hello()"), "旧文件应保留用户手写代码");
         assertTrue(oldContent.contains("return \"hi\";"));
         assertTrue(Files.isRegularFile(tempDir().resolve("com/test/Account.java")));
+    }
+
+    static final class TestGenerator extends AbstractJavaGenerator {
+
+        @Override
+        public String kind() {
+            return "test";
+        }
+
+        @Override
+        protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
+            for (Column column : ctx.columns()) {
+                builder.field(Variable.builder()
+                        .modifiers(Modifier.PRIVATE)
+                        .type(new TypeReference(ctx.typeOf(column)))
+                        .name(ctx.fieldName(column))
+                        .build());
+            }
+            builder.method(hyc.codegen.tree.Method.builder()
+                    .modifiers(Modifier.PUBLIC)
+                    .returnType(new TypeReference("java.lang.String"))
+                    .name("describe")
+                    .body("return \"" + ctx.getTable().getName() + "\";")
+                    .build());
+        }
+
     }
 
 }

@@ -7,5 +7,5 @@
     <suppress files="Demo\.java$" checks=".*"/>
     <!-- 测试代码适配：声明顺序/嵌套位置/javadoc 摘要风格对测试是低价值负担
          （复杂度/长度拦截已覆盖核心诉求，这些规则对测试的可维护性收益不成比例）。 -->
-    <suppress files="src/test/java/.*" checks="DeclarationOrder|InnerTypeLast|SummaryJavadoc|SingleLineJavadoc"/>
+    <suppress files="src/test/java/.*" checks="SummaryJavadoc|SingleLineJavadoc"/>
 </suppressions>

@@ -42,10 +42,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ParameterizedArtifactsTest {
 
     // JUnit @TempDir 注入，语法层不保证非 null：标 @Nullable，使用点经 tempDir() 显式校验。
-    private @Nullable DdlConfig config;
-
-    private @Nullable CodeGenerator generator;
-
     private static final String DDL = "create table user (\n"
             + "    id bigint primary key,\n"
             + "    name varchar(50) comment '用户名',\n"
@@ -55,6 +51,10 @@ class ParameterizedArtifactsTest {
     @TempDir
     @Nullable
     Path temp;
+
+    private @Nullable DdlConfig config;
+
+    private @Nullable CodeGenerator generator;
 
     /**
      * 注入目录（@TempDir 注入，标注 @Nullable，使用点经此显式校验）。
