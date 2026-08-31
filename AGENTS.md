@@ -213,6 +213,11 @@ mvn versions:display-plugin-updates
 - Place test files in `src/test/java` with same package structure
 - Test file naming: `<ClassName>Test.java`
 - Test method naming: `test<Operation>()` or `<operation>Should<ExpectedResult>()`
+- **测试可读性优先**：测试比被测代码更要求可读性（无性能顾虑 + 高频维护）；格式器管不到测试结构，由 LLM 负责
+  - **extract 辅助方法**：测试方法内大块密切关联代码（构造用例/验证结果）提取为有意义命名的方法（`config()`/`generate()`/`read()`）
+  - **参数化测试**：同一逻辑多组输入 → `@ParameterizedTest`（@CsvSource/@MethodSource）抽象重复；**流程性测试（多步骤生命周期）不适合参数化**，保持显式步骤
+  - **AAA 结构**：Arrange（构造）→ Act（执行）→ Assert（验证），三段用空行分隔（呼应 Vertical Spacing）
+  - **平衡**：extract 只针对密切关联的大块，小段保持内联直白——过度抽象反而难读
 
 ### Code Structure
 - Package-private fields are acceptable for internal classes
