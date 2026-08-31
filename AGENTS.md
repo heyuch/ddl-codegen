@@ -157,6 +157,7 @@ mvn versions:display-plugin-updates
 - **Variables**: lowerCamelCase (e.g., `module`, `pkg`, `useLombok`)
 - **Constants**: UPPER_SNAKE_CASE (e.g., `DEFAULT_TIMEOUT`)
 - **Packages**: lowercase (e.g., `hyc.codegen.core`)
+- **倾向 concise/short 命名**：在传达意图的前提下尽量短——避免冗余（`XxxManager`/`XxxHelper`/`XxxData` 后缀、与所在类/包上下文重复的词）；短作用域局部变量用短名（`ctx`/`p`/`i`）。与 Quality Bar 平衡：简洁 ≠ 无意义（禁止 `U`/`Tmp` 这类无名名），项目实证：`Codegen`（门面，非 CodeGeneratorFacade）、`Generator`（接口）
 
 ### Types and Generics
 - Use `List`, `Map`, `Set` interfaces over concrete implementations in method signatures
