@@ -13,7 +13,9 @@ public final class JavaTypes {
         throw new AssertionError("no instances");
     }
 
-    /** 把全限定名/简单名/数组类型字符串转为 tree 类型节点。 */
+    /**
+     * 把全限定名/简单名/数组类型字符串转为 tree 类型节点。
+     */
     public static Tree typeTree(String javaType) {
         if (javaType.endsWith("[]")) {
             return new ArrayType(new TypeReference(javaType.substring(0, javaType.length() - 2)));

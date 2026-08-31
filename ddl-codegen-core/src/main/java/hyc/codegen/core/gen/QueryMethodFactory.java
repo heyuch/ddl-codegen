@@ -26,14 +26,16 @@ final class QueryMethodFactory {
      * @param withParam 是否给参数加 {@code @Param}（MyBatis 需要）
      */
     static Method findBy(QueryMethods.Spec spec, TableContext ctx, String returnFqn,
-            String nullable, boolean withParam) {
+                         String nullable, boolean withParam) {
         Method.Builder builder = Method.builder().name(spec.getMethodName());
+
         if (spec.isUniqueFull()) {
             builder.annotation(Annotation.of(nullable));
             builder.returnType(new TypeReference(returnFqn));
         } else {
             builder.returnType(Types.listOf(new TypeReference(returnFqn)));
         }
+
         for (String columnName : spec.getColumns()) {
             Column column = ctx.getTable().getColumn(columnName);
             if (column == null) {
@@ -49,6 +51,7 @@ final class QueryMethodFactory {
             }
             builder.parameter(param.build());
         }
+
         return builder.build();
     }
 

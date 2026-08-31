@@ -21,7 +21,9 @@ import hyc.codegen.tree.Variable;
  */
 public final class EnumGenerator extends AbstractJavaGenerator {
 
-    /** 生成器注册名。 */
+    /**
+     * 生成器注册名。
+     */
     public static final String NAME = "enum";
 
     @Override
@@ -45,6 +47,7 @@ public final class EnumGenerator extends AbstractJavaGenerator {
             deleteIfExists(ctx, gctx);
             return;
         }
+
         for (Column column : ctx.columns()) {
             if (column.getEnumValues().isEmpty()) {
                 continue;
@@ -105,11 +108,14 @@ public final class EnumGenerator extends AbstractJavaGenerator {
                 .build());
     }
 
-    /** 枚举常量名：非标识符字符转下划线、大写；空串 → EMPTY；数字开头加前缀。 */
+    /**
+     * 枚举常量名：非标识符字符转下划线、大写；空串 → EMPTY；数字开头加前缀。
+     */
     static String constantName(String value) {
         if (value == null || value.isEmpty()) {
             return "EMPTY";
         }
+
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
@@ -119,10 +125,12 @@ public final class EnumGenerator extends AbstractJavaGenerator {
                 sb.append('_');
             }
         }
+
         String name = sb.toString().toUpperCase(Locale.ROOT);
         if (Character.isDigit(name.charAt(0))) {
             name = "_" + name;
         }
+
         return name;
     }
 

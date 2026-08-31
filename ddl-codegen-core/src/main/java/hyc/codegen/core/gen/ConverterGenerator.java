@@ -22,7 +22,9 @@ import hyc.codegen.tree.gen.Expr;
  */
 public final class ConverterGenerator extends AbstractJavaGenerator {
 
-    /** 生成器注册名。 */
+    /**
+     * 生成器注册名。
+     */
     public static final String NAME = "converter";
 
     @Override
@@ -75,7 +77,9 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
         return imports;
     }
 
-    /** 构建单对象映射方法：{@code fromType} → {@code toType}。 */
+    /**
+     * 构建单对象映射方法：{@code fromType} → {@code toType}。
+     */
     private Method toMethod(TableContext ctx, Mapping m, GenerationContext gctx) {
         String toVar = decapitalize(m.toType);
         List<String> stmts = new ArrayList<>();
@@ -112,7 +116,7 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
     }
 
     private Method listMethod(String methodName, String elementFqn, String fromType, String toType,
-            String convertMethod, String listParam, String itemParam) {
+                              String convertMethod, String listParam, String itemParam) {
         String elementSimple = simpleName(elementFqn);
         List<String> stmts = new ArrayList<>();
         stmts.add("java.util.List<" + elementSimple + "> list = new java.util.ArrayList<>();");
@@ -154,7 +158,9 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
         return Character.toLowerCase(s.charAt(0)) + s.substring(1);
     }
 
-    /** 单对象映射方向信息（toEnums/fromEnums：目标/源端是否枚举类视图）。 */
+    /**
+     * 单对象映射方向信息（toEnums/fromEnums：目标/源端是否枚举类视图）。
+     */
     private static final class Mapping {
 
         final String methodName;

@@ -43,8 +43,8 @@ public final class GenerationContext {
     private final List<String> warnings = new ArrayList<>();
 
     GenerationContext(DdlConfig config, NamingService naming, TypeMapper typeMapper,
-            AnnotationRegistry annotationRegistry, GeneratorRegistry artifactRegistry,
-            Map<String, Generator> generators, ChangeReport report) {
+                      AnnotationRegistry annotationRegistry, GeneratorRegistry artifactRegistry,
+                      Map<String, Generator> generators, ChangeReport report) {
         this.config = config;
         this.projectRoot = config.getRoot();
         this.naming = naming;
@@ -59,7 +59,9 @@ public final class GenerationContext {
         return config;
     }
 
-    /** 项目根（config 所在目录）。 */
+    /**
+     * 项目根（config 所在目录）。
+     */
     public Path getProjectRoot() {
         return projectRoot;
     }
@@ -84,7 +86,9 @@ public final class GenerationContext {
         return report;
     }
 
-    /** 按产物名取配置；未配置时明确报错（生成流程的配置契约）。 */
+    /**
+     * 按产物名取配置；未配置时明确报错（生成流程的配置契约）。
+     */
     private ArtifactConfig requireArtifact(String artifactName) {
         ArtifactConfig artifactConfig = config.artifact(artifactName);
         if (artifactConfig == null) {
@@ -93,7 +97,9 @@ public final class GenerationContext {
         return artifactConfig;
     }
 
-    /** 产物对应的生成器实例（config.generator → 注册表）。 */
+    /**
+     * 产物对应的生成器实例（config.generator → 注册表）。
+     */
     public Generator generatorFor(String artifactName) {
         ArtifactConfig artifactConfig = requireArtifact(artifactName);
         String generatorName = artifactConfig.getGenerator();
@@ -107,7 +113,9 @@ public final class GenerationContext {
         return generator;
     }
 
-    /** enum 产物包（enums 特性开启时：唯一 enum 生成器产物，缺省/多实例报错）。 */
+    /**
+     * enum 产物包（enums 特性开启时：唯一 enum 生成器产物，缺省/多实例报错）。
+     */
     public @Nullable String enumPackageFor(String artifactName) {
         if (!usesEnums(artifactName)) {
             return null;
@@ -125,13 +133,17 @@ public final class GenerationContext {
         return matches.get(0).getPkg();
     }
 
-    /** 产物 enums 特性开关。 */
+    /**
+     * 产物 enums 特性开关。
+     */
     public boolean usesEnums(String artifactName) {
         ArtifactConfig artifactConfig = config.artifact(artifactName);
         return artifactConfig != null && Boolean.parseBoolean(artifactConfig.getOption("enums"));
     }
 
-    /** 产物类的全限定名（包 + 类名；未启用报错）。 */
+    /**
+     * 产物类的全限定名（包 + 类名；未启用报错）。
+     */
     public String artifactFqn(String tableName, String artifactName) {
         ArtifactConfig artifactConfig = requireArtifact(artifactName);
         String pkg = artifactConfig.getPkg();
@@ -176,7 +188,9 @@ public final class GenerationContext {
         return owner.getOption(refKey);
     }
 
-    /** enum 产物包（唯一 enum 实例；未配置返回 null，多实例报错）。 */
+    /**
+     * enum 产物包（唯一 enum 实例；未配置返回 null，多实例报错）。
+     */
     public @Nullable String enumPackage() {
         List<ArtifactConfig> matches = new ArrayList<>();
         for (ArtifactConfig a : config.getArtifacts().values()) {
@@ -190,7 +204,9 @@ public final class GenerationContext {
         throw new IllegalStateException("enum 生成器实例数 = " + matches.size() + "（应唯一，多个时需显式配置引用）");
     }
 
-    /** 产物引用 → FQN（查询契约：路由到引用产物的生成器 className）。 */
+    /**
+     * 产物引用 → FQN（查询契约：路由到引用产物的生成器 className）。
+     */
     public String refFqn(String tableName, ArtifactConfig referenced) {
         TableContext refCtx = tableContext(syntheticTable(tableName, referenced), referenced.getName());
         return referenced.getPkg() + "." + generatorFor(referenced.getName()).className(refCtx);
@@ -200,23 +216,31 @@ public final class GenerationContext {
         return new Table(tableName, null);
     }
 
-    /** 按产物配置创建表上下文。 */
+    /**
+     * 按产物配置创建表上下文。
+     */
     public TableContext tableContext(Table table, String artifactName) {
         ArtifactConfig artifactConfig = requireArtifact(artifactName);
         return new TableContext(table, artifactConfig, this);
     }
 
-    /** 记一条警告（不中断生成）。 */
+    /**
+     * 记一条警告（不中断生成）。
+     */
     public void warning(String message) {
         warnings.add(message);
     }
 
-    /** 本次执行的全部警告。 */
+    /**
+     * 本次执行的全部警告。
+     */
     public List<String> getWarnings() {
         return new ArrayList<>(warnings);
     }
 
-    /** 构造器：由 {@link CodeGenerator} 使用。 */
+    /**
+     * 构造器：由 {@link CodeGenerator} 使用。
+     */
     public static Builder builder() {
         return new Builder();
     }

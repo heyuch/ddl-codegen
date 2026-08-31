@@ -11,19 +11,29 @@ import hyc.codegen.core.model.Column;
  */
 public interface Generator {
 
-    /** 生成器注册名（config {@code generator=<名>} 引用）。 */
+    /**
+     * 生成器注册名（config {@code generator=<名>} 引用）。
+     */
     String kind();
 
-    /** 生成/更新该表该产物的文件。 */
+    /**
+     * 生成/更新该表该产物的文件。
+     */
     void generate(TableContext ctx, GenerationContext gctx);
 
-    /** 查询契约：类名（文件路径与跨产物引用使用）。 */
+    /**
+     * 查询契约：类名（文件路径与跨产物引用使用）。
+     */
     String className(TableContext ctx);
 
-    /** 查询契约：列名 → 字段名（本生成器视角，特殊命名逻辑在此实现）。 */
+    /**
+     * 查询契约：列名 → 字段名（本生成器视角，特殊命名逻辑在此实现）。
+     */
     String fieldName(Column column, TableContext ctx);
 
-    /** 查询契约：列 → 成员类型（本生成器视角，特性/特殊类型逻辑在此实现）。 */
+    /**
+     * 查询契约：列 → 成员类型（本生成器视角，特性/特殊类型逻辑在此实现）。
+     */
     String fieldType(Column column, TableContext ctx);
 
 }

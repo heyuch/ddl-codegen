@@ -5,6 +5,7 @@ import java.util.List;
 
 import hyc.codegen.core.model.Index;
 import hyc.codegen.core.naming.NamingService;
+import lombok.Data;
 
 /**
  * 索引 → 查询方法的拆分规则（DESIGN §12）：按最左前缀逐级拆分；
@@ -16,19 +17,26 @@ public final class QueryMethods {
         throw new AssertionError("no instances");
     }
 
-    /** 索引 → 前缀规格（1..n 列，逐级拆分）。 */
+    /**
+     * 索引 → 前缀规格（1..n 列，逐级拆分）。
+     */
     public static List<Spec> of(Index index, NamingService naming) {
         List<Spec> specs = new ArrayList<>();
+
         List<String> columns = index.getColumns();
         for (int i = 1; i <= columns.size(); i++) {
             List<String> prefix = new ArrayList<>(columns.subList(0, i));
             boolean uniqueFull = index.isUnique() && i == columns.size();
             specs.add(new Spec(naming.indexMethodName(prefix), prefix, uniqueFull));
         }
+
         return specs;
     }
 
-    /** 单个查询方法规格。 */
+    /**
+     * 单个查询方法规格。
+     */
+    @Data
     public static final class Spec {
 
         private final String methodName;
@@ -39,21 +47,12 @@ public final class QueryMethods {
 
         Spec(String methodName, List<String> columns, boolean uniqueFull) {
             this.methodName = methodName;
-            this.columns = columns;
+            this.columns = new ArrayList<>(columns);
             this.uniqueFull = uniqueFull;
-        }
-
-        public String getMethodName() {
-            return methodName;
         }
 
         public List<String> getColumns() {
             return new ArrayList<>(columns);
-        }
-
-        /** 唯一键且覆盖全部索引列 → 最多一条（@Nullable 单值返回）。 */
-        public boolean isUniqueFull() {
-            return uniqueFull;
         }
 
     }

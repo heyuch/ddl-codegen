@@ -20,10 +20,14 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 public final class MapperGenerator extends AbstractJavaGenerator {
 
-    /** 生成器注册名。 */
+    /**
+     * 生成器注册名。
+     */
     public static final String NAME = "mybatisMapper";
 
-    /** {@code @Param} 注解全限定名。 */
+    /**
+     * {@code @Param} 注解全限定名。
+     */
     private static final String PARAM = "org.apache.ibatis.annotations.Param";
 
     @Override
@@ -47,14 +51,15 @@ public final class MapperGenerator extends AbstractJavaGenerator {
         }
 
         for (Index index : ctx.indexes()) {
-
             for (QueryMethods.Spec spec : QueryMethods.of(index, gctx.getNaming())) {
                 builder.method(findByMethod(spec, poType, nullable, ctx));
             }
         }
     }
 
-    /** 主键列：PRIMARY KEY 索引首列；无主键返回 null（不生成按 id 删除）。 */
+    /**
+     * 主键列：PRIMARY KEY 索引首列；无主键返回 null（不生成按 id 删除）。
+     */
     static @Nullable Column primaryKey(TableContext ctx) {
         for (Index index : ctx.indexes()) {
             if (index.isUnique() && "PRIMARY".equalsIgnoreCase(index.getName())) {
@@ -100,12 +105,14 @@ public final class MapperGenerator extends AbstractJavaGenerator {
 
     private Method findByMethod(QueryMethods.Spec spec, String poType, String nullable, TableContext ctx) {
         Method.Builder builder = Method.builder().name(spec.getMethodName());
+
         if (spec.isUniqueFull()) {
             builder.annotation(Annotation.of(nullable));
             builder.returnType(new hyc.codegen.tree.TypeReference(poType));
         } else {
             builder.returnType(Types.listOf(new hyc.codegen.tree.TypeReference(poType)));
         }
+
         for (String columnName : spec.getColumns()) {
             Column column = ctx.getTable().getColumn(columnName);
             if (column == null) {
@@ -119,6 +126,7 @@ public final class MapperGenerator extends AbstractJavaGenerator {
                     .name(fieldName)
                     .build());
         }
+
         return builder.build();
     }
 

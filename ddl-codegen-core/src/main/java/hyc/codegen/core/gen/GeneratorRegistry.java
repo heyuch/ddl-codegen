@@ -13,7 +13,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 public final class GeneratorRegistry {
 
-    /** kind#table → 描述对象。 */
+    /**
+     * kind#table → 描述对象。
+     */
     private final Map<String, Object> entries = new LinkedHashMap<>();
 
     /**
@@ -27,7 +29,9 @@ public final class GeneratorRegistry {
         entries.put(key(kind, table), info);
     }
 
-    /** 按类型查询描述。 */
+    /**
+     * 按类型查询描述。
+     */
     public @Nullable <T> T lookup(String kind, String table, Class<T> type) {
         Object info = entries.get(key(kind, table));
         return type.isInstance(info) ? type.cast(info) : null;

@@ -10,7 +10,9 @@ import hyc.codegen.tree.Class;
  */
 public final class RepositoryGenerator extends AbstractJavaGenerator {
 
-    /** 生成器注册名。 */
+    /**
+     * 生成器注册名。
+     */
     public static final String NAME = "repository";
 
     @Override

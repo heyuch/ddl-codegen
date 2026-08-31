@@ -22,7 +22,9 @@ import hyc.codegen.tree.Variable;
  */
 public final class PojoGenerator extends AbstractJavaGenerator {
 
-    /** 生成器注册名。 */
+    /**
+     * 生成器注册名。
+     */
     public static final String NAME = "pojo";
 
     private static final String JSR303 = "javax.validation.constraints";
@@ -35,12 +37,15 @@ public final class PojoGenerator extends AbstractJavaGenerator {
     @Override
     protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
         applyClassFeatures(builder, ctx);
+
         for (Column column : ctx.columns()) {
             builder.field(fieldFor(column, ctx));
         }
     }
 
-    /** 成员类型视图（pojo 内部特性）：{@code type=true} 时 @type 优先；{@code enums=true} 时 enum 列 → 枚举类；否则 SQL 映射。 */
+    /**
+     * 成员类型视图（pojo 内部特性）：{@code type=true} 时 @type 优先；{@code enums=true} 时 enum 列 → 枚举类；否则 SQL 映射。
+     */
     @Override
     public String fieldType(Column column, TableContext ctx) {
         if (option(ctx, "type")) {
@@ -59,7 +64,9 @@ public final class PojoGenerator extends AbstractJavaGenerator {
         return Boolean.parseBoolean(ctx.getArtifactConfig().getOption(key));
     }
 
-    /** 类级特性：lombok 注解集、Serializable。 */
+    /**
+     * 类级特性：lombok 注解集、Serializable。
+     */
     private void applyClassFeatures(Class.Builder builder, TableContext ctx) {
         if (option(ctx, "lombok")) {
             builder.annotation(Annotation.of("lombok.Data"));
@@ -67,6 +74,7 @@ public final class PojoGenerator extends AbstractJavaGenerator {
             builder.annotation(Annotation.of("lombok.NoArgsConstructor"));
             builder.annotation(Annotation.of("lombok.AllArgsConstructor"));
         }
+
         if (option(ctx, "serializable")) {
             builder.implement(new TypeReference("java.io.Serializable"));
             builder.field(Variable.builder()
@@ -78,7 +86,9 @@ public final class PojoGenerator extends AbstractJavaGenerator {
         }
     }
 
-    /** 单字段：类型走查询契约（type/enums 视图在基类 fieldType），字段级特性加注解。 */
+    /**
+     * 单字段：类型走查询契约（type/enums 视图在基类 fieldType），字段级特性加注解。
+     */
     private Variable fieldFor(Column column, TableContext ctx) {
         Variable.Builder builder = Variable.builder()
                 .modifiers(Modifier.PRIVATE)
@@ -88,7 +98,9 @@ public final class PojoGenerator extends AbstractJavaGenerator {
         return builder.build();
     }
 
-    /** 字段级特性：jsr303 约束、jsr305 空值注解。 */
+    /**
+     * 字段级特性：jsr303 约束、jsr305 空值注解。
+     */
     private void applyFieldAnnotations(Variable.Builder builder, Column column, TableContext ctx) {
         if (option(ctx, "jsr303")) {
             if (!column.isNullable()) {
@@ -104,6 +116,7 @@ public final class PojoGenerator extends AbstractJavaGenerator {
                         "integer = " + integer + ", fraction = " + column.getScale()));
             }
         }
+
         if (option(ctx, "jsr305") && column.isNullable()) {
             builder.annotation(Annotation.of(ctx.getNullableAnnotation()));
         }

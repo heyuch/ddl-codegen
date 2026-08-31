@@ -42,11 +42,10 @@ public final class CodeGenerator {
      * @param schema         应用 DDL 后的最终模型
      * @param result         语句应用结果（受影响表/改名/删除）
      * @param customHandlers 自定义注解处理器（config {@code annotations.custom} 解析出的实例）
-     * 
      * @return 变更报告
      */
     public ChangeReport generate(DdlConfig config, Schema schema, ApplyResult result,
-            List<DdlAnnotationHandler> customHandlers) {
+                                 List<DdlAnnotationHandler> customHandlers) {
         GenerationContext gctx = buildContext(config, customHandlers);
         ChangeReport report = gctx.getReport();
         Path root = config.getRoot();
@@ -67,7 +66,9 @@ public final class CodeGenerator {
         return report;
     }
 
-    /** 构建全局上下文：共享服务（命名/类型映射）、注解注册表、生成器、变更报告。 */
+    /**
+     * 构建全局上下文：共享服务（命名/类型映射）、注解注册表、生成器、变更报告。
+     */
     private GenerationContext buildContext(DdlConfig config, List<DdlAnnotationHandler> customHandlers) {
         NamingService naming = new NamingService(config);
         TypeMapper typeMapper = new TypeMapper(customHandlers);
@@ -87,17 +88,22 @@ public final class CodeGenerator {
         for (Generator generator : generators.values()) {
             gb.generator(generator);
         }
+
         return gb.build();
     }
 
-    /** DROP：删除被删表在所有启用 artifact 路径下的产物文件。 */
+    /**
+     * DROP：删除被删表在所有启用 artifact 路径下的产物文件。
+     */
     private void handleDrops(Path root, ApplyResult result, GenerationContext gctx) {
         for (String tableName : result.getDroppedTables()) {
             deleteArtifacts(root, tableName, gctx);
         }
     }
 
-    /** 为 result 指定的受影响表逐表 × 逐 artifact 生成（受影响表含已删除表，跳过；校验表在模型中）。 */
+    /**
+     * 为 result 指定的受影响表逐表 × 逐 artifact 生成（受影响表含已删除表，跳过；校验表在模型中）。
+     */
     private void generateTables(Schema schema, ApplyResult result, GenerationContext gctx) {
         List<String> dropped = result.getDroppedTables();
         for (String tableName : result.getAffectedTables()) {
@@ -113,7 +119,9 @@ public final class CodeGenerator {
         }
     }
 
-    /** 任一 artifact 的类名因表改名而变化（true → 旧文件与新旧文件不同名，需保留提示迁移）。 */
+    /**
+     * 任一 artifact 的类名因表改名而变化（true → 旧文件与新旧文件不同名，需保留提示迁移）。
+     */
     private boolean classNameChanged(ApplyResult.TableRename rename, NamingService naming, DdlConfig config) {
         for (String artifactName : config.artifactNames()) {
             if (!naming.artifactClassName(rename.getFrom(), artifactName)
@@ -124,7 +132,9 @@ public final class CodeGenerator {
         return false;
     }
 
-    /** RENAME 处理：保留旧表名产物文件（用户手写代码），新表名走正常生成；类名变化时提示迁移。 */
+    /**
+     * RENAME 处理：保留旧表名产物文件（用户手写代码），新表名走正常生成；类名变化时提示迁移。
+     */
     private void handleRenames(ApplyResult result, NamingService naming, DdlConfig config, GenerationContext gctx) {
         for (ApplyResult.TableRename rename : result.getTableRenames()) {
             if (classNameChanged(rename, naming, config)) {
@@ -134,7 +144,9 @@ public final class CodeGenerator {
         }
     }
 
-    /** 对一张表执行全部启用的产物生成器（产物名 → config.generator → 注册生成器）。 */
+    /**
+     * 对一张表执行全部启用的产物生成器（产物名 → config.generator → 注册生成器）。
+     */
     private void generateTable(Table table, GenerationContext gctx) {
         for (String name : gctx.getConfig().artifactNames()) {
             ArtifactConfig artifactConfig = gctx.getConfig().artifact(name);
@@ -156,7 +168,9 @@ public final class CodeGenerator {
         }
     }
 
-    /** 删除一张表在所有启用 artifact 路径下的文件（Java 类走 package 路径，XML 走资源路径）。 */
+    /**
+     * 删除一张表在所有启用 artifact 路径下的文件（Java 类走 package 路径，XML 走资源路径）。
+     */
     private void deleteArtifacts(Path root, String tableName, GenerationContext gctx) {
         for (String name : gctx.getConfig().artifactNames()) {
             ArtifactConfig artifactConfig = gctx.getConfig().artifact(name);
@@ -192,7 +206,9 @@ public final class CodeGenerator {
         }
     }
 
-    /** 仅用于路径推导的表壳（删除/改名场景不需要真实列）。 */
+    /**
+     * 仅用于路径推导的表壳（删除/改名场景不需要真实列）。
+     */
     private Table syntheticTable(String tableName) {
         return new Table(tableName, null);
     }
