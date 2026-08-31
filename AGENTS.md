@@ -218,6 +218,12 @@ mvn versions:display-plugin-updates
 - Keep classes focused: single responsibility principle
 - Limit method length; extract helper methods when needed
 
+### Vertical Spacing（空行规则）
+
+- **垂直距离**：不相关的概念用**单个空行**分隔——方法体内不同逻辑步骤/段落之间（含 if/for 语句块之间，格式器不插入）
+- **垂直密度**：紧密相关的行保持紧凑无空行（同一逻辑步骤：变量声明与其使用、if 与其体）
+- **禁止**：多个连续空行；`{` 后或 `}` 前的空行
+
 ## Quality Bar（开源项目标准）
 
 - 代码按开源项目标准编写：命名传达意图（不用 `U`/`Tmp` 这类无名工具类名）、类小而聚焦、包按职责组织、公共 API 最小化（不暴露无需暴露的）
