@@ -1,5 +1,7 @@
 # DDL Codegen
 
+> **⚠️ WIP — 开发中**：本项目处于活跃开发阶段，API / 配置键 / 生成物形态可能变动，暂不适用于生产。
+
 MySQL DDL（create/alter/drop）驱动的 Java 代码生成框架：手写 schema 即唯一事实来源，
 `create table` 生成代码、`alter table` 增量更新（只动生成代码、保留手写改动）、`drop table` 删除代码。
 
@@ -158,14 +160,14 @@ annotations.nullable=org.checkerframework.checker.nullness.qual.Nullable
 
 | SPI | 位置 | 用途 |
 |---|---|---|
-| `Generator` | `hyc.codegen.core.gen` | 自定义 artifact（继承 `AbstractJavaGenerator` 只写成员构建） |
-| `GeneratorInterceptor` | `hyc.codegen.core.interceptor` | AST 装饰（内置 lombok/jsr303；`artifacts.X.use` 引用） |
+| `Generator` | `hyc.codegen.core.gen` | 唯一生成器扩展点（继承 `AbstractJavaGenerator` 只写成员构建） |
 | `DdlAnnotationHandler` | `hyc.codegen.core.annotation` | DDL 注解解析 + 类型钩子（`annotations.custom` 注册） |
+| 可替换 SPI | — | `DdlParser` / `ConfigLoader` / `TableNameStrategy`（默认实现可替换） |
 
 ## 模块
 
 ```
 ddl-codegen-tree   # 通用 Java 源码解析/生成工具（可修改 AST，基于 jdk.compiler，零依赖）
-ddl-codegen-core   # DDL 代码生成框架（模型/解析/命名/类型/生成器/拦截器/编排）
+ddl-codegen-core   # DDL 代码生成框架（模型/解析/命名/类型/生成器/编排）
 ddl-codegen-cli    # 命令行入口（fat jar）
 ```
