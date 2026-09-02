@@ -1,0 +1,25 @@
+name: CI
+
+# 推送/PR 触发全量门禁：编译 + 全部静态检查（spotless/checkstyle/error-prone/
+# checkerframework/spotbugs/jacoco）+ 测试。验证命令与本地一致：mvn clean test。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: maven
+
+      # 全量门禁 = 无 profile 的 mvn clean test（含全部静态检查与 122+ 测试）
+      - name: Build & verify
+        run: mvn clean test
