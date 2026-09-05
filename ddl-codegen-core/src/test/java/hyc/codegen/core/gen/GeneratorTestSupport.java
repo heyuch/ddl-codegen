@@ -178,6 +178,40 @@ public final class GeneratorTestSupport {
         return generate(config, new Schema(), ddl);
     }
 
+    /**
+     * 运行 case 的 DDL input（{@code fixtures/gen/<case>/input/*.sql}，按文件名序、共享 Schema）后做
+     * 严格 golden 比对。无 input 时等价 {@link #assertGolden}。
+     */
+    public void generateAndAssert(DdlConfig config, String caseName) throws Exception {
+        runInputs(config, caseName);
+        assertGolden(caseName);
+    }
+
+    /** 同 {@link #generateAndAssert}，但用子集断言（仅比对清单内期望文件）。 */
+    public void generateAndAssertSubset(DdlConfig config, String caseName, String... rels) throws Exception {
+        runInputs(config, caseName);
+        assertGoldenSubset(caseName, rels);
+    }
+
+    private Path inputDir(String caseName) {
+        Path source = Paths.get("src/test/resources", FIXTURES_BASE + caseName + "/input");
+        if (Files.isDirectory(source) || UPDATE) {
+            return source;
+        }
+        ClassLoader loader = getClass().getClassLoader();
+        if (loader != null) {
+            java.net.URL url = loader.getResource(FIXTURES_BASE + caseName + "/input");
+            if (url != null) {
+                try {
+                    return Paths.get(url.toURI());
+                } catch (URISyntaxException e) {
+                    return source;
+                }
+            }
+        }
+        return source;
+    }
+
     /** 新配置（root 已设，module 为空，产物按需 add）。 */
     public DdlConfig newConfig() {
         DdlConfig config = new DdlConfig();
@@ -190,6 +224,19 @@ public final class GeneratorTestSupport {
         Path path = root.resolve(relative);
         assertTrue(Files.isRegularFile(path), "文件不存在: " + relative);
         return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    }
+
+    /** 按文件名序执行 case 的 DDL input 文件（create/alter 同 Schema）。 */
+    private void runInputs(DdlConfig config, String caseName) throws Exception {
+        Path inputBase = inputDir(caseName);
+        if (!Files.isDirectory(inputBase)) {
+            return;
+        }
+        Schema schema = new Schema();
+        for (Path file : listFiles(inputBase)) {
+            String ddl = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+            generate(config, schema, ddl);
+        }
     }
 
     /** 带常见表命名策略的配置（t_ 前缀剥除 + 分表后缀剥除）。 */

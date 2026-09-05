@@ -13,7 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * ConverterGenerator golden 契约测试：枚举一端视图桥接（nullSafe fromCode/getCode）与纯标量直拷
- * 双向 toX/toXList 整文件。期望产物见 {@code fixtures/gen/converter/**}。
+ * 双向 toX/toXList 整文件。DDL 输入见 {@code fixtures/gen/converter/<case>/input}，
+ * 期望产物见同 case 的 {@code expected}。
  */
 class ConverterGeneratorTest {
 
@@ -38,13 +39,8 @@ class ConverterGeneratorTest {
     @Test
     void enumBridgeBothDirections() throws Exception {
         GeneratorTestSupport support = support();
-        DdlConfig config = converterConfig(support);
-        support.generate(config, "create table t_user (\n"
-                + "    id bigint not null auto_increment comment '主键',\n"
-                + "    status tinyint unsigned not null comment '状态 1=初始(INIT) 2=活跃(ACTIVE) @enum:Status',\n"
-                + "    name varchar(50) comment '用户名',\n"
-                + "    primary key (id))");
-        support.assertGoldenSubset("converter/enum-bridge", "com/demo/converter/UserConverter.java");
+        support.generateAndAssertSubset(converterConfig(support), "converter/enum-bridge",
+                "com/demo/converter/UserConverter.java");
 
         String converter = support.readGenerated("com/demo/converter/UserConverter.java");
         // 标量(po) → 枚举(entity)：nullSafe + fromCode；枚举 → 标量：nullSafe + getCode()
@@ -62,12 +58,8 @@ class ConverterGeneratorTest {
     @Test
     void plainColumnsCopiedDirectly() throws Exception {
         GeneratorTestSupport support = support();
-        support.generate(converterConfig(support), "create table t_user (\n"
-                + "    id bigint not null auto_increment comment '主键',\n"
-                + "    name varchar(50) not null comment '用户名',\n"
-                + "    note varchar(100) comment '备注',\n"
-                + "    primary key (id))");
-        support.assertGoldenSubset("converter/plain", "com/demo/converter/UserConverter.java");
+        support.generateAndAssertSubset(converterConfig(support), "converter/plain",
+                "com/demo/converter/UserConverter.java");
 
         String converter = support.readGenerated("com/demo/converter/UserConverter.java");
         assertTrue(converter.contains("user.setName(source.getName());"), converter);

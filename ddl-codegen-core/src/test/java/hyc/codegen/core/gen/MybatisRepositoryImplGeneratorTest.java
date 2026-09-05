@@ -14,8 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * MybatisRepositoryImplGenerator golden 契约测试：{@code di=field}（@Resource）与
- * {@code di=constructor} 两注入形态、converter 桥接（含 List 转换）、converter 缺失/不一致错误路径。
- * 期望产物见 {@code fixtures/gen/repository-impl/**}。
+ * {@code di=constructor} 两注入形态、converter 桥接、converter 缺失/不一致错误路径。
+ * DDL 输入见 {@code fixtures/gen/repository-impl/<case>/input}，期望产物见同 case 的 {@code expected}。
  */
 class MybatisRepositoryImplGeneratorTest {
 
@@ -26,8 +26,7 @@ class MybatisRepositoryImplGeneratorTest {
     @Test
     void constructorDiInjectsMapperAndConverter() throws Exception {
         GeneratorTestSupport support = support();
-        support.generate(fullConfig(support, "constructor"), ddl());
-        support.assertGoldenSubset("repository-impl/constructor-di",
+        support.generateAndAssertSubset(fullConfig(support, "constructor"), "repository-impl/constructor-di",
                 "com/demo/repository/impl/UserRepositoryImpl.java");
 
         String impl = support.readGenerated("com/demo/repository/impl/UserRepositoryImpl.java");
@@ -49,7 +48,10 @@ class MybatisRepositoryImplGeneratorTest {
         // 无 converter 产物、mapper.target(po) != impl.target(entity) → 报错
         support.addArtifact(config, "repositoryImpl", "mybatisRepositoryImpl",
                 "com.demo.repository.impl", "RepositoryImpl").setTarget("entity");
-        assertThrows(IllegalStateException.class, () -> support.generate(config, ddl()));
+        assertThrows(IllegalStateException.class, () -> support.generate(config,
+                "create table t_user (id bigint not null auto_increment comment '主键',"
+                        + " name varchar(50) not null comment '用户名', primary key (id),"
+                        + " unique key uk_name (name))"));
     }
 
     @Test
@@ -58,24 +60,16 @@ class MybatisRepositoryImplGeneratorTest {
         DdlConfig config = fullConfig(support, "field");
         // converter.target 与 impl.target(entity) 不一致 → 校验报错
         support.artifact(config, "entityConverter").setTarget("po");
-        assertThrows(IllegalStateException.class, () -> support.generate(config, ddl()));
-    }
-
-    private String ddl() {
-        return "create table t_user (\n"
-                + "    id bigint not null auto_increment comment '主键',\n"
-                + "    name varchar(50) not null comment '用户名',\n"
-                + "    status tinyint unsigned not null comment '状态 1=初始(INIT) 2=活跃(ACTIVE) @enum:Status',\n"
-                + "    primary key (id),\n"
-                + "    unique key uk_name (name)\n"
-                + ") comment '用户表'";
+        assertThrows(IllegalStateException.class, () -> support.generate(config,
+                "create table t_user (id bigint not null auto_increment comment '主键',"
+                        + " name varchar(50) not null comment '用户名', primary key (id),"
+                        + " unique key uk_name (name))"));
     }
 
     @Test
     void fieldDiBridgeWithConverter() throws Exception {
         GeneratorTestSupport support = support();
-        support.generate(fullConfig(support, "field"), ddl());
-        support.assertGoldenSubset("repository-impl/field-di",
+        support.generateAndAssertSubset(fullConfig(support, "field"), "repository-impl/field-di",
                 "com/demo/repository/impl/UserRepositoryImpl.java");
 
         String impl = support.readGenerated("com/demo/repository/impl/UserRepositoryImpl.java");

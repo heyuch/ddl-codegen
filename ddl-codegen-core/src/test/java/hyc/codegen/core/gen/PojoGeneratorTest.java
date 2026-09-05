@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * PojoGenerator golden 契约测试：特性选项单开/组合（lombok/serializable/jsr303/jsr305/type）、
- * `@Nullable` 定制值、保留字列名、enums 视图。期望产物见 {@code fixtures/gen/pojo/**}。
+ * PojoGenerator golden 契约测试：特性选项单开/组合（lombok/serializable/jsr303/jsr305/type）与
+ * enums 视图。DDL 输入见 {@code fixtures/gen/pojo/<case>/input}，期望产物见同 case 的 {@code expected}。
  */
 class PojoGeneratorTest {
 
@@ -33,12 +33,7 @@ class PojoGeneratorTest {
         ArtifactConfig entity = support.addArtifact(config, "entity", "pojo", "com.demo.entity", "");
         entity.putOption("enums", "true");
         support.addArtifact(config, "enum", "enum", "com.demo.enums", "");
-        support.generate(config, "create table t_user (\n"
-                + "    id bigint not null auto_increment comment '主键',\n"
-                + "    status tinyint unsigned not null comment '状态 1=初始(INIT) @enum:Status',\n"
-                + "    type varchar(20) not null comment '类型 NORMAL=普通 @enum:Type',\n"
-                + "    primary key (id))");
-        support.assertGoldenSubset("pojo/enums-view", "com/demo/entity/User.java");
+        support.generateAndAssertSubset(config, "pojo/enums-view", "com/demo/entity/User.java");
 
         String entityText = support.readGenerated("com/demo/entity/User.java");
         assertTrue(entityText.contains("private Status status;"), entityText);
@@ -55,8 +50,7 @@ class PojoGeneratorTest {
         entity.putOption("serializable", "true");
         entity.putOption("jsr303", "true");
         entity.putOption("jsr305", "true");
-        support.generate(config, sampleDdl());
-        support.assertGolden("pojo/lombok-jsr-all");
+        support.generateAndAssert(config, "pojo/lombok-jsr-all");
 
         String entityText = support.readGenerated("com/demo/entity/User.java");
         assertTrue(entityText.contains("@Data"), entityText);
@@ -75,19 +69,7 @@ class PojoGeneratorTest {
     @Test
     void plainNoOptions() throws Exception {
         GeneratorTestSupport support = support();
-        support.generate(plainConfig(support), sampleDdl());
-        support.assertGolden("pojo/plain");
-    }
-
-    private String sampleDdl() {
-        return "create table t_user (\n"
-                + "    id bigint not null auto_increment comment '主键',\n"
-                + "    name varchar(50) not null comment '用户名',\n"
-                + "    nick varchar(50) comment '昵称',\n"
-                + "    amount decimal(10,2) not null comment '金额',\n"
-                + "    score tinyint(1) not null comment '是否有效',\n"
-                + "    created_at datetime comment '创建时间',\n"
-                + "    primary key (id))";
+        support.generateAndAssert(plainConfig(support), "pojo/plain");
     }
 
     private GeneratorTestSupport support() {
@@ -99,11 +81,7 @@ class PojoGeneratorTest {
         GeneratorTestSupport support = support();
         DdlConfig config = plainConfig(support);
         support.artifact(config, "entity").putOption("type", "true");
-        support.generate(config, "create table t_user (\n"
-                + "    id bigint not null auto_increment comment '主键',\n"
-                + "    amount varchar(30) not null comment '金额 @type:java.math.BigDecimal',\n"
-                + "    primary key (id))");
-        support.assertGolden("pojo/type-override");
+        support.generateAndAssert(config, "pojo/type-override");
     }
 
 }
