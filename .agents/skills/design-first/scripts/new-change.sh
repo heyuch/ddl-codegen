@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # 变更目录命名权威：创建变更目录并分配变更号，或校验既有目录命名。
+# type 白名单须与 SKILL.md「变更类型」节保持同集（SKILL 是语义单源，本清单是执行镜像）。
 # 目录命名统一 {YYYYMMDD}-{NN}-{feat|optimize|refactor|fix|chore}-{标题}（早期存量已于 2026-09-05 迁移，无旧格式豁免）。
 # 用法:
 #   new-change.sh <feat|optimize|refactor|fix|chore> <标题>              # 创建 {YYYYMMDD}-{NN}-{type}-{标题}（今天）与 design.md 骨架
 #   new-change.sh --date YYYYMMDD <type> <标题>            # 指定日期（历史归档目录用，如初始建设期）
 #   new-change.sh check                                    # 校验 docs/changes 下所有目录命名合规
+#   new-change.sh check-docs                               # 校验记忆文档卫生（黑名单 doc-hygiene.patterns，实证追加）
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
@@ -39,8 +41,33 @@ check() {
   echo "check 通过：docs/changes 目录命名合规（$(ls -d "$CHANGES"/*/ | wc -l | tr -d ' ') 个变更）"
 }
 
+# ---- check-docs：记忆文档卫生确定性门禁（模式清单 doc-hygiene.patterns，实证追加）----
+docs_check() {
+  local patterns_file hits=0 line f files
+  patterns_file="$(dirname "${BASH_SOURCE[0]}")/doc-hygiene.patterns"
+  files="AGENTS.md docs/architecture.md docs/glossary.md docs/static-rules-review.md docs/changes/README.md docs/changes/TEMPLATE.md .agents/skills/design-first/SKILL.md"
+  while IFS= read -r line; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    for f in $files; do
+      if grep -nE "$line" "$ROOT/$f" >/dev/null 2>&1; then
+        echo "文档卫生违规 [$f]: $line" >&2
+        hits=1
+      fi
+    done
+  done < "$patterns_file"
+  if (( hits )); then
+    echo "check-docs 失败：记忆文档出现黑名单模式（清理；或确认误报后调整 doc-hygiene.patterns）" >&2
+    exit 1
+  fi
+  echo "check-docs 通过：记忆文档无黑名单模式"
+}
+
 if [[ "${1:-}" == "check" ]]; then
   check
+  exit 0
+fi
+if [[ "${1:-}" == "check-docs" ]]; then
+  docs_check
   exit 0
 fi
 

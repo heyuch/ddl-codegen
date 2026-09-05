@@ -14,8 +14,8 @@
 
 ## 开发工作流（硬性规则）
 
-1. **非平凡改动必须先分析设计、后实现**：加载 skill `design-first` 按其 10 步执行；未写设计 + 未经用户评审不得实现。小改动（1-3 文件）可省略设计文档，分析+取舍写进 commit message。
-2. **变更收尾必须蒸馏**：决策与偏差 → 所在变更 progress.md；现状 → architecture.md（更新条目）；索引行 → changes/README.md；改记忆文档 → 跑自检用例集；`new-change.sh check`。
+1. **非平凡改动必须先分析设计、后实现**：加载 skill `design-first` 按其 10 步执行；未写设计 + 未经用户评审不得实现。（分级与小改动豁免见 SKILL.md「何时使用」「变更类型」）
+2. **变更收尾必须蒸馏**：决策与偏差 → 所在变更 progress.md；现状 → architecture.md（更新条目）；索引行 → changes/README.md；改记忆文档 → 跑自检用例集与 `new-change.sh check-docs`；`new-change.sh check`。
 3. 内容与源头文档冲突时以源头文档为准。
 
 ## 命名与写作约定

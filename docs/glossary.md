@@ -1,9 +1,8 @@
 # 词汇表（Glossary）
 
-统一项目术语：**代码标识符（英文）与文档中文表达一一对应**，消除中英混用与歧义。
 文档写作与讨论默认使用「中文」列；代码/配置键使用「英文标识符」列。
 条目出处为术语的权威定义位置；冲突时以本表为准并同步修正出处文档。
-**现状事实以 `docs/architecture.md` 为准**（历史基线归档于 `docs/changes/20260801-01-feat-project-foundation/`，不再作为出处；AGENTS.md 仅索引，不复述事实）。
+**现状事实以 `docs/architecture.md` 为准**（历史基线归档于 `docs/changes/20260801-01-feat-project-foundation/`，不再作为出处）。
 
 ## 核心术语
 
@@ -34,7 +33,7 @@
 | quick build | 快速构建 | `-Pquick` profile：跳过编译期分析器/spotbugs/jacoco/checkstyle，保留格式化与测试（37s → 11s）；提交/验收前必须跑全量 | AGENTS.md「Build, Lint, and Test Commands」 |
 | 全量构建 | 全量构建 | 无 profile 的 `mvn clean test`：全部门禁 + 测试 | AGENTS.md「Build, Lint, and Test Commands」 |
 | design-first | 设计优先 | 项目工作流（10 步）：分析 → `new-change.sh` 脚手架 → 设计 → SOLID 自评 → 独立评审（中/大）→ 用户评审 → 实现 → 验证 → 一致性核对 → 蒸馏收尾；细则见 skill `design-first` | AGENTS.md「开发工作流（硬性规则）」、SKILL.md |
-| 蒸馏收尾 | 蒸馏收尾 | 工作流第 10 步：决策与偏差 → 所在变更目录 progress.md、现状 → architecture.md、索引行 → changes/README.md、目录处置、记忆文档自检、`new-change.sh check` | AGENTS.md「开发工作流（硬性规则）」 |
+| 蒸馏收尾 | 蒸馏收尾 | 变更收尾时的蒸馏动作：决策与偏差 → 所在变更目录 progress.md、现状 → architecture.md、索引行 → changes/README.md、目录处置、记忆文档自检、`new-change.sh check` | AGENTS.md「开发工作流（硬性规则）」 |
 | 初始归档 | 初始建设期归档 | 项目初始期（M0-M4 + 2026-08 设计定稿）原始文档归档：`docs/changes/20260801-01-feat-project-foundation/`（design/progress/tasks 原文） | docs/changes/20260801-01-feat-project-foundation/ |
 | PIT | 变异测试 | 变异覆盖率（击杀突变体比例）验证测试质量；显式运行（core 模块） | docs/changes/20260801-01-feat-project-foundation/progress.md「PIT 变异测试」 |
 

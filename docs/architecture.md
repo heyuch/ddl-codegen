@@ -1,8 +1,7 @@
-# 项目现状架构（单一事实源）
+# 项目现状架构
 
-> **本文档 = 项目现状（is）的单一事实源**，描述当前代码真相；随每次变更收尾（蒸馏步骤 10b）同步更新对应条目，禁止散文式追加。
-> 历史基线 = `docs/changes/20260801-01-feat-project-foundation/design.md`（2026-08 设计定稿 was，已部分被后续变更取代），**冲突以本文件为准**；本文件不引用历史基线作为事实来源。
-> **事实来源 = 代码对账**：变更后按文末「代码锚点表」重新核对；与旧文档冲突时以本文件为准。
+> 事实以代码对账为准：变更后按文末「代码锚点表」重新核对；禁止散文式追加。
+> 历史基线 `docs/changes/20260801-01-feat-project-foundation/design.md` 已部分被后续变更取代，不作为事实来源。
 
 ## 模块与依赖方向
 
@@ -45,7 +44,7 @@ DDL 文本（多条语句，分号分隔）
 - **增量语义**：`Schema` 每次从空起步，本批次 DDL 描述目标状态；生成只覆盖 `ApplyResult.affectedTables`（本批次变更过的表），未涉及的表与文件完全不触碰。
 - **drop 语义**（代码实证 `CodeGenerator.handleDrops`）：drop table → 删除该表所有启用产物文件（Java 类 = 根/module/package/类名；XML = 根/module/path/mapper 类名.xml）。列/索引 drop 只改模型，下次生成时由 reconcile 删对应 @Generated 成员/方法。
 - **rename 语义**（代码实证 `CodeGenerator.handleRenames`）：表改名 → **保留旧表名产物文件**（含用户手写代码），新表名正常生成；任一产物类名变化时记 warning 提示「迁移手写内容后手动删除旧文件」。列/索引改名 → 表内原地替换（`Schema.renameTable` / `Table.renameColumn`/`renameIndex`），文件层由 reconcile 按新成员名对齐。
-- 无拦截器 / 无 `use` 链：产物特性为生成器内部选项（见 §3/§5）。
+- 无拦截器 / 无 `use` 链：产物特性为生成器内部选项（见「生成器体系」「config schema」）。
 - 变更状态：`CREATED`（新建）/ `UPDATED`（覆盖）/ `UNCHANGED`（一致未写盘）/ `DELETED`；报告摘要形如 `+N ~M -D =U`。
 
 ## 生成器体系
@@ -104,7 +103,7 @@ DDL 文本（多条语句，分号分隔）
 
 | 属性 | 语义 |
 |---|---|
-| `generator` | 注册生成器名（§3 清单）；配置了即启用 |
+| `generator` | 注册生成器名（见「生成器体系」清单）；配置了即启用 |
 | `module` | 项目根下的一级子目录；空/缺省 = 根 |
 | `package` | Java 包名（Java 类产物）；XML 产物省略、改用 `path` |
 | `path` | 资源相对路径（XML 用） |
@@ -148,7 +147,7 @@ DDL 文本（多条语句，分号分隔）
 | config 存在即启用 | 产物 = config 顶层键；文件位置 = config 推导（根 + module + package/资源 path + 类名），**无 manifest** |
 | @Generated 成员所有权 | 工具只增删改带 `@Generated`（`javax.annotation.processing.Generated`，JDK 自带）的字段/方法成员；用户手写成员永不触碰；现有文件无期望类名 → 视为新建（用户迁移代码未改 config 后果自负）；包名/类名以 config 为准 |
 | reconcile 即 diff | 字段按名匹配、方法按名匹配；替换判据：字段 = 类型；方法 = 返回类型 + 参数类型序列 + 方法体（空白归一化）。模型有而文件无 → 增；有而模型无 → 删；签名变 → 替换；一致 → 跳过 |
-| 解析失败不覆盖 | 现有源解析失败 → 抛 `IllegalStateException` 中止本次运行、该文件未修改；**当前无 `--force` 逃生口**（CLI/plugin 均无此选项，见对账发现） |
+| 解析失败不覆盖 | 现有源解析失败 → 抛 `IllegalStateException` 中止本次运行、该文件未修改；**当前无 `--force` 逃生口**（CLI/plugin 均无此选项） |
 | 删除无条件 | drop table → 无条件删除该表全部启用产物文件；产物不再适用（enum 无 enum 列）→ 删除旧文件 |
 | rename 保留用户代码 | 表改名保留旧表名产物文件（含手写代码），新表名正常生成，类名变化 → warning 提示手动迁移删除；列/索引改名 → reconcile 层替换成员 |
 | 字节比对幂等 | FileWriter 写前比对，内容一致不写盘（UNCHANGED）；dry-run 只计算状态不落盘 |
@@ -159,13 +158,11 @@ DDL 文本（多条语句，分号分隔）
 
 ## 已知限制（现状缺口）
 
-（2026-09-05 随归档动作自原 docs/progress.md「已知限制」迁移；完整历史见 `docs/changes/20260801-01-feat-project-foundation/progress.md`）
-
 - `--sync` 模式未实现（需文件归属标记才能对账磁盘）
 - enum 列失去 enum 类型后旧枚举文件不自动清理（shouldGenerate=false 只删当前类名文件）
 - merge 时删除成员不清理其 import（保守策略：不删可能被用户代码引用的 import）
 - ALTER COLUMN SET/DROP DEFAULT、FK/CHECK、分区、FULLTEXT/SPATIAL 索引 → warning 跳过（不生成对应变更）
-- 源码残留过时 javadoc 文案（"拦截器"残留、`CodeGenerator` RENAME 描述与实现矛盾等）——见「对账发现」，待代码清理变更处理
+- 源码残留过时 javadoc 文案（"拦截器"残留、`CodeGenerator` RENAME 描述与实现矛盾等），待代码清理变更处理
 
 ## 命名与类型映射速查
 
