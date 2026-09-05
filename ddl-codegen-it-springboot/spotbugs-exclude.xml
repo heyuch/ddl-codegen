@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- 20260906-03 门禁分级记录：EI_EXPOSE_REP2 对 Spring DI 注入的无状态 Bean（Mapper/Converter 接口）为误报；
+         生成类 final 且字段 final，外部可变性不成立。核心生成器输出（findById 等）的 NPE 已由临时变量守卫修复。 -->
+    <Match>
+        <Class name="com.example.sample.repository.impl.UserRepositoryImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+</FindBugsFilter>

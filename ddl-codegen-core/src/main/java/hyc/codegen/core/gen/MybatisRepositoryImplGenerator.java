@@ -92,8 +92,10 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
             String converterCall = decapitalize(simpleName(bridge.converterFqn())) + "."
                     + bridge.convertMethod();
             if (spec.isUniqueFull()) {
-                // mapper 单值 findBy 声明 @Nullable po：未命中时 converter 形参非空契约 → 空安全桥接
-                body = "return " + call + " == null ? null : " + converterCall + "(" + call + ");";
+                // mapper 单值 findBy 声明 @Nullable po：临时变量（FQN 免 import）守卫一次调用
+                String tmp = "po";
+                body = bridge.mapperReturnFqn + " " + tmp + " = " + call + ";\n"
+                        + "return " + tmp + " == null ? null : " + converterCall + "(" + tmp + ");";
             } else {
                 body = "return " + converterCall + "List(" + call + ");";
             }
@@ -127,6 +129,7 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
         String mapperField = decapitalize(simpleName(mapperFqn));
 
         if ("constructor".equals(ctx.getArtifactConfig().getOption("di"))) {
+            builder.field(fieldFinal(mapperFqn, mapperField, "数据访问 Mapper"));
             Method.Builder ctor = Method.builder()
                     .modifiers(Modifier.PUBLIC)
                     .name(ctx.className())
@@ -134,6 +137,7 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
             String body = "this." + mapperField + " = " + mapperField + ";";
             if (bridge.convert) {
                 String converterField = decapitalize(simpleName(bridge.converterFqn()));
+                builder.field(fieldFinal(bridge.converterFqn(), converterField, "实体转换器"));
                 ctor.parameter(Variable.builder()
                         .type(new TypeReference(bridge.converterFqn()))
                         .name(converterField)
@@ -174,6 +178,16 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
                 .build();
     }
 
+    /** 构造注入字段：final 无注解。 */
+    private Variable fieldFinal(String typeFqn, String name, String doc) {
+        return Variable.builder()
+                .modifiers(Modifier.PRIVATE, Modifier.FINAL)
+                .type(new TypeReference(typeFqn))
+                .name(name)
+                .javadoc(hyc.codegen.tree.DocComment.builder().summary(doc).build())
+                .build();
+    }
+
     /** 生成的 impl 为 leaf 实现类 → final。 */
     @Override
     protected boolean finalClass() {
@@ -193,8 +207,9 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
         String mapperField = decapitalize(simpleName(gctx.refFqn(ctx.getTable().getName(), mapper)));
 
         ArtifactConfig mapperTarget = gctx.resolveReference(mapper.getName(), "target", PojoGenerator.NAME);
+        String mapperReturnFqn = gctx.refFqn(ctx.getTable().getName(), mapperTarget);
         if (mapperTarget.getName().equals(target.getName())) {
-            return new Bridge(mapperField, false, null, null);
+            return new Bridge(mapperField, false, null, null, mapperReturnFqn);
         }
         ArtifactConfig converter = gctx.resolveReference(ownName, "converter", ConverterGenerator.NAME);
         String converterFqn = gctx.refFqn(ctx.getTable().getName(), converter);
@@ -212,7 +227,7 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
                     + converterTarget.getName() + ") 应与 repositoryImpl(" + ownName
                     + ") 的 target(" + target.getName() + ") 一致");
         }
-        return new Bridge(mapperField, true, converterFqn, "to" + capitalize(simpleName(targetFqn)));
+        return new Bridge(mapperField, true, converterFqn, "to" + capitalize(simpleName(targetFqn)), mapperReturnFqn);
     }
 
     /**
@@ -228,11 +243,16 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
 
         final @Nullable String convertMethod;
 
-        Bridge(String mapperField, boolean convert, @Nullable String converterFqn, @Nullable String convertMethod) {
+        /** mapper 返回类型（其 target 产物）FQN，单值空安全守卫的临时变量类型。 */
+        final String mapperReturnFqn;
+
+        Bridge(String mapperField, boolean convert, @Nullable String converterFqn, @Nullable String convertMethod,
+                String mapperReturnFqn) {
             this.mapperField = mapperField;
             this.convert = convert;
             this.converterFqn = converterFqn;
             this.convertMethod = convertMethod;
+            this.mapperReturnFqn = mapperReturnFqn;
         }
 
         /**

@@ -17,6 +17,7 @@ ddl-codegen-maven-plugin（Maven Mojo）──► ddl-codegen-core（框架）�
 | `ddl-codegen-core` | 框架本体：配置/解析/命名/类型/生成器/写盘 | `tree`；运行时外部依赖仅 druid（DDL 解析） | `Codegen`（门面） |
 | `ddl-codegen-cli` | 命令行：`--config/--ddl/--dry-run`，shade fat jar | `core`（不直接依赖 tree） | `hyc.codegen.cli.Main` |
 | `ddl-codegen-maven-plugin` | `mvn ddl-codegen:generate`（不绑生命周期，显式调用），支持 ddl 内联 / ddlFile（含行范围）/ dryRun / skip | `core` + maven-plugin-api | `GenerateMojo` |
+| `ddl-codegen-it-springboot` | 真实消费工程（20260906-03）：Boot 2.7 + MyBatis + MySQL[Testcontainers]；DDL/config 生成全链路代码提交入库，验证可编译/装配/调用（IT 无 Docker 自动 skip） | spring-boot/mybatis-starter/mysql/lombok/checker-qual/spotbugs-annotations（lombok @Builder 生成引用）+ testcontainers | `SampleApplication` |
 
 模块/包依赖方向由 Maven 边界 + 各模块 `ArchitectureTest`（ArchUnit）强制：cli/plugin 不得依赖 tree；core 包分层——叶子（`model/config/io`）无内部依赖，低层（`annotation/naming/types/ddl`）只向下，`gen` 是顶层，core 包间无循环。
 
@@ -70,6 +71,8 @@ DDL 文本（多条语句，分号分隔）
 | `ConverterGenerator` | `converter` | converter | source ↔ target 双向 `toX` / `toXList`；枚举列按两端产物视图差异自动插 `fromCode`/`getCode()` 空安全转换（视图判定 = 枚举类 FQN 精确比对，非 String 启发式；标量→enum 用 nullSafe + `fromCode`，保持未知 code 抛错语义） |
 
 产物（artifact）≠ 生成器：产物名是 config 顶层键、自由定义；「配置了即启用」。**同一 kind 可服务多个产物实例**（如 `entity` 与 `po` 均 `generator=pojo`，各自配 package/suffix/特性）；`CodeGenerator` 每 kind 持一个实例，由 `TableContext`（表 × 产物配置）驱动，实例不存表态。
+
+**生成物 javadoc（20260906-06）**：Java 产物类/字段/方法均带 javadoc——类取表注释（enum 空则退列注释）、字段取列注释、方法取模板/列注释摘要；注释先经 `gen.CommentDocs` 清洗（剥注解与枚举项 token）。成员标记 `@Generated("ddl-codegen")`；impl/converter 为 `final`（20260906-04）。
 
 **注册与多实例/缺省规则**（`CodeGenerator` / `GenerationContext.resolveReference`）：
 - 产物未配 `generator` → warning 跳过；配的 kind 未注册 → warning 跳过（门面只组合内置 7 个；`CodeGenerator` 构造器接受任意 Generator 列表，自定义 kind 需自行组装，不经 `Codegen.run`）。

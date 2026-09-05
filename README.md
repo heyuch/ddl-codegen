@@ -55,6 +55,10 @@ mvn ddl-codegen:generate
 
 - **druid**：DDL 解析（唯一运行时依赖）
 - Java 解析/生成：自研（`ddl-codegen-tree`，基于 jdk.compiler 的可修改 AST，零依赖）
+- 生成代码消费方注意：
+  - 反查方法与 jsr305 字段引用 `annotations.nullable` 注解（缺省 checkerframework qual，需 checker-qual）
+  - 产物开 lombok（`lombok=true`）时 lombok `@Builder/@Data` 生成代码引用 `edu.umd.cs.findbugs.annotations.SuppressFBWarnings` → 需 **spotbugs-annotations** 依赖
+  - 生成物 javadoc 来自 DDL 注释（清洗注解/枚举项 token），成员带 `@Generated("ddl-codegen")`
 
 ## 边界契约（重要）
 
@@ -189,4 +193,6 @@ type    varchar(20)     NOT NULL comment '类型 NORMAL=普通 VIP=高级 TRIAL=
 ddl-codegen-tree   # 通用 Java 源码解析/生成工具（可修改 AST，基于 jdk.compiler，零依赖）
 ddl-codegen-core   # DDL 代码生成框架（模型/解析/命名/类型/生成器/编排）
 ddl-codegen-cli    # 命令行入口（fat jar）
+ddl-codegen-maven-plugin  # Maven Mojo
+ddl-codegen-it-springboot # 真实消费样例（Boot2.7+MyBatis+MySQL/Testcontainers；生成代码提交入库，IT 无 Docker 自动跳过）
 ```

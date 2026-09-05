@@ -36,7 +36,8 @@ public final class UserRepositoryImpl implements UserRepository {
     @Nullable
     @Generated("ddl-codegen")
     public User findById(Long id) {
-        return userMapper.findById(id) == null ? null : userConverter.toUser(userMapper.findById(id));
+        com.demo.pojo.UserPo po = userMapper.findById(id);
+        return po == null ? null : userConverter.toUser(po);
     }
 
     /**
@@ -46,7 +47,8 @@ public final class UserRepositoryImpl implements UserRepository {
     @Nullable
     @Generated("ddl-codegen")
     public User findByName(String name) {
-        return userMapper.findByName(name) == null ? null : userConverter.toUser(userMapper.findByName(name));
+        com.demo.pojo.UserPo po = userMapper.findByName(name);
+        return po == null ? null : userConverter.toUser(po);
     }
 
 }

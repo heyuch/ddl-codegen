@@ -12,6 +12,7 @@
         <module>ddl-codegen-core</module>
         <module>ddl-codegen-cli</module>
         <module>ddl-codegen-maven-plugin</module>
+        <module>ddl-codegen-it-springboot</module>
     </modules>
 
     <properties>

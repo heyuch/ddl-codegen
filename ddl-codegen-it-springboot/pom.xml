@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.heyuch</groupId>
+        <artifactId>ddl-codegen</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <!--
+        真实 Spring Boot 消费工程（20260906-03）：DDL/config 唯一事实源 → 生成全链路 MyBatis 代码提交入库；
+        集成测试用 Testcontainers MySQL（无 Docker 自动 skip）。门禁分级见 docs/architecture 与本模块设计：
+        质量类（checkstyle/spotbugs/checkerframework/error-prone）全开验收生成代码质量；
+        jacoco 跳过（覆盖率度量测试执行面，非质量信号）；spotless 作用于本模块源码（含生成物归一化）。
+    -->
+    <artifactId>ddl-codegen-it-springboot</artifactId>
+    <name>ddl-codegen-it-springboot</name>
+    <description>Spring Boot + MyBatis 集成样例：生成代码可编译、可装配、可调用验证</description>
+
+    <properties>
+        <spring-boot.version>2.7.18</spring-boot.version>
+        <mybatis-spring-boot.version>2.3.2</mybatis-spring-boot.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
+        <!-- 门禁分级：覆盖率非质量信号（生成类在 IT 场景不会全载入），跳过并说明 -->
+        <jacoco.skip>true</jacoco.skip>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>${mybatis-spring-boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- 生成代码的 javax.annotation.Resource（di=field）与 @Nullable（annotations.nullable 缺省 checker-qual） -->
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-qual</artifactId>
+            <version>3.42.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- lombok @Builder/@Data 生成代码会引用 edu.umd.cs.findbugs.annotations.SuppressFBWarnings → 需该注解依赖 -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>4.8.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mysql</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- 生成代码首次过全量编译期分析器（ErrorProne + NullnessChecker）会有可预测失败（如
+                 mapper 单值 findBy @Nullable → repositoryImpl 直传 converter 非空形参）；生成器修复
+                 另立 fix 变更驱动。本模块作为真实消费者用普通 javac 编译，去掉 core 自家分析器，
+                 保留 lombok 注解处理（javac 自动发现）。质量验收由 checkstyle/spotbugs 承担。 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration combine.self="override">
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <!-- 门禁分级见 03 设计：质量类全开（checkstyle/spotbugs/error-prone 已随生成器 final/@Generated 修复达标）；
+                本模块不再需要豁免。 -->
+            <!-- 模块级豁免（20260906-03 spike 记录）：EI_EXPOSE_REP2 对 DI 无状态 Bean 误报 -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <configuration>
+                    <excludeFilterFile>${project.basedir}/spotbugs-exclude.xml</excludeFilterFile>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -75,9 +75,10 @@ class MybatisRepositoryImplGeneratorTest {
         String impl = support.readGenerated("com/demo/repository/impl/UserRepositoryImpl.java");
         assertTrue(impl.contains("@Resource"), impl);
         assertFalse(impl.contains("public UserRepositoryImpl("), impl);
-        // 唯一键 findById/findByName → 单值 converter 桥接（toUser）；无普通索引故无 toUserList/findByStatus
-        assertTrue(impl.contains("userConverter.toUser(userMapper.findById(id))"), impl);
-        assertTrue(impl.contains("userConverter.toUser(userMapper.findByName(name))"), impl);
+        // 唯一键 findById/findByName → 单值 converter 桥接（临时变量空安全守卫）；无普通索引故无 toUserList
+        assertTrue(impl.contains("UserPo po = userMapper.findById(id);"), impl);
+        assertTrue(impl.contains("return po == null ? null : userConverter.toUser(po);"), impl);
+        assertTrue(impl.contains("UserPo po = userMapper.findByName(name);"), impl);
         assertFalse(impl.contains("toUserList"), impl);
         assertFalse(impl.contains("findByStatus"), impl);
     }

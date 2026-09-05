@@ -1,12 +1,11 @@
-package com.demo.repository.impl;
+package com.example.sample.repository.impl;
 
-import java.util.List;
 import javax.annotation.processing.Generated;
 
-import com.demo.converter.UserConverter;
-import com.demo.entity.User;
-import com.demo.mapper.UserMapper;
-import com.demo.repository.UserRepository;
+import com.example.sample.converter.UserConverter;
+import com.example.sample.entity.User;
+import com.example.sample.mapper.UserMapper;
+import com.example.sample.repository.UserRepository;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -39,7 +38,7 @@ public final class UserRepositoryImpl implements UserRepository {
     @Nullable
     @Generated("ddl-codegen")
     public User findById(Long id) {
-        com.demo.pojo.UserPo po = userMapper.findById(id);
+        com.example.sample.po.UserPo po = userMapper.findById(id);
         return po == null ? null : userConverter.toUser(po);
     }
 
@@ -50,7 +49,7 @@ public final class UserRepositoryImpl implements UserRepository {
     @Nullable
     @Generated("ddl-codegen")
     public User findByName(String name) {
-        com.demo.pojo.UserPo po = userMapper.findByName(name);
+        com.example.sample.po.UserPo po = userMapper.findByName(name);
         return po == null ? null : userConverter.toUser(po);
     }
 

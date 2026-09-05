@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.sample.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.sample.po.UserPo">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="gender" column="gender" jdbcType="VARCHAR"/>
+        <result property="status" column="status" jdbcType="TINYINT"/>
+        <result property="kind" column="kind" jdbcType="VARCHAR"/>
+        <result property="note" column="note" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="BaseColumnList">
+        t.id,
+        t.name,
+        t.gender,
+        t.status,
+        t.kind,
+        t.note
+    </sql>
+
+    <insert id="insert"
+            keyColumn="id"
+            keyProperty="id"
+            parameterType="com.example.sample.po.UserPo"
+            useGeneratedKeys="true">
+
+        INSERT INTO t_user
+        (
+        name,
+        gender,
+        status,
+        kind,
+        note
+        )
+        VALUES
+        (
+        #{name,jdbcType=VARCHAR},
+        #{gender,jdbcType=VARCHAR},
+        #{status,jdbcType=TINYINT},
+        #{kind,jdbcType=VARCHAR},
+        #{note,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM
+        t_user
+        WHERE
+        id = #{id,jdbcType=BIGINT}
+    </delete>
+
+    <update id="update" parameterType="com.example.sample.po.UserPo">
+        UPDATE
+        t_user
+        SET
+        name = #{name,jdbcType=VARCHAR},
+        gender = #{gender,jdbcType=VARCHAR},
+        status = #{status,jdbcType=TINYINT},
+        kind = #{kind,jdbcType=VARCHAR},
+        note = #{note,jdbcType=VARCHAR}
+        WHERE
+        id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="BaseColumnList"/>
+        FROM
+        t_user t
+        WHERE
+        t.id = #{id,jdbcType=BIGINT}
+    </select>
+
+    <select id="findByName" resultMap="BaseResultMap">
+        SELECT
+        <include refid="BaseColumnList"/>
+        FROM
+        t_user t
+        WHERE
+        t.name = #{name,jdbcType=VARCHAR}
+    </select>
+
+</mapper>

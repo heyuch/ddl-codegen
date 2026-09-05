@@ -240,13 +240,9 @@ class EndToEndTest {
         String impl = read("com/demo/repository/impl/UserRepositoryImpl.java");
         assertTrue(impl.contains("private UserMapper userMapper;"), impl);
         assertTrue(impl.contains("private UserConverter userConverter;"), impl);
-        assertTrue(impl.contains(
-                "return userMapper.findById(id) == null ? null : userConverter.toUser(userMapper.findById(id));"),
-                impl);
-        assertTrue(impl.contains(
-                "return userMapper.findByName(name) == null ? null : "
-                        + "userConverter.toUser(userMapper.findByName(name));"),
-                impl);
+        assertTrue(impl.contains("UserPo po = userMapper.findById(id);"), impl);
+        assertTrue(impl.contains("return po == null ? null : userConverter.toUser(po);"), impl);
+        assertTrue(impl.contains("UserPo po = userMapper.findByName(name);"), impl);
     }
 
     @BeforeEach
