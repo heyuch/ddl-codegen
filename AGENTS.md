@@ -6,7 +6,7 @@
 |---|---|---|
 | `docs/architecture.md` | 项目现状架构：模块/管线/SPI/注解/config schema/契约/已知限制/代码锚点 | 改动设计前读；变更收尾更新条目 |
 | `.agents/skills/design-first/SKILL.md` | 开发工作流细则（10 步 + 检查单 + 变更号规则） | 非平凡改动开始时加载 |
-| `docs/changes/README.md` | 变更索引 + 生命周期/引用规则 + 命名迁移 + 记忆文档自检用例集 | 设计前查曾做/曾否决；收尾追加索引行 |
+| `docs/changes/README.md` | 变更索引 + 生命周期/引用规则 + 记忆文档自检用例集 | 设计前查曾做/曾否决；收尾追加索引行 |
 | `docs/changes/20260801-01-feat-project-foundation/` | 初始建设期归档（设计定稿 + M0-M4 台账/任务/早期决策） | 仅历史溯源 |
 | `docs/glossary.md` | 术语表（中英对照） | 写作/命名前查词 |
 | `docs/static-rules-review.md` | 静态检查考察（阈值基线/实证/抑制准则） | 静态检查报错时 |

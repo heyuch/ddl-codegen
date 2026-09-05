@@ -1,6 +1,6 @@
 # docs/changes 变更索引
 
-本目录存放**单次变更的工作文档**（`{变更号}/design.md` + `progress.md`，变更号 = 目录 slug）。本文件 = **变更索引** + **本目录生命周期规则** + **引用规则** + **命名迁移对照** + **记忆文档自检用例集**。
+本目录存放**单次变更的工作文档**（`{变更号}/design.md` + `progress.md`，变更号 = 目录 slug）。本文件 = **变更索引** + **本目录生命周期规则** + **引用规则** + **记忆文档自检用例集**。
 
 > **读取指引**：设计新变更前先读本文件——查**曾做 / 曾否决**（防重复提案已否决的方案），变更号一览即目录树一览。
 
@@ -15,7 +15,7 @@
 | [20260829-02-chore-archunit-rules](20260829-02-chore-archunit-rules/)                     | 完成 | 引入 ArchUnit 架构测试 4 规则入 mvn test（叶子无依赖 / 单向分层 / 实现层约束 / 无循环）；`GeneratorInterceptor` 接口从 interceptor 包归位 `gen`，打破实测的 gen↔interceptor 包循环；cli/plugin 门面防绕过规则（不得直连 gen/tree）随后随 maven-plugin 变更补齐 |
 | [20260829-03-feat-parameterized-artifacts](20260829-03-feat-parameterized-artifacts/)     | 完成 | artifact = 生成器具名实例 + 配置：config 顶层键改为产物名（`generator` / `source` / `target`，`naming.*`/`annotations.*` 为保留命名空间）；跨产物引用显式或「该生成器唯一实例」缺省，无唯一实例明确报错；新增 `enums`/`jsr305` 拦截器；删 `TypeMapper.isEnumArtifact`、`TableContext.typeOf` 等硬编码（breaking config，单轨迁移） |
 | ~~20260829-04~~（洞，不重用）                                                                    | — | 占位 = 已删除的 `2026-08-29-opt-annotation-interceptors`（作废，见下行；NN 留洞不重用的首次实证） |
-| annotation-interceptors（原 `2026-08-29-opt-annotation-interceptors`）                       | 作废-已删 | 目录已删除（git 保留全文）。**被 opt-core-first 取代**（未实现即否决）；否决教训：**不为简单开关建抽象**（拦截器钩子方案）；**更正**：其 progress.md 自称保留决策「@as 移除」**未落地**——代码保留 @as（AsHandler 与 meta 读取仍在），其另两条保留决策（注解全存不处理、@type 独立于 enums）由 opt-core-first 落地；**作废变更的决策一律以 architecture.md / 代码为准，不以其目录为准** |
+| annotation-interceptors（原 `2026-08-29-opt-annotation-interceptors`）                       | 作废-已删 | 目录已删除（git 保留全文）。**被 refactor-core-first 取代**（未实现即否决）；否决教训：**不为简单开关建抽象**（拦截器钩子方案）；**更正**：其 progress.md 自称保留决策「@as 移除」**未落地**——代码保留 @as（AsHandler 与 meta 读取仍在），其另两条保留决策（注解全存不处理、@type 独立于 enums）由 refactor-core-first 落地；**作废变更的决策一律以 architecture.md / 代码为准，不以其目录为准** |
 | [20260829-05-refactor-core-first](20260829-05-refactor-core-first/)                       | 完成 | 第一性原理简化（核心优先）：删 `GeneratorInterceptor` SPI + use 链 + 4 个拦截器，lombok/jsr303/jsr305/enums/type/serializable 改为产物特性开关（`entity.lombok=true` 式）由生成器内部应用；@ignore 模型级剪枝（解析后移除）；查询契约 className/fieldName/fieldType 统一跨产物类型查询；唯一扩展点收敛为 ArtifactGenerator；annotation-interceptors 设计作废 |
 | [20260830-01-chore-spotbugs](20260830-01-chore-spotbugs/)                                 | 完成 | 引入 spotbugs-maven-plugin 4.8.6.8（SpotBugs 4.9+ 需 Java 17，构建跑 Java 11 → 锁 4.8.x 线），effort=Max / threshold=Low / check 绑 process-classes 进 mvn test；首轮 triage 修真 bug（NPE 路径、死代码）+ exclude 逐条带理由（终态仅 1 条）；随迁 checkerframework 强化为 error 级（去 `-Awarns`、@Nullable/@MonotonicNonNull 注解化、jsr305 迁 checkerframework @Nullable） |
 | [20260830-02-chore-jacoco](20260830-02-chore-jacoco/)                                     | 完成 | 引入 JaCoCo 覆盖率门槛：prepare-agent/report/check 全进 `mvn clean test` 生命周期；阈值全局 BUNDLE line ≥ 75%（基线实证后定稿呈报）；cli 原覆盖率 0% → 补 MainTest 拉到 87.7%；与 PIT 互补（JaCoCo 量化保底、PIT 深度验证） |
@@ -36,7 +36,7 @@
 
 - 文档内引用变更用**变更号（目录 slug）或其相对链接**——slug 自带 type + title，引用处自可读，无「裸号」配对问题。
 - **已删除的作废变更不引用目录**（目录已不存在）：提及时用**叙述标题**或**指索引行**（如上表 annotation-interceptors 作废行）。
-- 目录命名全仓统一 `{YYYYMMDD}-{NN}-{type}-{title}`（早期存量已迁移，见「命名迁移」）；完成目录冻结不改名（原名即其变更号，append-only 引用兼容）。
+- 目录命名全仓统一 `{YYYYMMDD}-{NN}-{type}-{title}`（早期存量已统一迁移）；完成目录冻结不改名（原名即其变更号，append-only 引用兼容）。
 
 ## 记忆文档自检用例集
 
