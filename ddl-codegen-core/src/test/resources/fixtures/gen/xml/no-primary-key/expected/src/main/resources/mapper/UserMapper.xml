@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.demo.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.demo.pojo.UserPo">
+        <result property="id" column="id" jdbcType="BIGINT"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="note" column="note" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="BaseColumnList">
+        t.id,
+        t.name,
+        t.note
+    </sql>
+
+    <insert id="insert"
+            parameterType="com.demo.pojo.UserPo"
+            useGeneratedKeys="false">
+
+        INSERT INTO t_user
+        (
+        id,
+        name,
+        note
+        )
+        VALUES
+        (
+        #{id,jdbcType=BIGINT},
+        #{name,jdbcType=VARCHAR},
+        #{note,jdbcType=VARCHAR}
+        )
+    </insert>
+
+</mapper>

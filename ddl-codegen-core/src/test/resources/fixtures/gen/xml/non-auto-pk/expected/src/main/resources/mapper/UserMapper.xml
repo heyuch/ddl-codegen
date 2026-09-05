@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.demo.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.demo.pojo.UserPo">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="BaseColumnList">
+        t.id,
+        t.name
+    </sql>
+
+    <insert id="insert"
+            parameterType="com.demo.pojo.UserPo"
+            useGeneratedKeys="false">
+
+        INSERT INTO t_user
+        (
+        id,
+        name
+        )
+        VALUES
+        (
+        #{id,jdbcType=BIGINT},
+        #{name,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM
+        t_user
+        WHERE
+        id = #{id,jdbcType=BIGINT}
+    </delete>
+
+    <update id="update" parameterType="com.demo.pojo.UserPo">
+        UPDATE
+        t_user
+        SET
+        name = #{name,jdbcType=VARCHAR}
+        WHERE
+        id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="BaseColumnList"/>
+        FROM
+        t_user t
+        WHERE
+        t.id = #{id,jdbcType=BIGINT}
+    </select>
+
+</mapper>

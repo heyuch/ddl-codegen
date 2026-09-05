@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.demo.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.demo.pojo.UserPo">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="status" column="status" jdbcType="INTEGER"/>
+        <result property="region" column="region" jdbcType="VARCHAR"/>
+        <result property="level" column="level" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="BaseColumnList">
+        t.id,
+        t.name,
+        t.status,
+        t.region,
+        t.level
+    </sql>
+
+    <insert id="insert"
+            keyColumn="id"
+            keyProperty="id"
+            parameterType="com.demo.pojo.UserPo"
+            useGeneratedKeys="true">
+
+        INSERT INTO t_user
+        (
+        name,
+        status,
+        region,
+        level
+        )
+        VALUES
+        (
+        #{name,jdbcType=VARCHAR},
+        #{status,jdbcType=INTEGER},
+        #{region,jdbcType=VARCHAR},
+        #{level,jdbcType=TINYINT}
+        )
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM
+        t_user
+        WHERE
+        id = #{id,jdbcType=BIGINT}
+    </delete>
+
+    <update id="update" parameterType="com.demo.pojo.UserPo">
+        UPDATE
+        t_user
+        SET
+        name = #{name,jdbcType=VARCHAR},
+        status = #{status,jdbcType=INTEGER},
+        region = #{region,jdbcType=VARCHAR},
+        level = #{level,jdbcType=TINYINT}
+        WHERE
+        id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="BaseColumnList"/>
+        FROM
+        t_user t
+        WHERE
+        t.id = #{id,jdbcType=BIGINT}
+    </select>
+
+    <select id="findByName" resultMap="BaseResultMap">
+        SELECT
+        <include refid="BaseColumnList"/>
+        FROM
+        t_user t
+        WHERE
+        t.name = #{name,jdbcType=VARCHAR}
+    </select>
+
+    <select id="findByStatus" resultMap="BaseResultMap">
+        SELECT
+        <include refid="BaseColumnList"/>
+        FROM
+        t_user t
+        WHERE
+        t.status = #{status,jdbcType=INTEGER}
+    </select>
+
+    <select id="findByRegion" resultMap="BaseResultMap">
+        SELECT
+        <include refid="BaseColumnList"/>
+        FROM
+        t_user t
+        WHERE
+        t.region = #{region,jdbcType=VARCHAR}
+    </select>
+
+    <select id="findByRegionAndLevel" resultMap="BaseResultMap">
+        SELECT
+        <include refid="BaseColumnList"/>
+        FROM
+        t_user t
+        WHERE
+        t.region = #{region,jdbcType=VARCHAR}
+        AND
+        t.level = #{level,jdbcType=TINYINT}
+    </select>
+
+</mapper>
