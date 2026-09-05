@@ -61,16 +61,11 @@ public final class MapperXmlGenerator implements Generator {
             sb.append("\n");
             sb.append(updateXml(ctx, tableName, columns, id, poType));
             sb.append("\n");
-            sb.append(selectXml(ctx, tableName, "findById", id.getName()));
-            sb.append("\n");
         }
 
         for (Index index : ctx.indexes()) {
-
             for (QueryMethods.Spec spec : QueryMethods.of(index, naming)) {
-                if ("findById".equals(spec.getMethodName())) {
-                    continue;
-                }
+                // PRIMARY 索引 spec 天然产出 findBy<IdPascal>（pk 列名 id → findById）
                 sb.append(selectXml(ctx, tableName, spec.getMethodName(),
                         spec.getColumns().toArray(new String[0])));
                 sb.append("\n");

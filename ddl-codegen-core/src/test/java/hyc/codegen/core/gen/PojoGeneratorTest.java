@@ -72,6 +72,16 @@ class PojoGeneratorTest {
         support.generateAndAssert(plainConfig(support), "pojo/plain");
     }
 
+    @Test
+    void reservedWordColumnGetsSuffix() throws Exception {
+        GeneratorTestSupport support = support();
+        support.generateAndAssert(plainConfig(support), "pojo/reserved-word");
+
+        String entityText = support.readGenerated("com/demo/entity/User.java");
+        assertTrue(entityText.contains("private Integer order_"), entityText);
+        assertFalse(entityText.contains("`order`"), entityText);
+    }
+
     private GeneratorTestSupport support() {
         return new GeneratorTestSupport(temp, new PojoGenerator());
     }

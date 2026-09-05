@@ -77,9 +77,10 @@ public final class NamingService {
         return tableClassName(tableName) + suffix;
     }
 
-    /** 列名 → 字段名（camelCase + 保留字后缀）。 */
+    /** 列名 → 字段名（camelCase + 保留字后缀；先剥反引号）。 */
     public String columnFieldName(String columnName) {
-        String name = config.isColumnCamelCase() ? toCamelCase(columnName) : columnName;
+        String clean = columnName.replace("`", "");
+        String name = config.isColumnCamelCase() ? toCamelCase(clean) : clean;
         if (RESERVED_WORDS.contains(name)) {
             return name + config.getColumnKeywordSuffix();
         }
@@ -146,9 +147,10 @@ public final class NamingService {
         return toPascalCase(name);
     }
 
-    /** snake_case → camelCase（user_id → userId；首段小写，其余段首字母大写）。 */
+    /** snake_case → camelCase（user_id → userId；首段小写，其余段首字母大写）。列名先剥反引号（`` `order` `` → order）。 */
     private String toCamelCase(String name) {
-        String[] words = name.split("_");
+        String clean = name.replace("`", "");
+        String[] words = clean.split("_");
         StringBuilder sb = new StringBuilder(words[0].toLowerCase(Locale.ROOT));
         for (int i = 1; i < words.length; i++) {
             if (!words[i].isEmpty()) {
@@ -158,10 +160,11 @@ public final class NamingService {
         return sb.toString();
     }
 
-    /** snake_case → PascalCase（user_profile → UserProfile；USER → User）。 */
+    /** snake_case → PascalCase（user_profile → UserProfile；USER → User）。先剥反引号。 */
     private String toPascalCase(String name) {
+        String clean = name.replace("`", "");
         StringBuilder sb = new StringBuilder();
-        for (String word : name.split("_")) {
+        for (String word : clean.split("_")) {
             if (!word.isEmpty()) {
                 sb.append(capitalize(word));
             }

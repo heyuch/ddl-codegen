@@ -77,13 +77,14 @@ public final class MapperGenerator extends AbstractJavaGenerator {
     }
 
     private Method deleteByIdMethod(Column id, TableContext ctx) {
+        String fieldName = ctx.fieldName(id);
         return Method.builder()
                 .returnType(new hyc.codegen.tree.TypeReference("int"))
                 .name("deleteById")
                 .parameter(Variable.builder()
-                        .annotation(Annotation.of(PARAM, "\"id\""))
+                        .annotation(Annotation.of(PARAM, "\"" + fieldName + "\""))
                         .type(JavaTypes.typeTree(ctx.typeOf(id)))
-                        .name(ctx.fieldName(id))
+                        .name(fieldName)
                         .build())
                 .build();
     }

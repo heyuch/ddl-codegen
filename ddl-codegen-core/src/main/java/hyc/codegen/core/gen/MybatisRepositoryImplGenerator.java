@@ -86,9 +86,14 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
         String call = bridge.mapperField + "." + spec.getMethodName() + "(" + String.join(", ", args) + ")";
         String body;
         if (bridge.convert) {
-            String listSuffix = spec.isUniqueFull() ? "" : "List";
-            body = "return " + decapitalize(simpleName(bridge.converterFqn())) + "."
-                    + bridge.convertMethod() + listSuffix + "(" + call + ");";
+            String converterCall = decapitalize(simpleName(bridge.converterFqn())) + "."
+                    + bridge.convertMethod();
+            if (spec.isUniqueFull()) {
+                // mapper 单值 findBy 声明 @Nullable po：未命中时 converter 形参非空契约 → 空安全桥接
+                body = "return " + call + " == null ? null : " + converterCall + "(" + call + ");";
+            } else {
+                body = "return " + converterCall + "List(" + call + ");";
+            }
         } else {
             body = "return " + call + ";";
         }

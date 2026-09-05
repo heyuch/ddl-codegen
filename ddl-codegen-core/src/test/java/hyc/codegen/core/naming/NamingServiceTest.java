@@ -27,6 +27,16 @@ class NamingServiceTest {
     }
 
     @Test
+    void backtickedIdentifiersStrippedForJavaSide() {
+        NamingService naming = new NamingService(config());
+        // `` `order` `` → order（保留字 → order_）；XML/SQL 侧列原文仍带反引号，Java 侧剥除
+        assertEquals("order_", naming.columnFieldName("`order`"));
+        assertEquals("userId", naming.columnFieldName("`user_id`"));
+        assertEquals("Order", naming.enumClassName("t_user", "`order`"));
+        assertEquals("findByOrder", naming.indexMethodName(index("idx_order", "`order`")));
+    }
+
+    @Test
     void columnFieldNameCamelCaseAndKeyword() {
         NamingService naming = new NamingService(config());
         assertEquals("userId", naming.columnFieldName("user_id"));
