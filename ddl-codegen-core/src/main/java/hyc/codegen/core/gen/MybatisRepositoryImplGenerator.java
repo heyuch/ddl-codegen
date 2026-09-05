@@ -60,6 +60,9 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
                 .modifiers(Modifier.PUBLIC)
                 .annotation(Annotation.of("java.lang.Override"))
                 .name(spec.getMethodName());
+        builder.javadoc(hyc.codegen.tree.DocComment.builder()
+                .summary(CommentDocs.findBySummary(ctx, spec.getColumns()))
+                .build());
 
         if (spec.isUniqueFull()) {
             builder.annotation(Annotation.of(nullable));
@@ -104,6 +107,7 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
     protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
         String tableName = ctx.getTable().getName();
         String ownName = ctx.getArtifactName();
+        CommentDocs.classDoc(builder, ctx.tableComment());
 
         ArtifactConfig target = gctx.resolveReference(ownName, "target", PojoGenerator.NAME);
         ArtifactConfig mapper = gctx.resolveReference(ownName, "mapper", MapperGenerator.NAME);
@@ -160,11 +164,13 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
     }
 
     private Variable field(String typeFqn, String name) {
+        String doc = name.endsWith("Mapper") ? "数据访问 Mapper" : "实体转换器";
         return Variable.builder()
                 .modifiers(Modifier.PRIVATE)
                 .annotation(Annotation.of(RESOURCE))
                 .type(new TypeReference(typeFqn))
                 .name(name)
+                .javadoc(hyc.codegen.tree.DocComment.builder().summary(doc).build())
                 .build();
     }
 

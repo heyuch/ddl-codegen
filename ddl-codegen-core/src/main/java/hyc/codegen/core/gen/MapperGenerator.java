@@ -6,6 +6,7 @@ import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Index;
 import hyc.codegen.tree.Annotation;
 import hyc.codegen.tree.Class;
+import hyc.codegen.tree.DocComment;
 import hyc.codegen.tree.Method;
 import hyc.codegen.tree.Types;
 import hyc.codegen.tree.Variable;
@@ -57,6 +58,7 @@ public final class MapperGenerator extends AbstractJavaGenerator {
     @Override
     protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
         builder.kind(Kind.INTERFACE);
+        CommentDocs.classDoc(builder, ctx.tableComment());
 
         ArtifactConfig target = gctx.resolveReference(ctx.getArtifactName(), "target", PojoGenerator.NAME);
         String poType = gctx.refFqn(ctx.getTable().getName(), target);
@@ -81,6 +83,7 @@ public final class MapperGenerator extends AbstractJavaGenerator {
         return Method.builder()
                 .returnType(new hyc.codegen.tree.TypeReference("int"))
                 .name("deleteById")
+                .javadoc(DocComment.builder().summary("按主键删除记录").build())
                 .parameter(Variable.builder()
                         .annotation(Annotation.of(PARAM, "\"" + fieldName + "\""))
                         .type(JavaTypes.typeTree(ctx.typeOf(id)))
@@ -91,6 +94,7 @@ public final class MapperGenerator extends AbstractJavaGenerator {
 
     private Method findByMethod(QueryMethods.Spec spec, String poType, String nullable, TableContext ctx) {
         Method.Builder builder = Method.builder().name(spec.getMethodName());
+        builder.javadoc(DocComment.builder().summary(CommentDocs.findBySummary(ctx, spec.getColumns())).build());
 
         if (spec.isUniqueFull()) {
             builder.annotation(Annotation.of(nullable));
@@ -120,6 +124,7 @@ public final class MapperGenerator extends AbstractJavaGenerator {
         return Method.builder()
                 .returnType(new hyc.codegen.tree.TypeReference("int"))
                 .name("insert")
+                .javadoc(DocComment.builder().summary("插入记录").build())
                 .parameter(Variable.builder()
                         .type(new hyc.codegen.tree.TypeReference(poType))
                         .name(decapitalize(simpleName(poType)))
@@ -136,6 +141,7 @@ public final class MapperGenerator extends AbstractJavaGenerator {
         return Method.builder()
                 .returnType(new hyc.codegen.tree.TypeReference("int"))
                 .name("update")
+                .javadoc(DocComment.builder().summary("更新记录").build())
                 .parameter(Variable.builder()
                         .type(new hyc.codegen.tree.TypeReference(poType))
                         .name(decapitalize(simpleName(poType)))

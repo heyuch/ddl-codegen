@@ -28,6 +28,9 @@ final class QueryMethodFactory {
     static Method findBy(QueryMethods.Spec spec, TableContext ctx, String returnFqn,
             String nullable, boolean withParam) {
         Method.Builder builder = Method.builder().name(spec.getMethodName());
+        builder.javadoc(hyc.codegen.tree.DocComment.builder()
+                .summary(CommentDocs.findBySummary(ctx, spec.getColumns()))
+                .build());
 
         if (spec.isUniqueFull()) {
             builder.annotation(Annotation.of(nullable));

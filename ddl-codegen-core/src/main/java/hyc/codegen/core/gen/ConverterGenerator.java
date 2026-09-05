@@ -50,6 +50,7 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
     protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
         String tableName = ctx.getTable().getName();
         String ownName = ctx.getArtifactName();
+        CommentDocs.classDoc(builder, ctx.tableComment());
 
         ArtifactConfig source = gctx.resolveReference(ownName, "source", PojoGenerator.NAME);
         ArtifactConfig target = gctx.resolveReference(ownName, "target", PojoGenerator.NAME);
@@ -118,6 +119,9 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
                 .modifiers(Modifier.PUBLIC)
                 .returnType(Types.listOf(new TypeReference(elementSimple)))
                 .name(methodName)
+                .javadoc(hyc.codegen.tree.DocComment.builder()
+                        .summary("把 " + fromType + " 列表转成 " + toType + " 列表")
+                        .build())
                 .parameter(Variable.builder()
                         .type(Types.listOf(new TypeReference(fromType)))
                         .name(listParam)
@@ -163,6 +167,9 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
                 .modifiers(Modifier.PUBLIC)
                 .returnType(new TypeReference(m.toType))
                 .name(m.methodName)
+                .javadoc(hyc.codegen.tree.DocComment.builder()
+                        .summary("把 " + m.fromType + " 转成 " + m.toType)
+                        .build())
                 .parameter(Variable.builder().type(new TypeReference(m.fromType)).name(m.fromParam).build())
                 .body(String.join("\n", stmts))
                 .build();

@@ -81,6 +81,7 @@ public final class PojoGenerator extends AbstractJavaGenerator {
 
     @Override
     protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
+        CommentDocs.classDoc(builder, ctx.tableComment());
         applyClassFeatures(builder, ctx);
 
         for (Column column : ctx.columns()) {
@@ -96,6 +97,7 @@ public final class PojoGenerator extends AbstractJavaGenerator {
                 .modifiers(Modifier.PRIVATE)
                 .type(JavaTypes.typeTree(ctx.typeOf(column)))
                 .name(ctx.fieldName(column));
+        CommentDocs.fieldDoc(builder, column.getComment());
         applyFieldAnnotations(builder, column, ctx);
         return builder.build();
     }

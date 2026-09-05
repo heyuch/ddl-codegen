@@ -10,16 +10,28 @@ import com.demo.mapper.UserMapper;
 import com.demo.repository.UserRepository;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+/**
+ * 用户表
+ */
 public final class UserRepositoryImpl implements UserRepository {
 
+    /**
+     * 数据访问 Mapper
+     */
     @Resource
     @Generated("ddl-codegen")
     private UserMapper userMapper;
 
+    /**
+     * 实体转换器
+     */
     @Resource
     @Generated("ddl-codegen")
     private UserConverter userConverter;
 
+    /**
+     * 按 主键 查询
+     */
     @Override
     @Nullable
     @Generated("ddl-codegen")
@@ -27,6 +39,9 @@ public final class UserRepositoryImpl implements UserRepository {
         return userMapper.findById(id) == null ? null : userConverter.toUser(userMapper.findById(id));
     }
 
+    /**
+     * 按 用户名 查询
+     */
     @Override
     @Nullable
     @Generated("ddl-codegen")

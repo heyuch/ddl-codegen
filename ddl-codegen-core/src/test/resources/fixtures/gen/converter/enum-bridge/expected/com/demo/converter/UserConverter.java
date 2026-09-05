@@ -10,6 +10,9 @@ import com.demo.pojo.UserPo;
 
 public final class UserConverter {
 
+    /**
+     * 把 UserPo 转成 User
+     */
     @Generated("ddl-codegen")
     public User toUser(UserPo source) {
         User user = new User();
@@ -19,6 +22,9 @@ public final class UserConverter {
         return user;
     }
 
+    /**
+     * 把 User 转成 UserPo
+     */
     @Generated("ddl-codegen")
     public UserPo toUserPo(User target) {
         UserPo userPo = new UserPo();
@@ -28,6 +34,9 @@ public final class UserConverter {
         return userPo;
     }
 
+    /**
+     * 把 UserPo 列表转成 User 列表
+     */
     @Generated("ddl-codegen")
     public List<User> toUserList(List<UserPo> sourceList) {
         java.util.List<User> list = new java.util.ArrayList<>();
@@ -39,6 +48,9 @@ public final class UserConverter {
         return list;
     }
 
+    /**
+     * 把 User 列表转成 UserPo 列表
+     */
     @Generated("ddl-codegen")
     public List<UserPo> toUserPoList(List<User> targetList) {
         java.util.List<UserPo> list = new java.util.ArrayList<>();

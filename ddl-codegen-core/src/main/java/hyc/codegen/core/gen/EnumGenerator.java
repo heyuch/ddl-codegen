@@ -17,6 +17,7 @@ import hyc.codegen.core.model.EnumItem;
 import hyc.codegen.core.types.TypeMapper;
 import hyc.codegen.tree.Annotation;
 import hyc.codegen.tree.Class;
+import hyc.codegen.tree.DocComment;
 import hyc.codegen.tree.Method;
 import hyc.codegen.tree.SourceExpr;
 import hyc.codegen.tree.TypeReference;
@@ -149,18 +150,21 @@ public final class EnumGenerator extends AbstractJavaGenerator {
                         .name("desc")
                         .build())
                 .body("this.code = code;\nthis.desc = desc;")
+                .javadoc(DocComment.builder().summary("私有构造：code + desc").build())
                 .build());
         builder.method(Method.builder()
                 .modifiers(Modifier.PUBLIC)
                 .returnType(new TypeReference(codeType))
                 .name("getCode")
                 .body("return code;")
+                .javadoc(DocComment.builder().summary("获取数据库存储值 code").build())
                 .build());
         builder.method(Method.builder()
                 .modifiers(Modifier.PUBLIC)
                 .returnType(new TypeReference(JAVA_LANG_STRING))
                 .name("getDesc")
                 .body("return desc;")
+                .javadoc(DocComment.builder().summary("获取枚举值描述 desc").build())
                 .build());
     }
 
@@ -172,6 +176,7 @@ public final class EnumGenerator extends AbstractJavaGenerator {
                 .annotation(Annotation.of(nullable))
                 .returnType(new TypeReference(enumName))
                 .name("fromCodeNullable")
+                .javadoc(DocComment.builder().summary("按 code 宽松反查：无匹配或入参为 null 时返回 null").build())
                 .parameter(Variable.builder()
                         .kind(VariableKind.PARAMETER)
                         .annotation(Annotation.of(nullable))
@@ -188,6 +193,7 @@ public final class EnumGenerator extends AbstractJavaGenerator {
                 .modifiers(Modifier.PUBLIC, Modifier.STATIC)
                 .returnType(new TypeReference(enumName))
                 .name("fromCode")
+                .javadoc(DocComment.builder().summary("按 code 严格反查：入参为 null 或无匹配时抛异常").build())
                 .parameter(Variable.builder()
                         .kind(VariableKind.PARAMETER)
                         .type(new TypeReference(codeType))
@@ -244,7 +250,8 @@ public final class EnumGenerator extends AbstractJavaGenerator {
                     + " 的枚举项常量名重复（清洗后）: " + constantName + "（可用 (name) 显式区分）");
         }
 
-        resolved.add(new ResolvedItem(constantName, "(" + codeLiteral + ", " + quote(item.getDesc()) + ")"));
+        resolved.add(new ResolvedItem(constantName, "(" + codeLiteral + ", " + quote(item.getDesc()) + ")",
+                item.getDesc()));
     }
 
     @Override
@@ -259,13 +266,20 @@ public final class EnumGenerator extends AbstractJavaGenerator {
             builder.annotation(Annotation.of("lombok.Getter"));
             builder.annotation(Annotation.of("lombok.RequiredArgsConstructor"));
         }
+        // 类 javadoc：表注释优先，空则退列注释（CommentDocs 内部清洗）
+        CommentDocs.classDoc(builder, CommentDocs.summary(ctx.tableComment()) != null
+                ? ctx.tableComment()
+                : column.getComment());
 
         for (ResolvedItem item : items) {
-            builder.enumConstant(Variable.builder()
+            Variable.Builder constant = Variable.builder()
                     .name(item.constantName)
                     .type(new TypeReference(enumName))
-                    .init(new SourceExpr(item.initText))
-                    .build());
+                    .init(new SourceExpr(item.initText));
+            if (!item.desc.isEmpty()) {
+                constant.javadoc(DocComment.builder().summary(item.desc).build());
+            }
+            builder.enumConstant(constant.build());
         }
 
         String codeType = codeTypeOf(ctx, column);
@@ -273,11 +287,13 @@ public final class EnumGenerator extends AbstractJavaGenerator {
                 .modifiers(Modifier.PRIVATE, Modifier.FINAL)
                 .type(new TypeReference(codeType))
                 .name("code")
+                .javadoc(DocComment.builder().summary("code - 数据库存储值").build())
                 .build());
         builder.field(Variable.builder()
                 .modifiers(Modifier.PRIVATE, Modifier.FINAL)
                 .type(new TypeReference(JAVA_LANG_STRING))
                 .name("desc")
+                .javadoc(DocComment.builder().summary("desc - 枚举值描述").build())
                 .build());
 
         if (!lombok) {
@@ -384,16 +400,19 @@ public final class EnumGenerator extends AbstractJavaGenerator {
         return false;
     }
 
-    /** 解析后的枚举项：最终常量名 + 完整常量 init 文本（{@code (codeLiteral, "desc")}）。 */
+    /** 解析后的枚举项：最终常量名 + 完整常量 init 文本 + desc（常量 javadoc 用）。 */
     private static final class ResolvedItem {
 
         final String constantName;
 
         final String initText;
 
-        ResolvedItem(String constantName, String initText) {
+        final String desc;
+
+        ResolvedItem(String constantName, String initText, String desc) {
             this.constantName = constantName;
             this.initText = initText;
+            this.desc = desc;
         }
 
     }
