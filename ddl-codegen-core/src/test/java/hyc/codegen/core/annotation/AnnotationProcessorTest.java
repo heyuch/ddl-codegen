@@ -39,6 +39,31 @@ class AnnotationProcessorTest {
     }
 
     @Test
+    void enumAnnotationOnColumnWithAndWithoutValue() {
+        Meta named = new Meta();
+        processor.process("状态 1=初始(INIT) @enum:Status", MetaTarget.COLUMN, named);
+        assertEquals("Status", named.getString("enum"));
+
+        Meta bare = new Meta();
+        processor.process("类型 NORMAL=普通 @enum", MetaTarget.COLUMN, bare);
+        // 裸 @enum：Boolean.TRUE 占位（Meta.put(null) 是清除语义，占位防止整列静默退化）
+        assertTrue(bare.contains("enum"));
+        assertTrue(bare.isTrue("enum"));
+        assertNull(bare.getString("enum"));
+    }
+
+    @Test
+    void enumAnnotationOnWrongTargetIsIgnored() {
+        Meta tableMeta = new Meta();
+        processor.process("用户表 @enum:Status", MetaTarget.TABLE, tableMeta);
+        assertFalse(tableMeta.contains("enum"));
+
+        Meta indexMeta = new Meta();
+        processor.process("@enum", MetaTarget.INDEX, indexMeta);
+        assertFalse(indexMeta.contains("enum"));
+    }
+
+    @Test
     void ignoreAnnotationOnColumnAndIndex() {
         Meta columnMeta = new Meta();
         processor.process("敏感字段 @ignore", MetaTarget.COLUMN, columnMeta);

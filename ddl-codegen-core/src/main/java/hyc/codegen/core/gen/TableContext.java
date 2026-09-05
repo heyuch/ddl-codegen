@@ -69,12 +69,19 @@ public final class TableContext {
     }
 
     /**
-     * enum 列 → 枚举类名（列注释 {@code @as} 优先，否则按命名策略）。
+     * 枚举列 → 枚举类名（优先级：列注释 {@code @as} > {@code @enum} 值 > 命名策略）。
+     * <p>
+     * {@code @enum} 仅在有值时作为类名（键值为字符串）；裸 {@code @enum}（键值为 {@code Boolean.TRUE}）
+     * 与 SQL-enum 列同走命名策略（{@code naming.enum.style}）。
      */
     public String enumClassName(Column column) {
         Object as = column.getMeta().get("as");
         if (as != null) {
             return as.toString();
+        }
+        Object annotated = column.getMeta().get("enum");
+        if (annotated instanceof String) {
+            return annotated.toString();
         }
         return naming.enumClassName(table.getName(), column.getName());
     }

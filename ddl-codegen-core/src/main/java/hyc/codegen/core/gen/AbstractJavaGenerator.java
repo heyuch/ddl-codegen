@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.lang.model.element.Modifier;
 
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.VariableTree;
 import hyc.codegen.core.io.ChangeStatus;
 import hyc.codegen.core.io.FileWriter;
@@ -18,6 +19,7 @@ import hyc.codegen.tree.JavaCodegen;
 import hyc.codegen.tree.JavaParser;
 import hyc.codegen.tree.Method;
 import hyc.codegen.tree.Variable;
+import hyc.codegen.tree.VariableKind;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -29,7 +31,12 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * reconcile 语义（DESIGN §1/§4）：模型有而文件无 → 增；有而模型无 → 删；类型/签名变 → 替换；一致 → 跳过。
  * 只动 {@code @Generated} 成员，用户手写成员永不触碰；解析失败 → 记警告跳过（不覆盖）。
  */
+// 生成器基类聚合 reconcile 所需的签名类型引用（ExpressionTree/VariableKind + 双日志），fanout 21/20；
+// 类内职责内聚，豁免优于改动静态检查配置
+@SuppressWarnings("ClassFanOutComplexity")
 public abstract class AbstractJavaGenerator implements Generator {
+
+    private static final System.Logger LOG = System.getLogger(AbstractJavaGenerator.class.getName());
 
     private final JavaParser parser = new JavaParser();
 
@@ -215,6 +222,13 @@ public abstract class AbstractJavaGenerator implements Generator {
         for (Variable exp : expected) {
             Variable match = findField(generated, exp.getName().toString());
             if (match == null) {
+                // 既有同名非 @Generated 成员（用户手写常量/字段）→ 保留用户版，跳过新增防重名
+                if (findField(target.getFields(), exp.getName().toString()) != null) {
+                    LOG.log(System.Logger.Level.WARNING,
+                            "跳过新增 @Generated 字段（存在同名用户手写成员，保留用户版本）: {0} {1}",
+                            target.getSimpleName(), exp.getName());
+                    continue;
+                }
                 target.addField(exp);
                 continue;
             }
@@ -230,6 +244,13 @@ public abstract class AbstractJavaGenerator implements Generator {
         for (Method exp : expected) {
             Method match = findMethod(generated, exp.getName().toString());
             if (match == null) {
+                // 既有同名非 @Generated 方法（用户手写）→ 保留用户版，跳过新增防重名
+                if (findMethod(target.getMethods(), exp.getName().toString()) != null) {
+                    LOG.log(System.Logger.Level.WARNING,
+                            "跳过新增 @Generated 方法（存在同名用户手写方法，保留用户版本）: {0} {1}",
+                            target.getSimpleName(), exp.getName());
+                    continue;
+                }
                 target.addMethod(exp);
                 continue;
             }
@@ -251,6 +272,14 @@ public abstract class AbstractJavaGenerator implements Generator {
 
     private void replaceIfSignatureChanged(Class target, Variable expected, Variable match) {
         if (signature(expected).equals(signature(match))) {
+            return;
+        }
+        if (expected.getVariableKind() == VariableKind.ENUM_CONSTANT) {
+            // 枚举常量签名含 init：code/desc 值改 → 原位替换，保持声明顺序（防 ordinal/values() 漂移）
+            if (!target.replaceField(match, expected)) {
+                target.removeField(match);
+                target.addField(expected);
+            }
             return;
         }
         target.removeField(match);
@@ -282,9 +311,17 @@ public abstract class AbstractJavaGenerator implements Generator {
         return sb.toString();
     }
 
-    /** 字段签名：类型。 */
+    /**
+     * 字段签名：普通字段 = 类型；枚举常量 = 类型 + init 规范化文本
+     * （code/desc 值变化触发替换，见 {@link JavaCodegen#enumConstantInitText}）。
+     */
     private String signature(Variable field) {
-        return String.valueOf(field.getType());
+        String type = String.valueOf(field.getType());
+        if (field.getVariableKind() != VariableKind.ENUM_CONSTANT) {
+            return type;
+        }
+        ExpressionTree init = field.getInitializer();
+        return type + ":" + (init == null ? "" : JavaCodegen.enumConstantInitText(init));
     }
 
     private void writeFile(Path file, TableContext ctx, GenerationContext gctx, String code, String className) {

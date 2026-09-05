@@ -10,7 +10,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * 注解处理器注册表：按注解名查找处理器。
  * <p>
- * {@link #builtin()} 注册内置的 type/as/ignore；用户自定义处理器通过 {@link #register} 加入。
+ * {@link #builtin()} 注册内置的 type/as/ignore/enum；用户自定义处理器通过 {@link #register} 加入。
  */
 public final class AnnotationRegistry {
 
@@ -24,6 +24,7 @@ public final class AnnotationRegistry {
         registry.register(new TypeHandler());
         registry.register(new AsHandler());
         registry.register(new IgnoreHandler());
+        registry.register(new EnumHandler());
         return registry;
     }
 

@@ -81,7 +81,7 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
         String enumPackage = gctx.enumPackage();
         if (enumPackage != null) {
             for (Column column : ctx.columns()) {
-                if (!column.getEnumValues().isEmpty()) {
+                if (column.isEnumColumn()) {
                     imports.add(new Import(enumPackage + "." + ctx.enumClassName(column)));
                 }
             }
@@ -133,16 +133,20 @@ public final class ConverterGenerator extends AbstractJavaGenerator {
             String field = ctx.fieldName(column);
             String getter = m.fromParam + ".get" + capitalize(field) + "()";
             String expr = getter;
-            if (!column.getEnumValues().isEmpty()) {
-                // 转换方向 = from/to 产物各自 fieldType 的视图差异（查询契约）
+            String enumPackage = gctx.enumPackage();
+            if (column.isEnumColumn() && enumPackage != null) {
+                // 转换方向 = from/to 产物各自 fieldType 相对该枚举类 FQN 的视图差异（查询契约精确比对）
+                String enumFqn = enumPackage + "." + ctx.enumClassName(column);
                 String fromType = gctx.generatorFor(m.fromName).fieldType(column, fromCtx);
                 String toType = gctx.generatorFor(m.toName).fieldType(column, toCtx);
-                boolean fromEnumView = !"java.lang.String".equals(fromType);
-                boolean toEnumView = !"java.lang.String".equals(toType);
+                boolean fromEnumView = enumFqn.equals(fromType);
+                boolean toEnumView = enumFqn.equals(toType);
                 if (toEnumView && !fromEnumView) {
-                    expr = Expr.nullSafe(getter, ctx.enumClassName(column) + ".fromValue(" + getter + ")");
+                    // 标量 → enum：nullSafe + fromCode（保持旧 fromValue 语义：null 短路、未知 code 抛错）
+                    expr = Expr.nullSafe(getter, ctx.enumClassName(column) + ".fromCode(" + getter + ")");
                 } else if (fromEnumView && !toEnumView) {
-                    expr = Expr.nullSafe(getter, getter + ".value()");
+                    // enum → 标量：nullSafe + getCode()（@Getter/手写 getter 两形态方法面一致）
+                    expr = Expr.nullSafe(getter, getter + ".getCode()");
                 }
             }
             stmts.add(toVar + ".set" + capitalize(field) + "(" + expr + ");");

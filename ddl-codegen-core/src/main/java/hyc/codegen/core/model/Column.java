@@ -103,6 +103,15 @@ public final class Column {
         return "enum".equals(sqlType);
     }
 
+    /**
+     * 是否为「枚举列」（生成枚举类）：原生 SQL enum 列或 {@code @enum} 标注列（meta 含 {@code "enum"} 键）。
+     * <p>
+     * {@code @enum} 键由 {@code annotation.EnumHandler} 写入：有值为枚举类名字符串，无值为 {@code Boolean.TRUE}。
+     */
+    public boolean isEnumColumn() {
+        return isEnum() || meta.contains("enum");
+    }
+
     public boolean isNullable() {
         return nullable;
     }

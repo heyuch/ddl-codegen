@@ -13,7 +13,9 @@
 | 产物文件 / 生成物 | 产物文件 | 生成器产出的 `.java`/`.xml` 文件；路径 = 根 + module + package/资源路径 + 类名（config 推导） | docs/architecture.md「运行管线」「config schema」 |
 | reconcile | 增量同步 | 模型 vs 现有文件的 `@Generated` 成员级 diff：模型有文件无 → 增；有而模型无 → 删；签名变 → 替换；一致 → 跳过 | docs/architecture.md「关键契约」 |
 | `@Generated` | 成员所有权标记 | 工具只增删改带此注解的成员；**用户手写代码永不触碰**；解析失败不覆盖 | docs/architecture.md「关键契约」 |
-| DDL 注解 | DDL 注解 | 注释中 `@name[:value]`；内置 `@type`（复用类型）/ `@as`（类名覆盖）/ `@ignore`（模型剪枝）；未知注解 warning 忽略 | docs/architecture.md「注解体系」 |
+| DDL 注解 | DDL 注解 | 注释中 `@name[:value]`；内置 `@type`（复用类型）/ `@as`（类名覆盖）/ `@enum`（声明列按枚举处理）/ `@ignore`（模型剪枝）；未知注解 warning 忽略 | docs/architecture.md「注解体系」 |
+| 枚举列 | enum column | 生成枚举类的列：原生 SQL `enum(...)` 类型列或 `@enum` 标注列（`Column.isEnumColumn()`）；枚举项数据在常量 init、参与 reconcile 签名 | `Column`、docs/architecture.md「注解体系」「生成器体系」 |
+| `@enum` | 枚举声明注解 | 列注释 `@enum[:类名]` 声明该列按枚举处理（tinyint/varchar 等非 SQL-enum 列）；枚举项 `{code}={desc}({name})` 由 comment 列表定义；类名 = `@as` > `@enum` 值 > 命名策略 | docs/architecture.md「注解体系」、README「注解枚举列」 |
 | 剪枝 | 剪枝 | `@ignore` 注解的列/索引在解析应用后从模型移除（一处解决所有产物） | `StatementApplier.pruneIgnored` |
 | Schema | 内存模型 | DDL 应用后的表模型（Table/Column/Index/Meta）；后续语句可见前面结果 | core `model` 包、docs/architecture.md「运行管线」 |
 | 模型 vs 树 | 模型 / 可修改 AST | 模型 = core `model` 包的领域对象（DDL 语义层）；树 = `ddl-codegen-tree` 的自研可修改 Java AST（源码表示层） | docs/architecture.md「模块与依赖方向」 |

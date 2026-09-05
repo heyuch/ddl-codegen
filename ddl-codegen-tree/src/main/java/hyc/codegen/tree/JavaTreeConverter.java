@@ -2,6 +2,8 @@ package hyc.codegen.tree;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 
 import com.sun.source.tree.ArrayTypeTree;
@@ -23,6 +25,23 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
 
     JavaTreeConverter(DocTrees docs) {
         this.docs = docs;
+    }
+
+    /**
+     * 判断枚举类的成员是否为枚举常量：javac 中常量隐式 {@code public static final} 且声明类型 = 枚举类自身。
+     * <p>
+     * 与 {@code JavaCodegen.isEnumConstant} 同规则；解析侧据此补标 {@link VariableKind#ENUM_CONSTANT}，
+     * 使解析/构建两侧成员 kind 对称（此前统一 FIELD）。
+     */
+    private static boolean isEnumConstantMember(ClassTree node, Variable v, Class c) {
+        if (node.getKind() != com.sun.source.tree.Tree.Kind.ENUM) {
+            return false;
+        }
+        Set<Modifier> flags = v.getModifiers().getFlags();
+        if (!flags.contains(Modifier.PUBLIC) || !flags.contains(Modifier.STATIC) || !flags.contains(Modifier.FINAL)) {
+            return false;
+        }
+        return String.valueOf(v.getType()).equals(String.valueOf(c.getSimpleName()));
     }
 
     /**
@@ -75,7 +94,9 @@ class JavaTreeConverter extends TreeScanner<Tree, TreePath> {
                 }
             } else if (mm instanceof Variable) {
                 Variable v = (Variable)mm;
-                v.setVariableKind(VariableKind.FIELD);
+                v.setVariableKind(isEnumConstantMember(node, v, c)
+                        ? VariableKind.ENUM_CONSTANT
+                        : VariableKind.FIELD);
             }
 
             c.addMember(mm);

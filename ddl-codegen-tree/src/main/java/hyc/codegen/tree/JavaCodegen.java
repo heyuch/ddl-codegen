@@ -81,6 +81,46 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         return result;
     }
 
+    /** 解码 javac toString 输出的 {@code \\uXXXX}（前面无成对反斜杠者）；其余原样保留。 */
+    private static String decodeUnicodeEscapes(String code) {
+        StringBuilder sb = new StringBuilder(code.length());
+        for (int i = 0; i < code.length();) {
+            char c = code.charAt(i);
+            if (c == '\\' && i + 1 < code.length() && code.charAt(i + 1) == '\\') {
+                // 真实反斜杠（javac 输出 \\）：成对拷贝
+                sb.append('\\').append('\\');
+                i += 2;
+            } else if (c == '\\' && i + 5 < code.length() && code.charAt(i + 1) == 'u' && isHex(code, i + 2)) {
+                sb.append((char)Integer.parseInt(code.substring(i + 2, i + 6), 16));
+                i += 6;
+            } else {
+                sb.append(c);
+                i++;
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 枚举常量 init 的规范化文本（打印器 {@link #visitEnumConstants} 与 reconcile 字段签名共用，避免两处漂移）：
+     * {@code new X(a)} → {@code (a)}；裸值（字符串字面量等）→ {@code (value)}；已括号开头原样；空白归一化为单空格。
+     * <p>
+     * javac 的 toString 会把字符串内的非 ASCII 输出为 {@code \\uXXXX} 转义；生成侧 SourceExpr 写原文——
+     * 统一在此解码回字符（仅当 {@code \\u} 前无反斜杠对，真实反斜杠被 javac 输出为 {@code \\} 不受影响），
+     * 保证两侧规范化文本一致（幂等、可读）。
+     */
+    public static String enumConstantInitText(ExpressionTree init) {
+        String code = generateCode(init);
+        if (code.startsWith("new") && code.contains("(")) {
+            // new Foo(x) → (x)
+            code = code.substring(code.indexOf('('));
+        } else if (!code.startsWith("(")) {
+            // 裸值（如字符串字面量）→ (value)
+            code = "(" + code + ")";
+        }
+        return decodeUnicodeEscapes(code).replaceAll("\\s+", " ").trim();
+    }
+
     /**
      * Java 字符字面量转义。
      */
@@ -187,6 +227,16 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         String vtype = String.valueOf(v.getType());
 
         return vtype.equals(className);
+    }
+
+    private static boolean isHex(String s, int from) {
+        for (int i = from; i < from + 4; i++) {
+            char c = s.charAt(i);
+            if (!(c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F')) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -302,7 +352,11 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
         }
 
         List<VariableTree> constants = collectMembers(node, VariableTree.class, m -> isEnumConstant(node, m));
-        if (constants.isEmpty()) {
+        boolean hasBodyMembers = !collectMembers(node, VariableTree.class, m -> !isEnumConstant(node, m)).isEmpty()
+                || !collectMembers(node, MethodTree.class, null).isEmpty()
+                || !collectMembers(node, ClassTree.class, null).isEmpty();
+        if (constants.isEmpty() && !hasBodyMembers) {
+            // 空枚举（无常量亦无成员）：合法，无需分号
             return;
         }
 
@@ -312,6 +366,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
             p.newline();
         }
 
+        // 枚举体只要有成员（含仅常量），常量列表后必须打 ';'（JLS：enum 体成员前需分号）
         p.line(";");
         p.newline();
     }
@@ -544,15 +599,7 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
         ExpressionTree init = node.getInitializer();
         if (init != null) {
-            String code = generateCode(init);
-            if (code.startsWith("new") && code.contains("(")) {
-                // new Foo(x) → (x)
-                code = code.substring(code.indexOf('('));
-            } else if (!code.startsWith("(")) {
-                // 裸值（如字符串字面量）→ (value)
-                code = "(" + code + ")";
-            }
-            p.write(code);
+            p.write(enumConstantInitText(init));
         }
 
         return false;

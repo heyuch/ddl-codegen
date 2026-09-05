@@ -242,6 +242,20 @@ public final class Class implements ClassTree {
     }
 
     /**
+     * 原位替换指定字段（按实例相等定位，保持声明顺序）；不存在返回 false。
+     * <p>
+     * 与 {@link #addField}（追加）不同：枚举常量等有序成员替换时保持索引，避免 ordinal/顺序漂移。
+     */
+    public boolean replaceField(VariableTree oldField, VariableTree newField) {
+        int index = fields.indexOf(oldField);
+        if (index < 0) {
+            return false;
+        }
+        fields.set(index, newField);
+        return true;
+    }
+
+    /**
      * 设置父类。
      */
     public void setExtendsClause(@Nullable Tree extend) {

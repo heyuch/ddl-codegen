@@ -111,7 +111,7 @@ public final class PojoGenerator extends AbstractJavaGenerator {
                 return type.toString();
             }
         }
-        if (option(ctx, "enums") && !column.getEnumValues().isEmpty()) {
+        if (option(ctx, "enums") && column.isEnumColumn()) {
             return ctx.getEnumPackage() + "." + ctx.enumClassName(column);
         }
         return super.fieldType(column, ctx);

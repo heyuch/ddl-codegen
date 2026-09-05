@@ -118,14 +118,14 @@ class EndToEndTest {
     void converterGenerated() throws Exception {
         generate(DDL);
 
-        // Converter：逐字段 + enum 双向转换
+        // Converter：逐字段 + enum 双向转换（code/desc 模板：fromCode / getCode 空安全桥接）
         String converter = read("com/demo/converter/UserConverter.java");
         assertTrue(converter.contains("User user = new User();"), converter);
         assertTrue(converter.contains(
-                "user.setGender(source.getGender() == null ? null : Gender.fromValue(source.getGender()));"),
+                "user.setGender(source.getGender() == null ? null : Gender.fromCode(source.getGender()));"),
                 converter);
         assertTrue(converter.contains(
-                "userPo.setGender(target.getGender() == null ? null : target.getGender().value());"),
+                "userPo.setGender(target.getGender() == null ? null : target.getGender().getCode());"),
                 converter);
     }
 
@@ -152,12 +152,20 @@ class EndToEndTest {
     void enumGenerated() throws Exception {
         generate(DDL);
 
-        // Enum：@as 命名 + 常量 + value/fromValue
+        // Enum（code/desc 模板）：SQL-enum 列字面量为主，comment 无列表 → desc=""
         String gender = read("com/demo/enums/Gender.java");
-        assertTrue(gender.contains("MALE(\"male\")"), gender);
-        assertTrue(gender.contains("FEMALE(\"female\")"), gender);
-        assertTrue(gender.contains("fromValue"), gender);
-        assertTrue(gender.contains("public String value()"), gender);
+        assertTrue(gender.contains("MALE(\"male\", \"\")"), gender);
+        assertTrue(gender.contains("FEMALE(\"female\", \"\")"), gender);
+        assertTrue(gender.contains("private final String code"), gender);
+        assertTrue(gender.contains("private final String desc"), gender);
+        assertTrue(gender.contains("public static Gender fromCodeNullable"), gender);
+        assertTrue(gender.contains("public static Gender fromCode(String code)"), gender);
+        assertTrue(gender.contains("public String getCode()"), gender);
+        assertTrue(gender.contains("public String getDesc()"), gender);
+        // @Generated ownership 标记逐成员存在；新模板不再有 value()/fromValue
+        assertTrue(gender.contains("@Generated"), gender);
+        assertFalse(gender.contains("fromValue"), gender);
+        assertFalse(gender.contains("public String value()"), gender);
     }
 
     /**

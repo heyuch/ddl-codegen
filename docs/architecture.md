@@ -62,12 +62,12 @@ DDL 文本（多条语句，分号分隔）
 | 类 | kind | 典型产物（config 名，自由定义） | 说明 |
 |---|---|---|---|
 | `PojoGenerator` | `pojo` | entity / po / dto | 纯字段类，一表一文件；类名 = 基类名 + suffix；特性选项 lombok/serializable/jsr303/jsr305/enums/type |
-| `EnumGenerator` | `enum` | enum | 表内**每个 enum 列生成一个枚举类**（一表多文件）；常量 = DDL 值转标识符 + `value()` + `fromValue(String)`；无 enum 列时 `shouldGenerate=false` → 删除旧文件 |
+| `EnumGenerator` | `enum` | enum | 表内每个**枚举列**生成一个枚举类（一表多文件）；枚举列 = SQL `enum(...)` 类型列或 `@enum` 标注列（`Column.isEnumColumn()`）。模板：常量 = 枚举项 + code/desc 双字段 + `fromCodeNullable`/`fromCode` 反查方法对（`@Nullable` 用 `annotations.nullable`）；产物选项 `lombok=true` → 类级 `@Getter`+`@RequiredArgsConstructor`，缺省 → 手写私有构造器与 `getCode()/getDesc()`。枚举项数据在常量 init、参与 reconcile 签名（ALTER comment 后增/删/同名 code/desc 值改均增量同步，见契约）；无枚举列时 `shouldGenerate=false` → 删除旧文件 |
 | `MapperGenerator` | `mybatisMapper` | mapper | Mapper 接口：insert/update + 有主键时 deleteById + 索引派生 findBy*；返回类型 = `target` 引用 |
 | `MapperXmlGenerator` | `mybatisXml` | mapperXml / xml | 整文件字符串模板重生成（无 reconcile）；文件名为其 `mapper` 引用产物类名 + `.xml`；必配 `path`；结构 BaseResultMap/BaseColumnList/insert/deleteById/update/findById/findBy* |
 | `RepositoryGenerator` | `repository` | repository | Repository 接口：索引派生 findBy*（`target` 视图） |
 | `MybatisRepositoryImplGenerator` | `mybatisRepositoryImpl` | repositoryImpl | 桥接 Mapper →（Converter）→ target；`di=field`（默认 @Resource 字段注入）或 `di=constructor`；mapper.target == 自己 target → 直连，否则经 converter（校验 converter.source==mapper.target 且 converter.target==自己 target） |
-| `ConverterGenerator` | `converter` | converter | source ↔ target 双向 `toX` / `toXList`；enum 列按两端产物视图差异自动插 `fromValue`/`.value()` 空安全转换 |
+| `ConverterGenerator` | `converter` | converter | source ↔ target 双向 `toX` / `toXList`；枚举列按两端产物视图差异自动插 `fromCode`/`getCode()` 空安全转换（视图判定 = 枚举类 FQN 精确比对，非 String 启发式；标量→enum 用 nullSafe + `fromCode`，保持未知 code 抛错语义） |
 
 产物（artifact）≠ 生成器：产物名是 config 顶层键、自由定义；「配置了即启用」。**同一 kind 可服务多个产物实例**（如 `entity` 与 `po` 均 `generator=pojo`，各自配 package/suffix/特性）；`CodeGenerator` 每 kind 持一个实例，由 `TableContext`（表 × 产物配置）驱动，实例不存表态。
 
@@ -82,12 +82,13 @@ DDL 文本（多条语句，分号分隔）
 
 **语法**（`AnnotationParser`，严格）：DDL 注释文本内 `@` 后跟标识符为注解名，`@name` 或 `@name:value`；value 不含空白与 `@`、非空；一个注释可含多个注解；**无隐式简写**（`@boolean` ≠ `@type:boolean`）。注释中的邮箱（`foo@bar.com`）会被当未知注解提取，warning 忽略。**解析时机 = DruidDdlParser 转换语句时**（表/列/索引注释 → 各节点 `Meta`，`AnnotationProcessor` 分发）。未知注解名 / 位置不符 → warning 忽略，不中断生成。
 
-**内置 handler**（`AnnotationRegistry.builtin()`，注册顺序 type/as/ignore）：
+**内置 handler**（`AnnotationRegistry.builtin()`，注册顺序 type/as/ignore/enum）：
 
 | 注解 | Handler | 允许位置 | 写入 meta | 语义（消费方） |
 |---|---|---|---|---|
 | `@type[:<FQN或简单名>]` | `TypeHandler` | COLUMN | 列 `meta["type"]` | 列类型覆盖：**由 pojo 类产物在 `type=true` 时优先采用**（`PojoGenerator.fieldType`），不生成、不校验类型存在 |
 | `@as[:<名>]` | `AsHandler` | TABLE + COLUMN | 各自 `meta["as"]` | 表级：覆盖该表所有产物的**基类名**（类名 = as 值 + artifact suffix，`TableContext.className`）；列级：覆盖该列**枚举类名**（`TableContext.enumClassName`） |
+| `@enum[:<枚举类名>]` | `EnumHandler` | COLUMN | 列 `meta["enum"]`（有值存字符串，裸注解存 `Boolean.TRUE` 占位） | 声明该列**按枚举处理**（`Column.isEnumColumn()`）：非 SQL-enum 列生成 code/desc 枚举类；类名 = `@as` > `@enum` 值 > 命名策略（裸 `@enum` 与 SQL-enum 列同走 `naming.enum.style`）；枚举项 `{code}={desc}({name})` 由 EnumGenerator 经 `model.EnumCommentParser` 从 comment 解析；`@enum` 标注列再带列级 `@type` → 报错 |
 | `@ignore` | `IgnoreHandler` | COLUMN + INDEX | `meta["ignore"]` = true | 模型级剪枝：StatementApplier 应用完 `pruneIgnored` 把列/索引**从模型移除** → 所有产物（含 XML）与自定义生成器都不再见（一处解决）；索引忽略 = 不生成查询方法 |
 
 **自定义注解**：config `annotations.custom` = 逗号分隔的 `DdlAnnotationHandler` 实现类名；Codegen 反射实例化（要求无参构造）后 `register` 进注册表，同时注入 `TypeMapper`。Handler SPI = `name()` / `parse(Meta, @Nullable String)` / `targets()` + 默认钩子 `resolveType(Column, String)`（自定义注解可在 SQL 映射后改写列默认类型）。
@@ -119,7 +120,8 @@ DDL 文本（多条语句，分号分隔）
 | `serializable=true` | pojo | `implements Serializable` + `serialVersionUID` |
 | `jsr303=true` | pojo | NOT NULL→`@NotNull`；varchar/char→`@Size(max=n)`；decimal→`@Digits(integer=p-s, fraction=s)`（javax.validation.constraints） |
 | `jsr305=true` | pojo | nullable 列 → `@Nullable`（FQN 见 `annotations.nullable`） |
-| `enums=true` | pojo | enum 列字段类型 → 枚举类（要求 enum 产物唯一） |
+| `enums=true` | pojo | 枚举列（SQL-enum 或 `@enum` 标注，`Column.isEnumColumn()`）字段类型 → 枚举类（要求 enum 产物唯一） |
+| `lombok=true` | enum | 枚举类级 `@Getter`+`@RequiredArgsConstructor`（构造器/getter 由 lombok 生成）；缺省 false → 手写私有构造器 + `getCode()/getDesc()` 成员；选项翻转需删文件重生成（类级注解不 reconcile） |
 | `type=true` | pojo | 列 `@type` 注解值覆盖类型 |
 | `di=field\|constructor` | repositoryImpl | 注入方式；缺省 field（@Resource） |
 | `mapper=<产物>` / `converter=<产物>` / `repository=<产物>` 等 | mybatisXml / repositoryImpl | 跨产物引用选项键（经 `resolveReference` 的任意 refKey 路径） |
@@ -146,7 +148,7 @@ DDL 文本（多条语句，分号分隔）
 |---|---|
 | config 存在即启用 | 产物 = config 顶层键；文件位置 = config 推导（根 + module + package/资源 path + 类名），**无 manifest** |
 | @Generated 成员所有权 | 工具只增删改带 `@Generated`（`javax.annotation.processing.Generated`，JDK 自带）的字段/方法成员；用户手写成员永不触碰；现有文件无期望类名 → 视为新建（用户迁移代码未改 config 后果自负）；包名/类名以 config 为准 |
-| reconcile 即 diff | 字段按名匹配、方法按名匹配；替换判据：字段 = 类型；方法 = 返回类型 + 参数类型序列 + 方法体（空白归一化）。模型有而文件无 → 增；有而模型无 → 删；签名变 → 替换；一致 → 跳过 |
+| reconcile 即 diff | 字段按名匹配、方法按名匹配；替换判据：普通字段 = 类型，**enum 常量 = 类型 + init 规范化文本**（code/desc 值改触发原位替换、保持声明顺序）；方法 = 返回类型 + 参数类型序列 + 方法体（空白归一化）。模型有而文件无 → 增；有而模型无 → 删；签名变 → 替换；一致 → 跳过。期望成员名与既有**非 @Generated 手写成员**重复 → 跳过新增 + warning（保留用户版） |
 | 解析失败不覆盖 | 现有源解析失败 → 抛 `IllegalStateException` 中止本次运行、该文件未修改；**当前无 `--force` 逃生口**（CLI/plugin 均无此选项） |
 | 删除无条件 | drop table → 无条件删除该表全部启用产物文件；产物不再适用（enum 无 enum 列）→ 删除旧文件 |
 | rename 保留用户代码 | 表改名保留旧表名产物文件（含手写代码），新表名正常生成，类名变化 → warning 提示手动迁移删除；列/索引改名 → reconcile 层替换成员 |
@@ -159,7 +161,12 @@ DDL 文本（多条语句，分号分隔）
 ## 已知限制（现状缺口）
 
 - `--sync` 模式未实现（需文件归属标记才能对账磁盘）
-- enum 列失去 enum 类型后旧枚举文件不自动清理（shouldGenerate=false 只删当前类名文件）
+- 列失去枚举类型（SQL `enum(...)` 改型或 `@enum` 标注移除/列删除）后旧枚举文件不自动清理（shouldGenerate=false 只删当前类名文件；单列移除需手工删文件）
+- SQL-enum 旧模板产物（`value()`/`fromValue` 时代）升级：模板整体换代 + 类级注解不 reconcile → 删除旧枚举文件重生成
+- enum 产物 `lombok` 选项翻转（true↔false）对已存在文件失效（类级注解不 reconcile）→ 删文件重生成
+- comment 枚举项**顺序重排**不追（reconcile 按名不按序）→ 需删文件重生成以对齐 `values()` 序
+- 跨表同 enum 包枚举类名撞名不检测（生成器无状态；显式 `@enum:名`/`@as` 可避撞）
+- 生成枚举类恒引用 `annotations.nullable` 配置的注解（缺省 checkerframework qual）→ 消费项目需具备所配注解的依赖
 - merge 时删除成员不清理其 import（保守策略：不删可能被用户代码引用的 import）
 - ALTER COLUMN SET/DROP DEFAULT、FK/CHECK、分区、FULLTEXT/SPATIAL 索引 → warning 跳过（不生成对应变更）
 - 源码残留过时 javadoc 文案（"拦截器"残留、`CodeGenerator` RENAME 描述与实现矛盾等），待代码清理变更处理
@@ -171,7 +178,7 @@ DDL 文本（多条语句，分号分隔）
 - artifact 类名 = 基类名 + suffix；表级 `@as` 覆盖基类名。
 - 列名 → 字段名：camelCase（`user_id` → `userId`；可关）；命中保留字（Java 关键字 + 常用 SQL 保留字全集见 `NamingService.RESERVED_WORDS`，如 `order`）→ 追加 keywordSuffix。
 - 索引 → 查询方法名：`前缀 + By + 列 camelCase 以 And 连接`（`name, gender` → `findByNameAndGender`）。
-- 枚举类名：列 Pascal（column 风格）或基类名 + 列 Pascal（tableColumn 风格）；列级 `@as` 覆盖。
+- 枚举类名：列级 `@as` > `@enum` 显式值 > `naming.enumClassName`（SQL-enum 列与裸 `@enum` 列同走该函数：column 风格 = 列 Pascal，tableColumn = 基类名 + 列 Pascal）。
 
 **类型映射**（`TypeMapper`，返回全限定名；SQL→Java 内置表不进 config）：
 - 整数：`smallint/mediumint/int/integer/year` → `Integer`（**unsigned → `Long`**，防溢出）；`bigint` → `Long`；`tinyint(1)` → `Boolean`、其余 `tinyint` → `Integer`。
@@ -179,7 +186,7 @@ DDL 文本（多条语句，分号分隔）
 - 字符串：`char/varchar` + `tinytext/text/mediumtext/longtext/json` → `String`。
 - 二进制：`binary/varbinary` + blob 族 → `byte[]`。
 - 时间：`date` → `LocalDate`；`datetime/timestamp` → `LocalDateTime`；`time` → `LocalTime`。
-- 未知 SQL 类型 → `String`（保守）；enum 列 SQL 映射视图固定 `String`（枚举类视图走产物 `enums` 特性）。
+- 未知 SQL 类型 → `String`（保守）；**原生 SQL-enum 列标量视图固定 `String`**（`TypeMapper.resolveType` L134）；`@enum` 标注列保留自然映射（tinyint→Integer 等，po 等无 enums 产物即得数字/字符串类型）；枚举类视图走产物 `enums` 特性。
 - MyBatis jdbcType：`int→INTEGER`、`varchar→VARCHAR`、`text→LONGVARCHAR`、`datetime/timestamp→TIMESTAMP` 等（完整表见 `TypeMapper.JDBC_TYPES`；未知 → `VARCHAR`）。
 
 ## 关键代码锚点表
@@ -192,9 +199,9 @@ DDL 文本（多条语句，分号分隔）
 | CLI 入口 / Maven 入口 | `Main` / `GenerateMojo` | `ddl-codegen-cli/src/main/java/hyc/codegen/cli/Main.java`；`ddl-codegen-maven-plugin/src/main/java/hyc/codegen/mavenplugin/GenerateMojo.java` |
 | 配置模型 / 加载 | `DdlConfig` / `ArtifactConfig` / `ConfigLoader` / `PropertiesConfigLoader` | `…/core/config/` |
 | 类型映射 / 命名 | `TypeMapper` / `NamingService` / `TableNameStrategy` | `…/core/types/TypeMapper.java`；`…/core/naming/` |
-| 模型 | `Schema` / `Table` / `Column` / `Index` / `Meta` | `…/core/model/` |
+| 模型 | `Schema` / `Table` / `Column` / `Index` / `Meta` / `EnumItem` / `EnumCommentParser` | `…/core/model/` |
 | DDL 解析 / 操作 / 应用 | `DdlParser` / `DruidDdlParser` / `DruidAst` / `DdlOperation`（10 个 Op）/ `StatementApplier` / `ApplyResult` | `…/core/ddl/` |
-| 注解体系 | `AnnotationParser` / `AnnotationProcessor` / `AnnotationRegistry` / `DdlAnnotationHandler` / `TypeHandler` / `AsHandler` / `IgnoreHandler` / `MetaTarget` | `…/core/annotation/` |
+| 注解体系 | `AnnotationParser` / `AnnotationProcessor` / `AnnotationRegistry` / `DdlAnnotationHandler` / `TypeHandler` / `AsHandler` / `IgnoreHandler` / `EnumHandler` / `MetaTarget` | `…/core/annotation/` |
 | 生成编排 | `CodeGenerator` / `GenerationContext` / `TableContext` / `GeneratorRegistry` | `…/core/gen/` |
 | Generator SPI / 内置生成器 | `Generator` / `AbstractJavaGenerator` / `GeneratedSupport` / `JavaTypes` / `QueryMethods` / `QueryMethodFactory` / `PojoGenerator` / `EnumGenerator` / `MapperGenerator` / `MapperXmlGenerator` / `RepositoryGenerator` / `MybatisRepositoryImplGenerator` / `ConverterGenerator` | `…/core/gen/` |
 | 写盘 / 报告 / 路径 | `FileWriter` / `ChangeReport` / `ChangeStatus` / `PathResolver` | `…/core/io/` |

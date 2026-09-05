@@ -81,6 +81,7 @@
 | M5 | 注解迁移消除工具对比缺陷 | javax.annotation.Nullable → org.checkerframework @Nullable（纯 type-use）：TIGHTENS ×3（spotbugs 双注解 override 对比缺陷）随迁移消失；jsr305 依赖移除 | 已决策：统一 checkerframework 注解（用户拍板） | exclude 再删 1 条；AGENTS.md/README/design.md 注解约定同步 |
 | M5 | EQ 与 EI 收尾 | TypeReference callSuper=true + 字段遮蔽消除（EQ 删除，TypeReferenceTest 契约断言）；core EI 8 类就地 @SuppressFBWarnings(justification)，浅拷贝可行的 3 项代码修复 | 已决策：代码修复优先（用户拍板） | **spotbugs-exclude 最终 1 条**（tree 包可修改 AST）；集中排除 vs 就地注解的判据：写入通道/引用传递语义必须就地或排除，只读快照语义浅拷贝修复 |
 | M5 | checkerframework 升级 error 级实证 | 存量空指针全部由 @Nullable/@MonotonicNonNull 标注或显式判空修复；initialization 检查触发 `initialization.field.uninitialized`（可修改 AST 字段、builder 字段、@TempDir/@Parameter 注入字段）——**用户决策：全部注解化而非抑制**（真可空 @Nullable / 构建后必有 @MonotonicNonNull + 读取端判空 throw / JUnit-Maven 注入字段 @Nullable + getter 校验） | 已决策：注解化（用户拍板） | **initialization 类抑制零残留**；KeyFor 子检查（NullnessChecker 伴生，不可关闭）对 JDK 泛型通配符误报 → 局部 @SuppressWarnings("keyfor") 10 个类 |
+| M6 | `ClassFanOutComplexity` | AbstractJavaGenerator 21/20（20260906-01 reconcile 扩展 +ExpressionTree/VariableKind/双日志，基数 19） | **已决策：类级针对性 @SuppressWarnings + WHY 注释 + 本节记录**（用户重申：不改静态检查配置） | reconcile 属生成器基类聚合职责（成员签名/守卫/生命周期共处），非逻辑混杂；初稿曾入 checkstyle-suppressions.xml → 违规已回退；记录于变更 20260906-01-feat-enum-annotation-code-desc-template |
 
 
 ## 4. 用户决策区（调整项待定）

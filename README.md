@@ -75,12 +75,13 @@ entity.package=com.myapp.core.entity
 entity.suffix=
 entity.lombok=true                  # 特性开关：lombok 注解集
 entity.jsr303=true                  # @NotNull/@Size/@Digits
-entity.enums=true                   # enum 列映射为枚举类（需配置 enum 产物）
+entity.enums=true                   # 枚举列（enum(...) 或 @enum 列）字段用枚举类（需配置 enum 产物）
 entity.type=true                    # @type 注解 → 字段类型
 
 enum.generator=enum
 enum.module=core
 enum.package=com.myapp.core.enums
+enum.lombok=true                    # 枚举类：true → 类级 @Getter+@RequiredArgsConstructor；缺省 false → 手写私有构造器 + getCode()/getDesc()
 
 po.generator=pojo
 po.module=core
@@ -142,9 +143,27 @@ annotations.nullable=org.checkerframework.checker.nullness.qual.Nullable
 | `@type:X` | column | 字段直接使用已有类型 X（entity 视图；不生成、不校验存在） |
 | `@as:X` | column | 生成该列对应类（enum）时类名 = X |
 | `@as:X` | table | 基类名 = X（所有 artifact 派生） |
+| `@enum[:X]` | column | 声明该列按枚举处理（见下「注解枚举列（`@enum`）」）；X = 枚举类名（可选） |
 | `@ignore` | column | 所有 artifact 跳过该字段（含 XML） |
 | `@ignore` | index | 不生成查询方法 |
 | 其他 | 任意 | warning 日志并忽略，不中断 |
+
+## 注解枚举列（`@enum`）
+
+非 SQL `enum(...)` 类型的状态列（tinyint/varchar 等），在列 comment 用 `@enum` 标注并写明枚举项列表：
+
+```sql
+status  tinyint unsigned NOT NULL comment '状态 1=初始(INIT) 2=活跃(ACTIVE) 3=停用(SUSPEND) @enum:Status',
+type    varchar(20)     NOT NULL comment '类型 NORMAL=普通 VIP=高级 TRIAL=试用 @enum:Type',
+```
+
+- 枚举项格式 `{code}={desc}({name})`：code = 数据库存储值（数字列须与列类型一致，bigint 生成 `L` 后缀），desc = 描述，name = 常量名（**可选**）；缺省命名：字符列用 code 原文、数字列用 `{列名}_{code}`（如 `STATUS_1`），统一转大写清洗；comment 无列表项 → 生成**空枚举类骨架**（常量留待手补）。
+- 类名：列级 `@as` > `@enum` 值 > 命名策略（裸 `@enum` 与 SQL `enum(...)` 列同一命名函数，见 `naming.enum.style`）。
+- SQL `enum(...)` 列同样生成 code/desc 模板枚举：存储字面量为 code，comment 列表按 code 匹配补 desc/name，无匹配 desc = `""`。
+- 生成模板：常量 + `private final <列类型> code` / `private final String desc`；反查方法对 `fromCodeNullable`（`@Nullable`，null/未命中返 null）与 `fromCode`（null 入参或未命中抛异常）；产物 `lombok=true` → 类级 `@Getter`+`@RequiredArgsConstructor`，缺省 → 手写构造器与 `getCode()/getDesc()`。
+- `@Nullable` 注解 FQN 用 `annotations.nullable`（缺省 checkerframework qual）——生成枚举类**恒引用**它，消费项目需具备所配注解的依赖。
+- ALTER 改 comment 枚举项 → 增/删/同名 code/desc 值改增量同步（含用户手写成员保留）；**顺序重排、模板升级、`lombok` 选项翻转需删除旧枚举文件重生成**。
+- entity 开 `enums=true` 后该列字段用枚举类；DB 侧存储为 code，映射语义走 po → converter → entity 链路；mapper 直连 entity 需自配 typeHandler。
 
 ## 索引 → 查询方法
 
@@ -154,7 +173,7 @@ annotations.nullable=org.checkerframework.checker.nullness.qual.Nullable
 
 ## 增量同步
 
-无 manifest：按 config 定位文件 → 解析现有源码 → 只 reconcile `@Generated` 成员（缺→增、多余→删、类型变→替换、一致→跳过）→ 写盘前字节比对（无变化不写）。同一 DDL 重跑 = 全量 no-op。
+无 manifest：按 config 定位文件 → 解析现有源码 → 只 reconcile `@Generated` 成员（缺→增、多余→删、类型/签名变→替换、一致→跳过）→ 写盘前字节比对（无变化不写）。同一 DDL 重跑 = 全量 no-op。枚举常量以「类型 + init 规范化文本」为签名——ALTER comment 改 code/desc 也会原位替换；与手写成员同名的新增会被跳过并警告（保留你的版本）。
 
 ## 扩展（三层 SPI）
 
