@@ -6,38 +6,38 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public enum Gender {
 
-    @Generated
+    @Generated("ddl-codegen")
     MALE("male", "男"),
 
-    @Generated
+    @Generated("ddl-codegen")
     FEMALE("female", "女"),
 
     ;
 
-    @Generated
+    @Generated("ddl-codegen")
     private final String code;
 
-    @Generated
+    @Generated("ddl-codegen")
     private final String desc;
 
-    @Generated
+    @Generated("ddl-codegen")
     private Gender(String code, String desc) {
         this.code = code;
         this.desc = desc;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public String getCode() {
         return code;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public String getDesc() {
         return desc;
     }
 
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     public static Gender fromCodeNullable(@Nullable String code) {
         if (code == null) {
             return null;
@@ -50,7 +50,7 @@ public enum Gender {
         return null;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public static Gender fromCode(String code) {
         if (code == null) {
             throw new IllegalArgumentException("code 不能为 null");

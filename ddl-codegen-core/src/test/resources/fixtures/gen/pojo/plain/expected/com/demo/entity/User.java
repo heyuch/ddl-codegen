@@ -6,22 +6,22 @@ import javax.annotation.processing.Generated;
 
 public class User {
 
-    @Generated
+    @Generated("ddl-codegen")
     private Long id;
 
-    @Generated
+    @Generated("ddl-codegen")
     private String name;
 
-    @Generated
+    @Generated("ddl-codegen")
     private String nick;
 
-    @Generated
+    @Generated("ddl-codegen")
     private BigDecimal amount;
 
-    @Generated
+    @Generated("ddl-codegen")
     private Boolean score;
 
-    @Generated
+    @Generated("ddl-codegen")
     private LocalDateTime createdAt;
 
 }

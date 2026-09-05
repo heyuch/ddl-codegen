@@ -48,8 +48,10 @@ public abstract class AbstractJavaGenerator implements Generator {
             java.util.function.Consumer<Class.Builder> builderFn) {
         Class.Builder builder = Class.builder()
                 .name(className)
-                .pkg(ctx.packageName())
-                .modifiers(Modifier.PUBLIC);
+                .pkg(ctx.packageName());
+        builder.modifiers(finalClass()
+                ? new Modifier[] {Modifier.PUBLIC, Modifier.FINAL}
+                : new Modifier[] {Modifier.PUBLIC});
         builderFn.accept(builder);
         Class fresh = builder.build();
         markGenerated(fresh);
@@ -92,6 +94,11 @@ public abstract class AbstractJavaGenerator implements Generator {
     @Override
     public String fieldType(Column column, TableContext ctx) {
         return ctx.getTypeMapper().resolveType(ctx.getTable().getName(), column);
+    }
+
+    /** 生成类是否为 final（leaf 实现类，如 repositoryImpl/converter；接口/实体/枚举保持非 final）。 */
+    protected boolean finalClass() {
+        return false;
     }
 
     private @Nullable Variable findField(List<Variable> fields, String name) {

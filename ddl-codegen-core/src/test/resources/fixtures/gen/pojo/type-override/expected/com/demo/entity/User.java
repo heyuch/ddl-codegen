@@ -5,10 +5,10 @@ import javax.annotation.processing.Generated;
 
 public class User {
 
-    @Generated
+    @Generated("ddl-codegen")
     private Long id;
 
-    @Generated
+    @Generated("ddl-codegen")
     private BigDecimal amount;
 
 }

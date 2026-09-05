@@ -7,13 +7,13 @@ import com.demo.enums.Type;
 
 public class User {
 
-    @Generated
+    @Generated("ddl-codegen")
     private Long id;
 
-    @Generated
+    @Generated("ddl-codegen")
     private Status status;
 
-    @Generated
+    @Generated("ddl-codegen")
     private Type type;
 
 }

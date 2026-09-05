@@ -9,9 +9,9 @@ import com.demo.mapper.UserMapper;
 import com.demo.repository.UserRepository;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class UserRepositoryImpl implements UserRepository {
+public final class UserRepositoryImpl implements UserRepository {
 
-    @Generated
+    @Generated("ddl-codegen")
     public UserRepositoryImpl(UserMapper userMapper, UserConverter userConverter) {
         this.userMapper = userMapper;
         this.userConverter = userConverter;
@@ -19,14 +19,14 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     public User findById(Long id) {
         return userConverter.toUser(userMapper.findById(id));
     }
 
     @Override
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     public User findByName(String name) {
         return userConverter.toUser(userMapper.findByName(name));
     }

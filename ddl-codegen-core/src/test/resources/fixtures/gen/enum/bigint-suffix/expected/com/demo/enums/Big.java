@@ -6,38 +6,38 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public enum Big {
 
-    @Generated
+    @Generated("ddl-codegen")
     X(1L, "一"),
 
-    @Generated
+    @Generated("ddl-codegen")
     Y(3000000000L, "十亿"),
 
     ;
 
-    @Generated
+    @Generated("ddl-codegen")
     private final Long code;
 
-    @Generated
+    @Generated("ddl-codegen")
     private final String desc;
 
-    @Generated
+    @Generated("ddl-codegen")
     private Big(Long code, String desc) {
         this.code = code;
         this.desc = desc;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public Long getCode() {
         return code;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public String getDesc() {
         return desc;
     }
 
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     public static Big fromCodeNullable(@Nullable Long code) {
         if (code == null) {
             return null;
@@ -50,7 +50,7 @@ public enum Big {
         return null;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public static Big fromCode(Long code) {
         if (code == null) {
             throw new IllegalArgumentException("code 不能为 null");

@@ -7,9 +7,9 @@ import javax.annotation.processing.Generated;
 import com.demo.entity.User;
 import com.demo.pojo.UserPo;
 
-public class UserConverter {
+public final class UserConverter {
 
-    @Generated
+    @Generated("ddl-codegen")
     public User toUser(UserPo source) {
         User user = new User();
         user.setId(source.getId());
@@ -18,7 +18,7 @@ public class UserConverter {
         return user;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public UserPo toUserPo(User target) {
         UserPo userPo = new UserPo();
         userPo.setId(target.getId());
@@ -27,7 +27,7 @@ public class UserConverter {
         return userPo;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public List<User> toUserList(List<UserPo> sourceList) {
         java.util.List<User> list = new java.util.ArrayList<>();
         if (sourceList != null) {
@@ -38,7 +38,7 @@ public class UserConverter {
         return list;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public List<UserPo> toUserPoList(List<User> targetList) {
         java.util.List<UserPo> list = new java.util.ArrayList<>();
         if (targetList != null) {

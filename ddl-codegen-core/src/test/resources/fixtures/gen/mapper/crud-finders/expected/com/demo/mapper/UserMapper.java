@@ -9,30 +9,30 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public interface UserMapper {
 
-    @Generated
+    @Generated("ddl-codegen")
     int insert(UserPo userPo);
 
-    @Generated
+    @Generated("ddl-codegen")
     int update(UserPo userPo);
 
-    @Generated
+    @Generated("ddl-codegen")
     int deleteById(@Param("id") Long id);
 
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     UserPo findById(@Param("id") Long id);
 
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     UserPo findByName(@Param("name") String name);
 
-    @Generated
+    @Generated("ddl-codegen")
     List<UserPo> findByStatus(@Param("status") Integer status);
 
-    @Generated
+    @Generated("ddl-codegen")
     List<UserPo> findByRegion(@Param("region") String region);
 
-    @Generated
+    @Generated("ddl-codegen")
     List<UserPo> findByRegionAndLevel(@Param("region") String region, @Param("level") Integer level);
 
 }

@@ -163,6 +163,12 @@ public final class MybatisRepositoryImplGenerator extends AbstractJavaGenerator 
                 .build();
     }
 
+    /** 生成的 impl 为 leaf 实现类 → final。 */
+    @Override
+    protected boolean finalClass() {
+        return true;
+    }
+
     @Override
     public String kind() {
         return NAME;

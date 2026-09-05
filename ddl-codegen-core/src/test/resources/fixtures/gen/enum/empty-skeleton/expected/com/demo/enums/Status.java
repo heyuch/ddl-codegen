@@ -8,30 +8,30 @@ public enum Status {
 
     ;
 
-    @Generated
+    @Generated("ddl-codegen")
     private final Integer code;
 
-    @Generated
+    @Generated("ddl-codegen")
     private final String desc;
 
-    @Generated
+    @Generated("ddl-codegen")
     private Status(Integer code, String desc) {
         this.code = code;
         this.desc = desc;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public Integer getCode() {
         return code;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public String getDesc() {
         return desc;
     }
 
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     public static Status fromCodeNullable(@Nullable Integer code) {
         if (code == null) {
             return null;
@@ -44,7 +44,7 @@ public enum Status {
         return null;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public static Status fromCode(Integer code) {
         if (code == null) {
             throw new IllegalArgumentException("code 不能为 null");

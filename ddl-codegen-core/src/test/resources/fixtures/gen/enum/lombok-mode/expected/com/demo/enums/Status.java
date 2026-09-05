@@ -10,22 +10,22 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @RequiredArgsConstructor
 public enum Status {
 
-    @Generated
+    @Generated("ddl-codegen")
     INIT(1, "初始"),
 
-    @Generated
+    @Generated("ddl-codegen")
     ACTIVE(2, "活跃"),
 
     ;
 
-    @Generated
+    @Generated("ddl-codegen")
     private final Integer code;
 
-    @Generated
+    @Generated("ddl-codegen")
     private final String desc;
 
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     public static Status fromCodeNullable(@Nullable Integer code) {
         if (code == null) {
             return null;
@@ -38,7 +38,7 @@ public enum Status {
         return null;
     }
 
-    @Generated
+    @Generated("ddl-codegen")
     public static Status fromCode(Integer code) {
         if (code == null) {
             throw new IllegalArgumentException("code 不能为 null");

@@ -20,34 +20,34 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class User implements Serializable {
 
-    @Generated
+    @Generated("ddl-codegen")
     private static final long serialVersionUID = 1L;
 
     @NotNull
-    @Generated
+    @Generated("ddl-codegen")
     private Long id;
 
     @NotNull
     @Size(max = 50)
-    @Generated
+    @Generated("ddl-codegen")
     private String name;
 
     @Size(max = 50)
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     private String nick;
 
     @NotNull
     @Digits(integer = 8, fraction = 2)
-    @Generated
+    @Generated("ddl-codegen")
     private BigDecimal amount;
 
     @NotNull
-    @Generated
+    @Generated("ddl-codegen")
     private Boolean score;
 
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     private LocalDateTime createdAt;
 
 }

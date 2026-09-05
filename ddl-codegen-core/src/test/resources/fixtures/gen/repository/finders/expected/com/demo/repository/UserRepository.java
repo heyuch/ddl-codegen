@@ -9,20 +9,20 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public interface UserRepository {
 
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     User findById(Long id);
 
     @Nullable
-    @Generated
+    @Generated("ddl-codegen")
     User findByName(String name);
 
-    @Generated
+    @Generated("ddl-codegen")
     List<User> findByStatus(Integer status);
 
-    @Generated
+    @Generated("ddl-codegen")
     List<User> findByRegion(String region);
 
-    @Generated
+    @Generated("ddl-codegen")
     List<User> findByRegionAndLevel(String region, Integer level);
 
 }

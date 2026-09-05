@@ -6,10 +6,10 @@ import com.demo.pojo.UserPo;
 
 public interface UserMapper {
 
-    @Generated
+    @Generated("ddl-codegen")
     int insert(UserPo userPo);
 
-    @Generated
+    @Generated("ddl-codegen")
     int update(UserPo userPo);
 
 }

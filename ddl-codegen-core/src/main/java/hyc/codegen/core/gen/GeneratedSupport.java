@@ -44,17 +44,17 @@ public final class GeneratedSupport {
         return hasGenerated(member.getModifiers());
     }
 
-    /** 给方法打上生成标记（已存在则跳过）。 */
+    /** 给方法打上生成标记（已存在则跳过）；{@code value} 为必填元素，取工具名。 */
     public static void mark(Method member) {
         if (!isGenerated(member)) {
-            member.addAnnotation(Annotation.of(GENERATED));
+            member.addAnnotation(Annotation.of(GENERATED, "\"ddl-codegen\""));
         }
     }
 
-    /** 给字段打上生成标记（已存在则跳过）。 */
+    /** 给字段打上生成标记（已存在则跳过）；{@code value} 为必填元素，取工具名。 */
     public static void mark(Variable member) {
         if (!isGenerated(member)) {
-            member.addAnnotation(Annotation.of(GENERATED));
+            member.addAnnotation(Annotation.of(GENERATED, "\"ddl-codegen\""));
         }
     }
 
