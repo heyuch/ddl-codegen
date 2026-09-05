@@ -5,7 +5,7 @@
 MySQL DDL（create/alter/drop）驱动的 Java 代码生成框架：手写 schema 即唯一事实来源，
 `create table` 生成代码、`alter table` 增量更新（只动生成代码、保留手写改动）、`drop table` 删除代码。
 
-技术方案见 `docs/design.md`，任务进度见 `docs/tasks.md` 与 `docs/progress.md`，静态规则考察见 `docs/static-rules-review.md`。
+架构现状见 `docs/architecture.md`；初始设计与 M0-M4 历史归档见 `docs/changes/20260801-01-feat-project-foundation/`；静态规则考察见 `docs/static-rules-review.md`。
 开发工作流（先分析设计后实现）与顶层架构/数据流见 `AGENTS.md`，变更设计说明见 `docs/changes/`（目录命名与规范见 `AGENTS.md`）。
 
 ## 快速开始

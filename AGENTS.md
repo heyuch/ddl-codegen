@@ -1,238 +1,39 @@
 # AGENTS.md
 
-This document provides guidelines for AI agents working on this codebase.
+## 文档与信息架构
 
-## 开发工作流（先分析设计，后实现）
-
-任何非平凡改动（新功能 / 优化 / 问题修复）必须按顺序执行，不得跳过分析直接写代码：
-
-1. **分析**：问题是什么、为什么做、有哪些可选方案、各自的取舍（每项一句话）
-2. **设计**：采用哪个方案、改动哪些文件、影响面（依赖此逻辑的其他模块/生成器）、测试策略；**中/大改动必须包含「类职责与交互」设计**（新类/改动类的职责一句话——同时写入类 javadoc，及类间依赖方向）
-3. **设计评审**：按 SOLID 五原则 review 类职责与关系（每类职责单一？依赖方向可逆？接口内聚？继承不破坏替换？扩展不须改现有代码？）——不满足则回设计调整，通过后再实现（静态工具管实现层，此步管设计层）
-4. **实现**：按设计写代码
-5. **验证**：`JAVA_HOME=... mvn clean test` 全绿 + 静态检查全绿
-6. **文档同步**：涉及架构/数据流/约定变化时，更新本文件「项目架构」节或 `docs/design.md`；决策追加到 `docs/progress.md`「关键决策记录」
-
-轻量落地（不引入工具）：
-- **小改动**（1-3 个文件、逻辑清晰）：分析+设计写进 commit message（首行概括，正文给取舍）
-- **中/大改动**：用 skill `design-first`（`.agents/skills/design-first/`）——运行 `new-change.sh <类型> <标题>` 脚手架建变更目录，填 `design.md`（含「类职责与交互」节）后**先 SOLID 设计评审（可回环调整）再呈现给用户评审，认可后才实现**；同时把决策追加到 `docs/progress.md`「关键决策记录」
-- **禁止直接开写**：先写出「要改什么、为什么、怎么改、影响谁」再动代码
-
-### 文档命名与组织规范
-
-- 文档名一律小写，多词用 `-` 连接（`design.md` / `static-rules-review.md`）
-- 项目级文档（架构/进度/规则）在 `docs/` 顶层；变更级文档在 `docs/changes/` 下
-- 变更目录命名：`{YYYY-MM-DD}-{feat|opt|fix|chore}-{标题}`（同日冲突加 `-2`）；refactor 归入 chore 或 opt
-- 目录内固定文档：`design.md`（必填）、`progress.md`（可选）；其他按需添加
-- 根目录只允许：`AGENTS.md`、`README.md`、构建配置（pom/checkstyle 等）
-
-## 项目架构（顶层）
-
-DDL 驱动的 Java 代码生成框架：手写 MySQL DDL（create/alter/drop）→ 增量生成 MyBatis 链路代码（Mapper/XML/Pojo/RepositoryImpl/Converter/Entity/枚举）。
-
-### 模块与依赖方向
-
-```
-ddl-codegen-cli  →  ddl-codegen-core  →  ddl-codegen-tree
-（命令行入口）      （框架：模型/解析/命名/类型/生成器）  （自研可修改 Java AST，零依赖）
-```
-
-运行时外部依赖仅 druid（DDL 解析）。
-
-### 数据流（核心管线）
-
-```
-DDL 文本
-  → DruidDdlParser（→ DdlOperation[]）
-  → StatementApplier（多态分发：每种 DdlOperation 自实现 apply 到 Schema，产出 ApplyResult：受影响表/改名/删除记录）
-  → CodeGenerator（按 config artifacts.* 启用顺序，逐表 × 逐 artifact 调用生成器）
-  → AbstractJavaGenerator（定位文件 → 解析现有源码 → 只 reconcile @Generated 成员 → 拦截器 → 打印）
-  → FileWriter（字节比对，无变化不写盘）
-  → 文件 + ChangeReport
-```
-
-### 关键机制
-
-- **@Generated 成员级增量同步（无 manifest）**：文件位置 = config 推导（根 + module + package + 类名）；工具只增删改带 `@Generated` 的成员，用户手写代码永不触碰；解析失败不覆盖
-- **reconcile 即 diff**：模型有而文件无 → 增；有而模型无 → 删；签名/类型变 → 替换；一致 → 跳过
-- **DDL 注解**（注释中 `@name[:value]`）：`@type`（复用已有类型）/ `@as`（生成类命名）/ `@ignore`（跳过）；未知注解 warning 忽略不中断
-
-### 扩展点（三层 SPI）
-
-| SPI | 位置 | 用途 |
+| 文档 | 角色 | 何时读 / 写 |
 |---|---|---|
-| `Generator` | `hyc.codegen.core.gen` | 唯一扩展点；自定义生成器拿全模型，Java 类继承 `AbstractJavaGenerator` 自动获得 @Generated 增量同步 |
-| 特性开关 | 产物配置选项（如 `entity.lombok=true`） | 生成器内部应用；无需扩展代码 |
-| DDL 注解 | `@name:value` 解析存 meta | `@ignore` 模型剪枝；`@type` 由 pojo 的 `type` 特性处理；其余留给自定义生成器 |
+| `docs/architecture.md` | 项目现状架构：模块/管线/SPI/注解/config schema/契约/已知限制/代码锚点 | 改动设计前读；变更收尾更新条目 |
+| `.agents/skills/design-first/SKILL.md` | 开发工作流细则（10 步 + 检查单 + 变更号规则） | 非平凡改动开始时加载 |
+| `docs/changes/README.md` | 变更索引 + 生命周期/引用规则 + 命名迁移 + 记忆文档自检用例集 | 设计前查曾做/曾否决；收尾追加索引行 |
+| `docs/changes/20260801-01-feat-project-foundation/` | 初始建设期归档（设计定稿 + M0-M4 台账/任务/早期决策） | 仅历史溯源 |
+| `docs/glossary.md` | 术语表（中英对照） | 写作/命名前查词 |
+| `docs/static-rules-review.md` | 静态检查考察（阈值基线/实证/抑制准则） | 静态检查报错时 |
+| `README.md` | 用户手册（快速开始 + config/注解参考） | 使用者 |
 
-另有可替换 SPI：`DdlParser`（DDL 解析）/ `ConfigLoader`（配置加载）/ `TableNameStrategy`（命名）。
+## 开发工作流（硬性规则）
 
-### 文档地图
+1. **非平凡改动必须先分析设计、后实现**：加载 skill `design-first` 按其 10 步执行；未写设计 + 未经用户评审不得实现。小改动（1-3 文件）可省略设计文档，分析+取舍写进 commit message。
+2. **变更收尾必须蒸馏**：决策与偏差 → 所在变更 progress.md；现状 → architecture.md（更新条目）；索引行 → changes/README.md；改记忆文档 → 跑自检用例集；`new-change.sh check`。
+3. 内容与源头文档冲突时以源头文档为准。
 
-| 文档 | 内容 |
-|---|---|
-| `README.md` | 快速开始 + config/注解参考 |
-| `docs/design.md` | 完整技术方案（边界契约/模块/管线/SPI/风险取舍） |
-| `docs/progress.md` | 项目级进度 + 关键决策记录 + 已知限制 |
-| `docs/static-rules-review.md` | 静态检查规则考察（阈值基线/实证/抑制准则） |
-| `docs/glossary.md` | 词汇表：术语中英对照统一（写作与讨论默认词汇） |
-| `docs/tasks.md` | 历史任务列表（M0-M4 已完成） |
-| `docs/changes/` | 变更目录：`{YYYY-MM-DD}-{feat/opt/fix/chore}-{标题}/`，内含 `design.md` + `progress.md` |
+## 命名与写作约定
 
-### 修改约束
-
-- 架构/数据流变化必须同步本节约 `docs/design.md`
-- 新生成器必须遵守「config 存在即启用」与「@Generated 成员所有权」契约（见 `docs/design.md` §1）
+- **命名**：简洁明确一致——避免 `XxxManager`/`XxxHelper`/`XxxData` 后缀与上下文重复词；短作用域用短名（`ctx`/`p`/`i`）；禁 `U`/`Tmp` 无意义名；实证：`Codegen`、`Generator`
+- **注释**：业务逻辑中文、技术文档英文；公共 API 写 javadoc；解释 WHY
+- **可空性**：`@Nullable` 用 `org.checkerframework.checker.nullness.qual.Nullable`；禁用 Optional，可空性用 @Nullable 显式表达
+- **测试可读性**：AAA 三段空行分隔；密切关联大块提取有名字的辅助方法；同逻辑多组输入用 `@ParameterizedTest`；流程性测试保持显式步骤、不参数化
+- **垂直间距**：方法体内不同逻辑段落之间插入空行
 
 ## Build, Lint, and Test Commands
 
-This is a Maven multi-module project using Java 11.
+Maven 多模块（Java 11：cli / maven-plugin / core / tree）。
 
-### Build Commands
-```bash
-# Build all modules
-mvn clean compile
+- 全量门禁：`mvn clean test`（`JAVA_HOME=/opt/homebrew/opt/openjdk@11`；spotless/checkstyle/error-prone/checkerframework/spotbugs/jacoco 全进）——提交/验收前必跑
+- 日常迭代：`mvn -Pquick clean test`
+- 单测：`mvn test -Dtest=XxxTest`；单模块：`mvn -pl ddl-codegen-core test`
 
-# Build with tests
-mvn clean test
+## 项目（一句话定位）
 
-# 开发迭代加速（-Pquick）：跳过编译期分析器/spotbugs/jacoco/checkstyle，
-# 保留格式化与测试（37s → 11s）；提交/验收前必须跑无 profile 的全量构建（门禁不变）
-mvn -Pquick clean test
-
-# Build a specific module
-mvn -pl ddl-codegen-core clean compile
-```
-
-### Running Tests
-```bash
-# Run all tests
-mvn test
-
-# Run a single test class
-mvn test -Dtest=PoTest
-
-# Run a single test method
-mvn test -Dtest=PoTest#generate
-
-# Run tests in a specific module
-mvn -pl ddl-codegen-core test
-
-# Run tests with verbose output
-mvn test -X
-```
-
-### Code Quality
-```bash
-# Check for dependency updates
-mvn versions:display-dependency-updates
-
-# Check for plugin updates
-mvn versions:display-plugin-updates
-```
-
-## Code Style Guidelines
-
-### General Principles
-- Write clean, readable code with minimal complexity
-- Avoid unnecessary abstractions; prefer simplicity
-- Use meaningful and concise names for variables, methods, and classes
-
-### Java Version
-- Target Java 11 compatibility
-- Prefer simple if else statements rather than streams, optional, only use lambdas with simple logics
-
-### Imports
-- Use explicit imports (no wildcard imports like `java.util.*`)
-- Group imports in this order:
-  1. `java.*` imports
-  2. `javax.*` imports
-  3. Third-party libraries
-  4. Project imports (`hyc.codegen.*`)
-- Sort imports alphabetically within each group
-
-### Naming Conventions
-- **Classes**: UpperCamelCase (e.g., `JavaGenerator`, `TableResolver`)
-- **Methods**: lowerCamelCase (e.g., `generateCode`, `collectUserDefinedFields`)
-- **Variables**: lowerCamelCase (e.g., `module`, `pkg`, `useLombok`)
-- **Constants**: UPPER_SNAKE_CASE (e.g., `DEFAULT_TIMEOUT`)
-- **Packages**: lowercase (e.g., `hyc.codegen.core`)
-- **倾向 concise/short 命名**：在传达意图的前提下尽量短——避免冗余（`XxxManager`/`XxxHelper`/`XxxData` 后缀、与所在类/包上下文重复的词）；短作用域局部变量用短名（`ctx`/`p`/`i`）。与 Quality Bar 平衡：简洁 ≠ 无意义（禁止 `U`/`Tmp` 这类无名名），项目实证：`Codegen`（门面，非 CodeGeneratorFacade）、`Generator`（接口）
-
-### Types and Generics
-- Use `List`, `Map`, `Set` interfaces over concrete implementations in method signatures
-- Use `ArrayList` when concrete implementation is needed
-- Use `LinkedHashMap` when insertion order matters
-- Specify generic type parameters explicitly (no raw types)
-
-### Null Handling
-- Use `@Nullable` annotation from `org.checkerframework.checker.nullness.qual.Nullable` for nullable parameters and return values
-- Use `@Nullable` on method parameters that can be null
-- Consider using early returns to avoid deep nesting with null checks
-- Example:
-  ```java
-  @Nullable
-  public String getName() { ... }
-
-  public void process(@Nullable String input) {
-      if (input == null || input.isEmpty()) {
-          return;
-      }
-      // proceed with input
-  }
-  ```
-
-### Error Handling
-- Use exceptions for exceptional conditions, not control flow
-- Propagate exceptions with meaningful context
-- Use try-with-resources for any `AutoCloseable` resources
-- Example:
-  ```java
-  try (BufferedReader r = new BufferedReader(new FileReader(file))) {
-      // read file
-  } catch (IOException e) {
-      throw new RuntimeException("Failed to read file: " + file.getName(), e);
-  }
-  ```
-
-### Comments
-- Use Chinese comments for business logic explanations (consistent with existing codebase)
-- Use English for technical documentation
-- Javadoc for public APIs
-- Inline comments for non-obvious logic
-- Avoid redundant comments (e.g., `i++ // increment i`)
-
-### Lombok Usage
-- Use `@Data`, `@Getter`, `@Setter`, `@Builder`, `@AllArgsConstructor`, `@NoArgsConstructor` appropriately
-- Mark Lombok dependencies as `provided` scope (not included in runtime)
-- Use `@Slf4j` for logging in classes that need logging
-
-### Testing
-- Use JUnit 5
-- Use `Assert.assertEquals`, `Assert.assertNotNull`, etc. for assertions
-- Place test files in `src/test/java` with same package structure
-- Test file naming: `<ClassName>Test.java`
-- Test method naming: `test<Operation>()` or `<operation>Should<ExpectedResult>()`
-- **测试可读性优先**：测试比被测代码更要求可读性（无性能顾虑 + 高频维护）；格式器管不到测试结构，由 LLM 负责
-  - **extract 辅助方法**：测试方法内大块密切关联代码（构造用例/验证结果）提取为有意义命名的方法（`config()`/`generate()`/`read()`）
-  - **参数化测试**：同一逻辑多组输入 → `@ParameterizedTest`（@CsvSource/@MethodSource）抽象重复；**流程性测试（多步骤生命周期）不适合参数化**，保持显式步骤
-  - **AAA 结构**：Arrange（构造）→ Act（执行）→ Assert（验证），三段用空行分隔（呼应 Vertical Spacing）
-  - **平衡**：extract 只针对密切关联的大块，小段保持内联直白——过度抽象反而难读
-
-### Code Structure
-- Package-private fields are acceptable for internal classes
-- Keep classes focused: single responsibility principle
-- Limit method length; extract helper methods when needed
-
-### Vertical Spacing（空行规则）
-
-- **垂直距离**：不相关的概念用**单个空行**分隔——方法体内不同逻辑步骤/段落之间（含 if/for 语句块之间，格式器不插入）
-- **垂直密度**：紧密相关的行保持紧凑无空行（同一逻辑步骤：变量声明与其使用、if 与其体）
-- **禁止**：多个连续空行；`{` 后或 `}` 前的空行
-
-## Quality Bar（开源项目标准）
-
-- 代码按开源项目标准编写：命名传达意图（不用 `U`/`Tmp` 这类无名工具类名）、类小而聚焦、包按职责组织、公共 API 最小化（不暴露无需暴露的）
-- 复用旧代码：质量不达标直接优化，不机械照搬；迁移即改进
-- 本项目同时是学习材料：结构清晰、命名优雅、注释解释 WHY 而非 WHAT
-- 静态检查是硬门槛：spotless/checkstyle/error-prone/checkerframework（error 级）/spotbugs（字节码级，check 绑 process-classes，排除清单 `spotbugs-exclude.xml` 每条带理由）报错按提示修复（规则考察见 `docs/static-rules-review.md`）
+DDL 驱动的 Java 代码生成框架（MySQL DDL → 增量生成 MyBatis 链路代码）；架构细节见 `docs/architecture.md`。

@@ -1,0 +1,59 @@
+# docs/changes 变更索引
+
+本目录存放**单次变更的工作文档**（`{变更号}/design.md` + `progress.md`，变更号 = 目录 slug）。本文件 = **变更索引** + **本目录生命周期规则** + **引用规则** + **命名迁移对照** + **记忆文档自检用例集**。
+
+> **读取指引**：设计新变更前先读本文件——查**曾做 / 曾否决**（防重复提案已否决的方案），变更号一览即目录树一览。
+
+状态取值：`完成` / `否决` / `作废-已删` / `完成（归档）`（纯历史归档，如初始建设期）。进行中的变更不在表中，收尾时由工作流自行追加索引行。
+
+## 变更索引
+
+| 变更号（slug，链到变更目录）                                                                          | 状态 | 一句话摘要 / 关键决策 |
+|-------------------------------------------------------------------------------------------|---|---|
+| [20260801-01-feat-project-foundation](20260801-01-feat-project-foundation/)               | 完成（归档） | **初始建设期归档**（2026-08：M0-M4 + 技术设计定稿）：2026-09-05 随 `20260905-01-chore-project-memory` 归档动作，原 `docs/design.md`（技术设计定稿）+ `docs/progress.md`（进度台账/关键决策/PIT/已知限制原文）+ `docs/tasks.md`（M0-M4 任务清单）自顶层迁入；前向「已知限制」迁 `docs/architecture.md`「已知限制」节；决策史 = 早期于本目录、2026-08-29 起各变更目录 + 本索引（无顶层台账） |
+| [20260829-01-feat-maven-plugin](20260829-01-feat-maven-plugin/)                           | 完成 | 新模块 `ddl-codegen-maven-plugin`：`GenerateMojo`（projectRoot / configFile / ddl / ddlFile:行范围 / dryRun / skip，不绑生命周期，显式 `mvn ddl-codegen:generate`）；从 CLI `Main` 提取 `Codegen` 门面入 core——CLI/插件共用单一管线，修一处两边生效；config 默认名统一 `ddl-codegen.properties`；3 个 maven-invoker 集成测试（it-simple / it-range / it-inline） |
+| [20260829-02-chore-archunit-rules](20260829-02-chore-archunit-rules/)                     | 完成 | 引入 ArchUnit 架构测试 4 规则入 mvn test（叶子无依赖 / 单向分层 / 实现层约束 / 无循环）；`GeneratorInterceptor` 接口从 interceptor 包归位 `gen`，打破实测的 gen↔interceptor 包循环；cli/plugin 门面防绕过规则（不得直连 gen/tree）随后随 maven-plugin 变更补齐 |
+| [20260829-03-feat-parameterized-artifacts](20260829-03-feat-parameterized-artifacts/)     | 完成 | artifact = 生成器具名实例 + 配置：config 顶层键改为产物名（`generator` / `source` / `target`，`naming.*`/`annotations.*` 为保留命名空间）；跨产物引用显式或「该生成器唯一实例」缺省，无唯一实例明确报错；新增 `enums`/`jsr305` 拦截器；删 `TypeMapper.isEnumArtifact`、`TableContext.typeOf` 等硬编码（breaking config，单轨迁移） |
+| ~~20260829-04~~（洞，不重用）                                                                    | — | 占位 = 已删除的 `2026-08-29-opt-annotation-interceptors`（作废，见下行；NN 留洞不重用的首次实证） |
+| annotation-interceptors（原 `2026-08-29-opt-annotation-interceptors`）                       | 作废-已删 | 目录已删除（git 保留全文）。**被 opt-core-first 取代**（未实现即否决）；否决教训：**不为简单开关建抽象**（拦截器钩子方案）；**更正**：其 progress.md 自称保留决策「@as 移除」**未落地**——代码保留 @as（AsHandler 与 meta 读取仍在），其另两条保留决策（注解全存不处理、@type 独立于 enums）由 opt-core-first 落地；**作废变更的决策一律以 architecture.md / 代码为准，不以其目录为准** |
+| [20260829-05-refactor-core-first](20260829-05-refactor-core-first/)                       | 完成 | 第一性原理简化（核心优先）：删 `GeneratorInterceptor` SPI + use 链 + 4 个拦截器，lombok/jsr303/jsr305/enums/type/serializable 改为产物特性开关（`entity.lombok=true` 式）由生成器内部应用；@ignore 模型级剪枝（解析后移除）；查询契约 className/fieldName/fieldType 统一跨产物类型查询；唯一扩展点收敛为 ArtifactGenerator；annotation-interceptors 设计作废 |
+| [20260830-01-chore-spotbugs](20260830-01-chore-spotbugs/)                                 | 完成 | 引入 spotbugs-maven-plugin 4.8.6.8（SpotBugs 4.9+ 需 Java 17，构建跑 Java 11 → 锁 4.8.x 线），effort=Max / threshold=Low / check 绑 process-classes 进 mvn test；首轮 triage 修真 bug（NPE 路径、死代码）+ exclude 逐条带理由（终态仅 1 条）；随迁 checkerframework 强化为 error 级（去 `-Awarns`、@Nullable/@MonotonicNonNull 注解化、jsr305 迁 checkerframework @Nullable） |
+| [20260830-02-chore-jacoco](20260830-02-chore-jacoco/)                                     | 完成 | 引入 JaCoCo 覆盖率门槛：prepare-agent/report/check 全进 `mvn clean test` 生命周期；阈值全局 BUNDLE line ≥ 75%（基线实证后定稿呈报）；cli 原覆盖率 0% → 补 MainTest 拉到 87.7%；与 PIT 互补（JaCoCo 量化保底、PIT 深度验证） |
+| [20260830-03-refactor-applyone-polymorphism](20260830-03-refactor-applyone-polymorphism/) | 完成 | `StatementApplier.applyOne` 10 分支 instanceof if-else → 多态分发：`DdlOperation` 接口加 `apply(Schema, ApplyResult)`，10 个操作类各自实现 apply、应用逻辑与操作同居，applyOne 收敛为一行；纯结构重构语义等价，StatementApplierTest 行为断言不变 |
+| [20260905-01-chore-project-memory](20260905-01-chore-project-memory/)                     | 完成 | 项目记忆体系重构：文档角色三分离（`docs/architecture.md` 现状单一事实源[代码对账产出，10 条对账发现入档] / `docs/design.md` 降级历史基线 / `docs/progress.md` 决策台账）；本 README = 变更索引 + 生命周期规则 + 引用规则 + 自检用例集；变更号 = 目录 slug `{YYYYMMDD}-{NN}-{type}-{title}`（new-change.sh 命名权威 + `check` 门禁，禁手工 mkdir）；design-first skill 升级 10 步（独立评审 pass / 一致性核对 / 蒸馏收尾）；作废处置三态 + 状态后缀；删除作废目录 annotation-interceptors 并更正其"@as 移除"未落地；顶层 design/progress/tasks 归档入 `20260801-01`；存量目录统一迁移为新格式 |
+
+## 本目录生命周期规则
+
+- **变更收尾 → 先蒸馏，后处置，再追加一行**：决策与实现偏差沉淀到所在变更目录 `progress.md`、现状到 `docs/architecture.md`（**无顶层决策台账**），索引行随目录处置同步登记。
+- **批准/否决痕迹仓库化**：评审结论不留在对话里——用户评审**通过** = 变更目录 progress.md 状态 ✅ + 本索引行状态「完成」；**否决/作废** = 本索引行状态「否决/作废-已删」+ 一句教训。仓库即审计记录。
+- **作废处置三态**：
+  - **① 未实现即否决 / 整体作废 → 默认删除目录 + 索引行留痕**（git 保留全文；死文本零残留；删除前先完成索引化与蒸馏）
+  - **② 完成但被部分取代 → 目录保留原名**（部分失效无法二元标记，改名会破坏 append-only 历史引用），索引行注明「部分被 X 取代」并指向取代变更的变更号
+  - **③ 特殊需要保留陈列的死目录 → 改名加状态后缀**：`-rejected`（否决/作废未实现）或 `-superseded`（完成后被取代）
+- **目录名状态后缀仅 ③ 一种适用场景**——是叠加在索引行之上的防误读信号，**不替代索引**（索引行永存，教训不丢）。
+
+## 引用规则
+
+- 文档内引用变更用**变更号（目录 slug）或其相对链接**——slug 自带 type + title，引用处自可读，无「裸号」配对问题。
+- **已删除的作废变更不引用目录**（目录已不存在）：提及时用**叙述标题**或**指索引行**（如上表 annotation-interceptors 作废行）。
+- 目录命名全仓统一 `{YYYYMMDD}-{NN}-{type}-{title}`（早期存量已迁移，见「命名迁移」）；完成目录冻结不改名（原名即其变更号，append-only 引用兼容）。
+
+## 记忆文档自检用例集
+
+固定一组走查问题——任何记忆文档改动后的回归验收（轻量版 continuous evals）：
+
+- **现状类（5 问）**：
+  1. 当前注解集与各注解语义？
+  2. 内置生成器清单与 SPI？
+  3. 运行管线各环节类名？
+  4. config 顶层键 schema？
+  5. 核心契约（@Generated 成员所有权等）？
+- **历史类（2 问）**：
+  1. 曾否决 / 曾作废的方案与教训？
+  2. 最近几次变更改了什么？
+- **执行规则**：任何记忆文档（AGENTS.md / SKILL.md / architecture.md / 本索引 / glossary）被改动后，由**新上下文实例只喂记忆文档作答**，答案与 architecture.md / 代码不符即**不合格**，修复后才算收尾。答错 = 要么文档没触发、要么文本已漂移。
+
+## 读取指引
+
+- **新变更设计前先读本文件**：曾做 / 曾否决检索（本方案或相似方案是否做过、是否被否决）；变更号 = 目录 slug 一览。
+- 变更目录的**创建与命名校验走 `new-change.sh`**（脚本算名、分配变更号、`check` 子命令校验），**禁止手工 mkdir**。

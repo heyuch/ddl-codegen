@@ -1,3 +1,11 @@
+# progress：feat-project-foundation（初始建设期归档）
+
+> **归档说明（2026-09-05，随 20260905-01-chore-project-memory 归档动作）**：本目录 = 项目初始建设期（2026-08：M0-M4 + 技术设计定稿）原始文档的归档地：
+> `design.md` = 原 docs/design.md（技术设计定稿，历史基线）；`progress.md` = 本文件（原 docs/progress.md：M0-M4 进度台账 / 关键决策 / PIT 实证 / 已知限制原文）；`tasks.md` = 原 docs/tasks.md（M0-M4 任务清单）。
+> 正文原样保留（内部链接仍指旧路径 docs/design.md 等）。**勿作现状依据**——现状以 `docs/architecture.md` 为准；前向的「已知限制」已迁 architecture.md「已知限制」节；决策史 = 本目录（早期）+ `docs/changes/README.md` 索引 + 各变更目录（无顶层台账）。
+
+---
+
 # 开发进度台账
 
 > 自动执行记录（用户睡眠期间）。每阶段：worker 交付 → 复跑 validate+test → review diff → 记录。
@@ -14,8 +22,8 @@
 | M2 | 生成核心：SPI/基类 reconcile/拦截器/两阶段/编排 | ✅ 收口 | validate+test 全绿（64/64）；生命周期测试通过（create→alter→drop→rename→用户代码保留）；修复 tree 三处 addAnnotation 丢失注解 bug + Modifiers 空集崩溃 + 转换器 modifiers 模型化 |
 | M3 | 内置生成器 ×8 + 端到端验收 | ✅ 收口 | validate+test 全绿（63/63）；EndToEndTest 覆盖 @type/@as/@ignore/索引/拦截器全链路 |
 | M4 | CLI/报告/README/收尾 | ✅ 收口 | CLI 冒烟验证：create/幂等/dry-run/alter/用户代码保留/drop 全部通过 |
-| M3 | 内置生成器 ×7 + golden | ⬜ | |
-| M4 | CLI/报告/--sync/文档/端到端验收 | ⬜ | |
+
+> 注：早期计划残留的两行占位（M3 ×7+golden ⬜ / M4 --sync ⬜）已删除——M3/M4 均收口；--sync 未实现属「已知限制」而非阶段未完成。
 
 ## 关键决策记录（执行中拍板）
 
@@ -24,6 +32,7 @@
 - **2026-08-30：引入 SpotBugs（字节码级静态检查）**。锁 spotbugs-maven-plugin 4.8.6.8（Java 11 运行环境，4.9+ 需 Java 17）；check 绑 process-classes（沿用 `mvn clean test` 验证命令）；effort=Max + threshold=Low 全量检出，误报/接受项进 spotbugs-exclude.xml（每条带 Justification）。首轮实证：checkerframework -Awarns 存量警告 + 字节码默认注解真相不一致是检出主力，附带死代码/未读字段/equals 暴露等 checkerframework 不覆盖类别。详情见 docs/changes/2026-08-30-opt-spotbugs/design.md
 - **Expr/Block 助手简化**（M0c 并入 M2）：助手为纯字符串组合，不做 import 魔法；方法体引用类型的 import 由生成器显式 addImport（避免状态化 import-sink API，更清晰）。M0c 拆入 M2（对着真实生成上下文构建，避免空想 API）。
 - 其余开放问题按 docs/design.md §17 默认值
+- **2026-09-05：项目记忆体系重构（随 20260905-01-chore-project-memory 变更）**。根因：文档漂移（拦截器已删仍写于 design.md/AGENTS、作废变更自称"@as 移除"未落地）。四件套：① **文档角色三分离**——`docs/architecture.md` 现状单一事实源（is，从代码对账产出，随变更收尾同步）、`docs/design.md` 降级为历史基线（was，头部声明勿作现状依据）、`docs/progress.md` 决策台账（append-only）；② **`docs/changes/README.md`** = 变更索引 + 生命周期规则 + 引用规则 + 记忆文档自检用例集；③ **变更号 = 目录 slug** `{YYYYMMDD}-{NN}-{type}-{标题}`（紧凑日期 + NN 由 new-change.sh 分配不重用；引用直接用 slug，作废变更删除后不引用目录走索引行）；作废处置三态（默认删除+索引留痕 / 部分被取代保留原名索引注明 / 保留陈列个案加 `-rejected`/`-superseded` 后缀）；④ **design-first skill 升级 10 步**（新增独立评审 pass[新上下文实例只带记忆文档]、一致性核对、蒸馏收尾）+ **命名固化**（new-change.sh 为命名权威，算名 + `check` 子命令确定性门禁，禁手工 mkdir）。参照 Anthropic AI-Native SDLC playbook（verifier subagent / evals / 审计痕迹），吸收三条轻量增量（记忆文档自检用例集、实现-设计一致性核对、批准/否决痕迹仓库化）。**对账发现 10 条记录于 architecture.md「对账发现」**：EntityGenerator 不存在（entity/po 为 pojo 生成器产物实例）；`--force` 逃生口未实现；保留命名空间 = naming.* 与 annotations.* 两个；`CodeGenerator` javadoc 与实现矛盾（RENAME 语义）；源码残留 5 处"拦截器"javadoc 文本（未改代码，留待清理）等。
 
 ## 阶段详情
 

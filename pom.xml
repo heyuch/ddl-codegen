@@ -359,8 +359,6 @@
                                 <limit>
                                     <counter>LINE</counter>
                                     <value>COVEREDRATIO</value>
-                                    <!-- 基线实证（见 docs/changes/2026-08-30-opt-jacoco/progress.md）：
-                                         core 87.4 / tree 78.9 / maven-plugin 87.0 / cli 补测后 ~75+ -->
                                     <minimum>0.75</minimum>
                                 </limit>
                             </limits>
