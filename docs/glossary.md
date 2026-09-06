@@ -34,7 +34,7 @@
 | 门禁 | 门禁 | 静态检查硬门槛：spotless/checkstyle（error）/error-prone/checkerframework（error）/spotbugs（字节码）/jacoco（line ≥75%）全部进 `mvn clean test` | AGENTS.md「Build, Lint, and Test Commands」 |
 | quick build | 快速构建 | `-Pquick` profile：跳过编译期分析器/spotbugs/jacoco/checkstyle，保留格式化与测试（37s → 11s）；提交/验收前必须跑全量 | AGENTS.md「Build, Lint, and Test Commands」 |
 | 全量构建 | 全量构建 | 无 profile 的 `mvn clean test`：全部门禁 + 测试 | AGENTS.md「Build, Lint, and Test Commands」 |
-| design-first | 设计优先 | 项目工作流（10 步）：分析 → `new-change.sh` 脚手架 → 设计 → SOLID 自评 → 独立评审（中/大）→ 用户评审 → 实现 → 验证 → 一致性核对 → 蒸馏收尾；细则见 skill `design-first` | AGENTS.md「开发工作流（硬性规则）」、SKILL.md |
+| design-first | 设计优先 | 项目强制开发工作流（10 步 + 检查单 + 变更号规则）——流程细节只存源头 skill，此处不复述 | AGENTS.md「开发工作流（硬性规则）」、`.agents/skills/design-first/SKILL.md` |
 | 蒸馏收尾 | 蒸馏收尾 | 变更收尾时的蒸馏动作：决策与偏差 → 所在变更目录 progress.md、现状 → architecture.md、索引行 → changes/README.md、目录处置、记忆文档自检、`new-change.sh check` | AGENTS.md「开发工作流（硬性规则）」 |
 | 初始归档 | 初始建设期归档 | 项目初始期（M0-M4 + 2026-08 设计定稿）原始文档归档：`docs/changes/20260801-01-feat-project-foundation/`（design/progress/tasks 原文） | docs/changes/20260801-01-feat-project-foundation/ |
 | PIT | 变异测试 | 变异覆盖率（击杀突变体比例）验证测试质量；显式运行（core 模块） | docs/changes/20260801-01-feat-project-foundation/progress.md「PIT 变异测试」 |

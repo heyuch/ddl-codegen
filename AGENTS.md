@@ -30,7 +30,7 @@
 
 ## Build, Lint, and Test Commands
 
-Maven 多模块（Java 11：cli / maven-plugin / core / tree）。
+Maven 多模块（Java 11：cli / maven-plugin / core / tree；it-springboot = 真实 Spring Boot 消费工程样例，门禁分级见 20260906-03）。
 
 - 全量门禁：`mvn clean test`（`JAVA_HOME=/opt/homebrew/opt/openjdk@11`；spotless/checkstyle/error-prone/checkerframework/spotbugs/jacoco 全进）——提交/验收前必跑
 - 日常迭代：`mvn -Pquick clean test`

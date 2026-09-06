@@ -181,7 +181,7 @@ DDL 文本（多条语句，分号分隔）
 - artifact 类名 = 基类名 + suffix；表级 `@as` 覆盖基类名。
 - 列名 → 字段名：camelCase（`user_id` → `userId`；可关）；命中保留字（Java 关键字 + 常用 SQL 保留字全集见 `NamingService.RESERVED_WORDS`，如 `order`）→ 追加 keywordSuffix。
 - 索引 → 查询方法名：`前缀 + By + 列 camelCase 以 And 连接`（`name, gender` → `findByNameAndGender`）。
-- 枚举类名：列级 `@as` > `@enum` 显式值 > `naming.enumClassName`（SQL-enum 列与裸 `@enum` 列同走该函数：column 风格 = 列 Pascal，tableColumn = 基类名 + 列 Pascal）。
+- 枚举类名：列级 `@as` > `@enum` 显式值 > `naming.enum.style`（SQL-enum 列与裸 `@enum` 列同走该函数：column 风格 = 列 Pascal，tableColumn = 基类名 + 列 Pascal）。
 
 **类型映射**（`TypeMapper`，返回全限定名；SQL→Java 内置表不进 config）：
 - 整数：`smallint/mediumint/int/integer/year` → `Integer`（**unsigned → `Long`**，防溢出）；`bigint` → `Long`；`tinyint(1)` → `Boolean`、其余 `tinyint` → `Integer`。
