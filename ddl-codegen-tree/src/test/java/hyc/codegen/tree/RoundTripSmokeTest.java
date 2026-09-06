@@ -297,7 +297,7 @@ public class RoundTripSmokeTest {
 
     @Test
     public void demoRoundTripIsByteExact() throws Exception {
-        File file = new File("src/test/java/hyc/codegen/tree/Demo.java");
+        File file = new File("src/test/resources/fixtures/roundtrip/Demo.java");
         assertEquals(read(file), print(file), "Demo.java round-trip 应字节全等");
     }
 

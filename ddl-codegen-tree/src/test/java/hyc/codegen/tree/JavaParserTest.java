@@ -28,7 +28,7 @@ public class JavaParserTest {
 
     @Test
     public void parse() throws IOException {
-        File file = new File("src/test/java/hyc/codegen/tree/Demo.java");
+        File file = new File("src/test/resources/fixtures/roundtrip/Demo.java");
         JavaParser parser = new JavaParser();
         List<CompileUnit> units = parser.parse(file);
 
