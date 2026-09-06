@@ -18,6 +18,7 @@
 5. **EI_EXPOSE_REP2**（DI 无状态 Bean 误报）→ 模块级 spotbugs exclude（`${project.basedir}` 绝对路径，带理由），核心 NPE 类问题已由 4 修复。
 6. javadoc（06）之后模块再生成产物含 javadoc；最终模块文件：final/value/javadoc/ctor-di 字段齐全。
 7. 装配：`@MapperScan` + `SampleBeans`（converter/repositoryImpl Bean 显式注册，proxyBeanMethods=false final）；Testcontainers IT 覆盖 mapper 存 code → repository+converter 还原枚举（Status.ACTIVE/getCode/desc、Kind.TRIAL）。
+8. **IT 真实运行实证（2026-09-06）**：colima 引擎修复（daemon.json 顶层 `proxies` 为 dockerd29 不认键 → 清理并恢复 registry-mirrors）；Testcontainers 需 `DOCKER_HOST=unix:///Users/humpy/.colima/default/docker.sock`，ryuk 特权容器在 colima 不可用 → `TESTCONTAINERS_RYUK_DISABLED=true`；`SampleApplication/SampleBeans` 曾被 regen 清理误删（4e9dc8e 补回）——**SampleIntegrationTest 1/1 绿（真实 MySQL 容器）**，生成代码可编译/装配/调用闭环达成。
 
 ## 门禁分级结论
 
