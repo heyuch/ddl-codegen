@@ -23,6 +23,16 @@ class MybatisRepositoryImplGeneratorTest {
     @Nullable
     Path temp;
 
+    /** springCache 配置（repository 产物开 springCache；可选 repositoryImpl lombok）。 */
+    private DdlConfig cacheConfig(GeneratorTestSupport support, String di, boolean lombok) {
+        DdlConfig config = fullConfig(support, di);
+        support.artifact(config, "repository").putOption("springCache", "true");
+        if (lombok) {
+            support.artifact(config, "repositoryImpl").putOption("lombok", "true");
+        }
+        return config;
+    }
+
     @Test
     void constructorDiInjectsMapperAndConverter() throws Exception {
         GeneratorTestSupport support = support();
@@ -104,6 +114,36 @@ class MybatisRepositoryImplGeneratorTest {
         impl.putOption("converter", "entityConverter");
         impl.putOption("di", di);
         return config;
+    }
+
+    @Test
+    void springCacheGeneratesCacheAsideWithManualLogger() throws Exception {
+        GeneratorTestSupport support = support();
+        DdlConfig config = cacheConfig(support, "constructor", false);
+        support.generateAndAssertSubset(config, "repository-impl/spring-cache",
+                "com/demo/repository/UserRepository.java",
+                "com/demo/repository/impl/UserRepositoryImpl.java");
+
+        String impl = support.readGenerated("com/demo/repository/impl/UserRepositoryImpl.java");
+        // 非 lombok：Logger 常量置类顶（先于 mapper 字段）；lombok 形态在另一用例
+        int logAt = impl.indexOf("private static final Logger log");
+        int mapperAt = impl.indexOf("private final UserMapper userMapper");
+        assertTrue(logAt >= 0 && logAt < mapperAt, impl);
+        assertTrue(impl.contains("@Cacheable(cacheNames=\"User\", key=\"'findById:' + #id\")"), impl);
+        assertTrue(impl.contains("self.evictCaches(userConverter.toUser(userPo));"), impl);
+    }
+
+    @Test
+    void springCacheWithLombokUsesSlf4j() throws Exception {
+        GeneratorTestSupport support = support();
+        DdlConfig config = cacheConfig(support, "constructor", true);
+        support.generateAndAssertSubset(config, "repository-impl/spring-cache-with-lombok",
+                "com/demo/repository/impl/UserRepositoryImpl.java");
+
+        String impl = support.readGenerated("com/demo/repository/impl/UserRepositoryImpl.java");
+        assertTrue(impl.contains("@Slf4j\npublic class UserRepositoryImpl"), impl);
+        assertFalse(impl.contains("LoggerFactory.getLogger"), impl);
+        assertTrue(impl.contains("log.info(\"evictCaches: {}:{}\", \"User\", \"findById:\" + user.getId())"), impl);
     }
 
     private GeneratorTestSupport support() {

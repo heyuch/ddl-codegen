@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.lang.model.element.Modifier;
 
+import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.VariableTree;
 import hyc.codegen.core.io.ChangeStatus;
@@ -299,7 +300,7 @@ public abstract class AbstractJavaGenerator implements Generator {
         return true;
     }
 
-    /** 方法签名：返回类型 + 参数类型序列 + 方法体（空白归一化，体变更也能触发替换）。 */
+    /** 方法签名：返回类型 + 参数类型序列 + 方法体（空白归一化，体变更也能触发替换）+ 方法注解集。 */
     private String signature(Method method) {
         StringBuilder sb = new StringBuilder();
         com.sun.source.tree.Tree returnType = method.getReturnType();
@@ -311,6 +312,14 @@ public abstract class AbstractJavaGenerator implements Generator {
             sb.append(p.getType()).append(',');
         }
         sb.append(')');
+        // 注解纳入签名（20260906-13）：开/关 springCache 只增删注解、方法体不变时也要触发替换。
+        // 用 JavaCodegen.generateCode 渲染 = 与打印同源（FQN/简单名归一一致），两侧一致则零 churn。
+        com.sun.source.tree.ModifiersTree mods = method.getModifiers();
+        if (mods != null) {
+            for (AnnotationTree ann : mods.getAnnotations()) {
+                sb.append('\n').append(JavaCodegen.generateCode(ann));
+            }
+        }
         com.sun.source.tree.BlockTree body = method.getBody();
         if (body != null) {
             sb.append(':')

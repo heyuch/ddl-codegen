@@ -66,8 +66,8 @@ DDL 文本（多条语句，分号分隔）
 | `EnumGenerator` | `enum` | enum | 表内每个**枚举列**生成一个枚举类（一表多文件）；枚举列 = SQL `enum(...)` 类型列或 `@enum` 标注列（`Column.isEnumColumn()`）。模板：常量 = 枚举项 + code/desc 双字段 + `fromCodeNullable`/`fromCode` 反查方法对（`@Nullable` 用 `annotations.nullable`）；产物选项 `lombok=true` → 类级 `@Getter`+`@RequiredArgsConstructor`，缺省 → 手写私有构造器与 `getCode()/getDesc()`。枚举项数据在常量 init、参与 reconcile 签名（ALTER comment 后增/删/同名 code/desc 值改均增量同步，见契约）；无枚举列时 `shouldGenerate=false` → 删除旧文件 |
 | `MapperGenerator` | `mybatisMapper` | mapper | Mapper 接口：insert/update + 有主键时 deleteById + 索引派生 findBy*；返回类型 = `target` 引用 |
 | `MapperXmlGenerator` | `mybatisXml` | mapperXml / xml | 整文件字符串模板重生成（无 reconcile）；文件名为其 `mapper` 引用产物类名 + `.xml`；必配 `path`；结构 BaseResultMap/BaseColumnList/insert/deleteById/update/findById/findBy* |
-| `RepositoryGenerator` | `repository` | repository | Repository 接口：索引派生 findBy*（`target` 视图） |
-| `MybatisRepositoryImplGenerator` | `mybatisRepositoryImpl` | repositoryImpl | 桥接 Mapper →（Converter）→ target；`di=field`（默认 @Resource 字段注入）或 `di=constructor`；mapper.target == 自己 target → 直连，否则经 converter（校验 converter.source==mapper.target 且 converter.target==自己 target） |
+| `RepositoryGenerator` | `repository` | repository | Repository 接口：insert/update/deleteById（无条件写方法，deleteById 判据同 mapper 单列主键）+ 索引派生 findBy*（`target` 视图）；`springCache=true` 且表有索引时追加 evictCaches 声明（缓存注解全在 impl） |
+| `MybatisRepositoryImplGenerator` | `mybatisRepositoryImpl` | repositoryImpl | 桥接 Mapper →（Converter）→ target；`di=field`（默认 @Resource 字段注入）或 `di=constructor`；mapper.target == 自己 target → 直连，否则经 converter（校验 converter.source==mapper.target 且 converter.target==自己 target）。20260906-13：类去 final；写方法 insert/update/deleteById 透传；`repository.springCache=true` 且表有索引 → cache-aside（findBy* `@Cacheable`；`evictCaches` 上 `@Caching(evict={...})` 组 + 每 spec 一行 log；写方法 fetch-first 老行/回填行经 `@Autowired @Lazy` 自引用调 evictCaches；key=`{method}:{args}`、cacheNames 缺省基类名）；日志双形态：repositoryImpl 产物 `lombok=true` → 类级 `@Slf4j`，缺省 → 手写 `Logger` 常量置类顶。converter 桥接模式 po 类型 import 简单名（与已引用简单名冲突回退 FQN） |
 | `ConverterGenerator` | `converter` | converter | source ↔ target 双向 `toX` / `toXList`；枚举列按两端产物视图差异自动插 `fromCode`/`getCode()` 空安全转换（视图判定 = 枚举类 FQN 精确比对，非 String 启发式；标量→enum 用 nullSafe + `fromCode`，保持未知 code 抛错语义） |
 
 产物（artifact）≠ 生成器：产物名是 config 顶层键、自由定义；「配置了即启用」。**同一 kind 可服务多个产物实例**（如 `entity` 与 `po` 均 `generator=pojo`，各自配 package/suffix/特性）；`CodeGenerator` 每 kind 持一个实例，由 `TableContext`（表 × 产物配置）驱动，实例不存表态。
@@ -127,6 +127,9 @@ DDL 文本（多条语句，分号分隔）
 | `lombok=true` | enum | 枚举类级 `@Getter`+`@RequiredArgsConstructor`（构造器/getter 由 lombok 生成）；缺省 false → 手写私有构造器 + `getCode()/getDesc()` 成员；选项翻转需删文件重生成（类级注解不 reconcile） |
 | `type=true` | pojo | 列 `@type` 注解值覆盖类型 |
 | `di=field\|constructor` | repositoryImpl | 注入方式；缺省 field（@Resource） |
+| `springCache=true` | repository | 开 cache-aside 生成（repository 接口出 evictCaches 声明；impl 出 @Cacheable/@Caching/self 字段/fetch-first 写方法）；表无索引时整体失效 |
+| `cacheName` | repository | 缓存名；缺省 = 该表基类名；@Cacheable/@Caching 两侧同值 |
+| `lombok=true` | repositoryImpl | springCache=true 时日志形态：true → 类级 `@Slf4j`；缺省 → 手写 Logger 常量 |
 | `mapper=<产物>` / `converter=<产物>` / `repository=<产物>` 等 | mybatisXml / repositoryImpl | 跨产物引用选项键（经 `resolveReference` 的任意 refKey 路径） |
 
 **校验**：每个产物必须配置 `package` 或 `path` 之一，否则加载报错。
@@ -151,7 +154,7 @@ DDL 文本（多条语句，分号分隔）
 |---|---|
 | config 存在即启用 | 产物 = config 顶层键；文件位置 = config 推导（根 + module + package/资源 path + 类名），**无 manifest** |
 | @Generated 成员所有权 | 工具只增删改带 `@Generated`（`javax.annotation.processing.Generated`，JDK 自带）的字段/方法成员；用户手写成员永不触碰；现有文件无期望类名 → 视为新建（用户迁移代码未改 config 后果自负）；包名/类名以 config 为准 |
-| reconcile 即 diff | 字段按名匹配、方法按名匹配；替换判据：普通字段 = 类型，**enum 常量 = 类型 + init 规范化文本**（code/desc 值改触发原位替换、保持声明顺序）；方法 = 返回类型 + 参数类型序列 + 方法体（空白归一化）。模型有而文件无 → 增；有而模型无 → 删；签名变 → 替换；一致 → 跳过。期望成员名与既有**非 @Generated 手写成员**重复 → 跳过新增 + warning（保留用户版） |
+| reconcile 即 diff | 字段按名匹配、方法按名匹配；替换判据：普通字段 = 类型，**enum 常量 = 类型 + init 规范化文本**（code/desc 值改触发原位替换、保持声明顺序）；方法 = 返回类型 + 参数类型序列 + 方法体（空白归一化）+ **方法注解集文本**（20260906-13：注解增删/翻转也能触发替换；经 JavaCodegen.generateCode 渲染与打印同源）。模型有而文件无 → 增；有而模型无 → 删；签名变 → 替换；一致 → 跳过。期望成员名与既有**非 @Generated 手写成员**重复 → 跳过新增 + warning（保留用户版） |
 | 解析失败不覆盖 | 现有源解析失败 → 抛 `IllegalStateException` 中止本次运行、该文件未修改；**当前无 `--force` 逃生口**（CLI/plugin 均无此选项） |
 | 删除无条件 | drop table → 无条件删除该表全部启用产物文件；产物不再适用（enum 无 enum 列）→ 删除旧文件 |
 | rename 保留用户代码 | 表改名保留旧表名产物文件（含手写代码），新表名正常生成，类名变化 → warning 提示手动迁移删除；列/索引改名 → reconcile 层替换成员 |
@@ -171,6 +174,7 @@ DDL 文本（多条语句，分号分隔）
 - 跨表同 enum 包枚举类名撞名不检测（生成器无状态；显式 `@enum:名`/`@as` 可避撞）
 - 生成枚举类恒引用 `annotations.nullable` 配置的注解（缺省 checkerframework qual）→ 消费项目需具备所配注解的依赖
 - merge 时删除成员不清理其 import（保守策略：不删可能被用户代码引用的 import）
+- repositoryImpl 类级形态不 reconcile（非 final、@Slf4j）——`springCache`/`lombok` 翻转或升级需删文件重生成（类级修饰符/注解已知限制同 enum lombok）
 - ALTER COLUMN SET/DROP DEFAULT、FK/CHECK、分区、FULLTEXT/SPATIAL 索引 → warning 跳过（不生成对应变更）
 - 源码残留过时 javadoc 文案（"拦截器"残留、`CodeGenerator` RENAME 描述与实现矛盾等），待代码清理变更处理
 

@@ -11,6 +11,18 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public interface UserRepository {
 
     /**
+     * 按主键删除记录
+     */
+    @Generated("ddl-codegen")
+    int deleteById(Long id);
+
+    /**
+     * 清理该实体相关的缓存键
+     */
+    @Generated("ddl-codegen")
+    void evictCaches(User user);
+
+    /**
      * 按 主键 查询
      */
     @Nullable
@@ -23,5 +35,17 @@ public interface UserRepository {
     @Nullable
     @Generated("ddl-codegen")
     User findByName(String name);
+
+    /**
+     * 插入记录
+     */
+    @Generated("ddl-codegen")
+    int insert(User user);
+
+    /**
+     * 更新记录
+     */
+    @Generated("ddl-codegen")
+    int update(User user);
 
 }

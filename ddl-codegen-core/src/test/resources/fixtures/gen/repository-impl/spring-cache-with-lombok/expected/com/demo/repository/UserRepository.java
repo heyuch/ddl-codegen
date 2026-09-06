@@ -30,6 +30,12 @@ public interface UserRepository {
     int deleteById(Long id);
 
     /**
+     * 清理该实体相关的缓存键
+     */
+    @Generated("ddl-codegen")
+    void evictCaches(User user);
+
+    /**
      * 按 主键 查询
      */
     @Nullable
@@ -42,12 +48,6 @@ public interface UserRepository {
     @Nullable
     @Generated("ddl-codegen")
     User findByName(String name);
-
-    /**
-     * 按 状态 查询
-     */
-    @Generated("ddl-codegen")
-    List<User> findByStatus(Integer status);
 
     /**
      * 按 区域 查询

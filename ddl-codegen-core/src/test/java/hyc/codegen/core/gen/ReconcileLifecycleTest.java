@@ -40,6 +40,14 @@ class ReconcileLifecycleTest {
     @Nullable
     Path temp;
 
+    private ArtifactConfig artifact(DdlConfig config) {
+        ArtifactConfig artifactConfig = config.artifact("test");
+        if (artifactConfig == null) {
+            throw new AssertionError("test 产物未配置");
+        }
+        return artifactConfig;
+    }
+
     /** 测试生成器：每列一个 private 字段 + 一个由表名驱动的 describe() 方法（覆盖方法级 reconcile）。 */
 
     private DdlConfig config() {
@@ -117,6 +125,30 @@ class ReconcileLifecycleTest {
         ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
         CodeGenerator generator = new CodeGenerator(Collections.singletonList(new TestGenerator()));
         return generator.generate(config, schema, result, Collections.emptyList());
+    }
+
+    @Test
+    void methodAnnotationChangeTriggersReplaceOnToggle() throws Exception {
+        // 验收 6：reconcile 签名比对纳入注解——开关只增删方法注解、方法体不变也应触发替换（20260906-13）
+        DdlConfig config = config();
+        Schema schema = new Schema();
+        generate(config, schema, "create table user (id bigint primary key)");
+        assertFalse(content().contains("@Deprecated"), content());
+
+        // 开（注解增）
+        artifact(config).putOption("deprecated", "true");
+        generate(config, schema, "alter table user modify column id bigint");
+        assertTrue(content().contains("@Deprecated"), content());
+        String on = content();
+
+        // 幂等
+        generate(config, schema, "alter table user modify column id bigint");
+        assertEquals(on, content(), "同输入重跑应无变化");
+
+        // 关（注解删）
+        artifact(config).putOption("deprecated", "false");
+        generate(config, schema, "alter table user modify column id bigint");
+        assertFalse(content().contains("@Deprecated"), content());
     }
 
     @Test
@@ -199,12 +231,15 @@ class ReconcileLifecycleTest {
                         .name(ctx.fieldName(column))
                         .build());
             }
-            builder.method(hyc.codegen.tree.Method.builder()
+            hyc.codegen.tree.Method.Builder describe = hyc.codegen.tree.Method.builder()
                     .modifiers(Modifier.PUBLIC)
                     .returnType(new TypeReference("java.lang.String"))
                     .name("describe")
-                    .body("return \"" + ctx.getTable().getName() + "\";")
-                    .build());
+                    .body("return \"" + ctx.getTable().getName() + "\";");
+            if (Boolean.parseBoolean(ctx.getArtifactConfig().getOption("deprecated"))) {
+                describe.annotation(hyc.codegen.tree.Annotation.of("java.lang.Deprecated"));
+            }
+            builder.method(describe.build());
         }
 
         @Override
