@@ -14,9 +14,9 @@ description: 强制"先分析设计、沉淀文档、再实现"的开发工作�
 
 1. **分析**：问题是什么、为什么做、可选方案与取舍（每项一句话）；读 `docs/architecture.md`（现状）+ `docs/changes/README.md`（曾做/曾否决）
 2. **脚手架**：运行 `.agents/skills/design-first/scripts/new-change.sh <type> <标题>`——自动分配变更号 `{YYYYMMDD}-{NN}` 并注入 design.md 头部元信息；**禁止手工创建变更目录**（历史归档用 `--date YYYYMMDD`）
-3. **设计**：填 `design.md`（模板 `docs/changes/TEMPLATE.md`）；影响面写具体符号（类/文件/生成器，可 grep 验证）；中/大改动必含「类职责与交互」（类职责一句话入 javadoc + 依赖方向）
-4. **设计自评（可回环）**：按「设计自评检查单」四组核对——SOLID / GRASP 职责分配 / 语义归层 / 设计模式取舍；不满足回第 3 步
-5. **独立评审（中/大，硬性）**：新上下文实例（新会话/subagent）只带 `design.md` + `docs/architecture.md` + `docs/changes/README.md`，输出「与现状/历史冲突清单」（含查索引：曾做/曾否决；影响面可验证性），并按「设计自评检查单」四组复核设计；冲突回写 design.md，不通过回第 3 步
+3. **设计**：填 `design.md`（模板 `docs/changes/TEMPLATE.md`）；影响面写具体符号（类/文件/生成器，可 grep 验证）；中/大改动必含「战略定位」（归属层/架构不变量/波及面）与「类职责与交互」（类职责一句话入 javadoc + 依赖方向）
+4. **设计自评（可回环）**：按「设计自评检查单」两级核对——先**战略**（架构融洽：归属层/架构不变量/复用优先/波及面/与历史决策），后**战术**（SOLID/GRASP 职责分配/设计模式取舍）；不满足回第 3 步
+5. **独立评审（中/大，硬性）**：新上下文实例（新会话/subagent）只带 `design.md` + `docs/architecture.md` + `docs/changes/README.md`，输出「与现状/历史冲突清单」（含查索引：曾做/曾否决；影响面可验证性），并按「设计自评检查单」两级（战略/战术）复核设计；冲突回写 design.md，不通过回第 3 步
 6. **用户评审（硬关卡）**：把 design.md 呈现给用户；**未获认可不得进入实现**；结论落痕到变更目录 `progress.md`（通过 ✅ / 否决 ❌+理由）
 7. **实现**：按设计写代码
 8. **验证**：`JAVA_HOME=/opt/homebrew/opt/openjdk@11 mvn clean test` 全绿 + 静态检查全绿
@@ -25,7 +25,19 @@ description: 强制"先分析设计、沉淀文档、再实现"的开发工作�
 
 ## 设计自评检查单（步骤 4 执行细则；步骤 5 独立评审同此视角）
 
-逐类/逐职责核对；任一不满足回第 3 步。
+**先战略后战术**，逐项核对；任一不满足回第 3 步。战略不过，战术再漂亮也不成立。
+
+### 战略自评（架构融洽，先行）
+
+从项目整体看改动是否合理融洽，而非局部最优。每问的答案须能指回 `docs/architecture.md` 锚点或变更 slug。
+
+- **归属层**：改动作用于哪一层（DDL 解析/模型/命名服务/生成器/产物模板/config/工具链门禁）？该层职责边界与既有归属是否一致？反例实证：20260906-07-fix-generator-leftover-fixes 把 MySQL 反引号语义（方言）放进 NamingService 与模型 → 20260906-11-fix-identifier-hygiene 收归 parse 层剥引号 + MapperXmlGenerator 单点加引。判别启发：模型与共享服务只存真值，方言只在其直接生产者/消费者一层处理
+- **架构不变量**：是否触碰核心不变量——`Generator` 唯一扩展点、产物 = artifact 配置、模型存真名、`@Generated` 成员所有权、查询契约、reconcile 语义？触碰 = breaking，须显式声明并评审
+- **复用优先**：是否有既有服务/契约/产物可复用（`NamingService`/`TypeMapper`/`TableContext`/golden harness/`annotations.nullable`…），而非另起平行机制？
+- **波及面**：对既有产物输出/config 键/SPI/门禁/记忆文档的影响是否盘点（golden fixtures 重出、README/architecture 更新、自检触发）？
+- **与历史决策**：与曾做/曾否决（changes/README 索引）的关系是否说明（取代/新增/无关）？
+
+### 战术自评（以战略通过为前提）
 
 **① SOLID**：SRP（这个类为什么同时承担 X/Y？）/ OCP（扩展点是否闭合）/ LSP / ISP / DIP（依赖是否朝向抽象）。
 
@@ -39,9 +51,9 @@ description: 强制"先分析设计、沉淀文档、再实现"的开发工作�
 - 间接 Indirection：中介/分发是否真的降耦且值得
 - 预防变化 Protected Variations：易变点是否包在稳定接口/抽象后
 
-**③ 语义归层**（方言/文本语义）：引号、保留字、命名规则、格式等「方言/文本语义」**只存在于其直接生产者/消费者一层**；模型与共享服务只存真值。反例实证：20260906-07-fix-generator-leftover-fixes 把 MySQL 反引号语义泄漏进 NamingService 与模型 → 20260906-11-fix-identifier-hygiene 改 parse 层剥引号 + MapperXmlGenerator 单点加引（职责归层修正）。
+（职责不清（见战略·归属层与 GRASP）的结果形态之一是方言/文本语义跨层流转——如 20260906-07→11 反例——归因到职责归属即可，不单列检查项）
 
-**④ 设计模式取舍**（任何模式/纯虚构类的使用前必答；不用模式也是结论）：① 能否用设计模式？② 用哪种（说出名字）？③ 它简化了什么？④ 它复杂了什么（间接层/样板/可读性代价）？⑤ 值得吗？——实证教训：不为简单开关建抽象（annotation-interceptors 作废，见 changes/README 索引行）。用了模式就把 ③④⑤ 结论写进 design.md。
+**③ 设计模式取舍**（任何模式/纯虚构类的使用前必答；不用模式也是结论）：① 能否用设计模式？② 用哪种（说出名字）？③ 它简化了什么？④ 它复杂了什么（间接层/样板/可读性代价）？⑤ 值得吗？——实证教训：不为简单开关建抽象（annotation-interceptors 作废，见 changes/README 索引行）。用了模式就把 ③④⑤ 结论写进 design.md。
 
 ## 变更类型
 
