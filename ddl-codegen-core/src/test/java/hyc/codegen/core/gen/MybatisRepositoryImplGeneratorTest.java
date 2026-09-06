@@ -117,6 +117,30 @@ class MybatisRepositoryImplGeneratorTest {
     }
 
     @Test
+    void poSimpleNameCollisionFallsBackToFqn() throws Exception {
+        // poRef 冲突分支（PIT survivor）：po 与 entity 同简单名（不同包）→ 不 import，临时变量回退 FQN
+        GeneratorTestSupport support = support();
+        DdlConfig config = support.tableConfig();
+        support.addArtifact(config, "entity", "pojo", "com.demo.entity", "");
+        support.addArtifact(config, "po", "pojo", "com.demo.pojo", "");
+        support.addArtifact(config, "mapper", "mybatisMapper", "com.demo.mapper", "Mapper").setTarget("po");
+        support.addArtifact(config, "repository", "repository", "com.demo.repository", "Repository")
+                .setTarget("entity");
+        support.addArtifact(config, "converter", "converter", "com.demo.converter", "Converter");
+        support.artifact(config, "converter").setSource("po");
+        support.artifact(config, "converter").setTarget("entity");
+        support.addArtifact(config, "repositoryImpl", "mybatisRepositoryImpl",
+                "com.demo.repository.impl", "RepositoryImpl").setTarget("entity");
+        support.generate(config,
+                "create table t_user (id bigint not null auto_increment comment '主键',"
+                        + " name varchar(50) not null comment '用户名', primary key (id),"
+                        + " unique key uk_name (name))");
+        String impl = support.readGenerated("com/demo/repository/impl/UserRepositoryImpl.java");
+        assertFalse(impl.contains("import com.demo.pojo.User;"), "简单名冲突不应 import po");
+        assertTrue(impl.contains("com.demo.pojo.User po = userMapper.findById(id);"), impl);
+    }
+
+    @Test
     void springCacheGeneratesCacheAsideWithManualLogger() throws Exception {
         GeneratorTestSupport support = support();
         DdlConfig config = cacheConfig(support, "constructor", false);
