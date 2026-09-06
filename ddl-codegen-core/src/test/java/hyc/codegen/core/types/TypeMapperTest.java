@@ -7,7 +7,6 @@ import java.util.Set;
 
 import hyc.codegen.core.annotation.DdlAnnotationHandler;
 import hyc.codegen.core.annotation.MetaTarget;
-import hyc.codegen.core.config.DdlConfig;
 import hyc.codegen.core.model.Column;
 import hyc.codegen.core.model.Meta;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -18,8 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 // 自定义 handler 匿名实现 21 行（阈值 20 微超，测试内聚的 handler 直白可读）
 @SuppressWarnings("AnonInnerLength")
 class TypeMapperTest {
-
-    private final DdlConfig config = new DdlConfig();
 
     private final TypeMapper mapper = new TypeMapper();
 

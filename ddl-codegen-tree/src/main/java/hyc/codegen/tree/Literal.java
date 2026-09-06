@@ -58,10 +58,9 @@ public final class Literal implements LiteralTree {
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：NULL_LITERAL 的 getValue() 返回 null
     @SuppressWarnings("override.return")
-    public Object getValue() {
+    public @Nullable Object getValue() {
         return value;
     }
 

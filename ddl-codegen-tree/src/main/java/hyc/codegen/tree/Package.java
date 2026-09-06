@@ -10,6 +10,8 @@ import com.sun.source.tree.TreeVisitor;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode
+// 与 java.lang.Package 同名是有意的领域模型名（javac PackageTree 语义映射，无更贴切命名），类级抑制 JavaLangClash。
+@SuppressWarnings("JavaLangClash")
 public final class Package implements PackageTree {
 
     private List<AnnotationTree> annotations = new ArrayList<>();

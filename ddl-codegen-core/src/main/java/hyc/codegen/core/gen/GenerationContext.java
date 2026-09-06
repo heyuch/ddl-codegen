@@ -255,17 +255,13 @@ public final class GenerationContext {
 
         private final Map<String, Generator> generators = new LinkedHashMap<>();
 
-        @MonotonicNonNull
-        private DdlConfig config;
+        private @MonotonicNonNull DdlConfig config;
 
-        @MonotonicNonNull
-        private NamingService naming;
+        private @MonotonicNonNull NamingService naming;
 
-        @MonotonicNonNull
-        private TypeMapper typeMapper;
+        private @MonotonicNonNull TypeMapper typeMapper;
 
-        @MonotonicNonNull
-        private AnnotationRegistry annotationRegistry;
+        private @MonotonicNonNull AnnotationRegistry annotationRegistry;
 
         private GeneratorRegistry artifactRegistry = new GeneratorRegistry();
 

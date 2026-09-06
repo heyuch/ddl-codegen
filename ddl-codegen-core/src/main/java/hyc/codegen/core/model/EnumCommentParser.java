@@ -40,7 +40,7 @@ public final class EnumCommentParser {
         }
 
         List<EnumItem> items = new ArrayList<>();
-        for (String token : comment.split("\\s+")) {
+        for (String token : comment.split("\\s+", -1)) {
             if (!token.contains("=")) {
                 continue;
             }

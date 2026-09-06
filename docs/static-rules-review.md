@@ -82,24 +82,27 @@
 | M5 | EQ 与 EI 收尾 | TypeReference callSuper=true + 字段遮蔽消除（EQ 删除，TypeReferenceTest 契约断言）；core EI 8 类就地 @SuppressFBWarnings(justification)，浅拷贝可行的 3 项代码修复 | 已决策：代码修复优先（用户拍板） | **spotbugs-exclude 最终 1 条**（tree 包可修改 AST）；集中排除 vs 就地注解的判据：写入通道/引用传递语义必须就地或排除，只读快照语义浅拷贝修复 |
 | M5 | checkerframework 升级 error 级实证 | 存量空指针全部由 @Nullable/@MonotonicNonNull 标注或显式判空修复；initialization 检查触发 `initialization.field.uninitialized`（可修改 AST 字段、builder 字段、@TempDir/@Parameter 注入字段）——**用户决策：全部注解化而非抑制**（真可空 @Nullable / 构建后必有 @MonotonicNonNull + 读取端判空 throw / JUnit-Maven 注入字段 @Nullable + getter 校验） | 已决策：注解化（用户拍板） | **initialization 类抑制零残留**；KeyFor 子检查（NullnessChecker 伴生，不可关闭）对 JDK 泛型通配符误报 → 局部 @SuppressWarnings("keyfor") 10 个类 |
 | M6 | `ClassFanOutComplexity` | AbstractJavaGenerator 21/20（20260906-01 reconcile 扩展 +ExpressionTree/VariableKind/双日志，基数 19） | **已决策：类级针对性 @SuppressWarnings + WHY 注释 + 本节记录**（用户重申：不改静态检查配置） | reconcile 属生成器基类聚合职责（成员签名/守卫/生命周期共处），非逻辑混杂；初稿曾入 checkstyle-suppressions.xml → 违规已回退；记录于变更 20260906-01-feat-enum-annotation-code-desc-template |
+| M7 | 编译告警 42 条（`type.anno.*`×30 / EP `StringSplitter`×6 / `UnusedVariable`×3 / `JavaLangClash`×2 / javac `deprecation`×1） | 20260906-08 全量排查：type.anno 与 split 属书写规范（注解未紧邻类型、split 尾空陷阱）→ 源码规范化根治；JavaLangClash 为 tree.Package/Class 有意命名 → 类级 @SuppressWarnings + WHY；Druid `containsNotNullConstaint`（拼写错误 API）实有未弃用替代 `containsNotNullConstraint` → 代码修复而非抑制；UnusedVariable 为死参数/死字段 → 直接删除 | **已决策：`-Werror` 编译告警升级为 error + 代码内带 WHY 的 @SuppressWarnings 统一抑制**（用户 2026-09-06 拍板；详见 §4/§5） | 偶发 `junit-assertions.astub` 主类路径 "Package not found" 噪音（junit 仅测试类路径，预期缺失）经实证会被 -Werror 误伤 → 加 `-AstubNoWarnIfNotFound` 抑制（非源码告警）；记录于变更 20260906-08-chore-annotation-style-warning-gate |
 
 
-## 4. 用户决策区（调整项待定）
+## 4. 用户决策与豁免区（已生效）
 
-（暂空——待实证积累后由用户拍板；调整实施时在此记录：规则 / 调整方式 / 理由 / 日期）
+- 2026-09-06 编译告警强制门禁：根 pom `compilerArgs` 追加 `-Werror`，checker/error-prone/javac 告警统一升级为 error（告警只查不改=工具无意义；经分析确认不处理处 → 就地带 WHY 的 `@SuppressWarnings`，写入 AGENTS.md 写作约定）。此为对 §5「不加 suppression」与「不改配置」的**用户豁免项**——豁免的是「代码内抑制」「-Werror 提升」与「checker stub 主编译预期噪音抑制（`-AstubNoWarnIfNotFound`，非源码告警）」三项，不改各工具自身的规则/阈值/配置文件。（记录于变更 20260906-08）
 
 ## 5. 执行约定（已生效）
 
 - 静态检查是硬门槛：报错按提示改代码，直至 `JAVA_HOME=/opt/homebrew/opt/openjdk@11 mvn validate` + `mvn test` 全绿
-- 不自行改 checkstyle.xml、不加 suppression、不加 `-Dxxx.skip`
+- 不改工具规则/阈值/配置文件、不加配置级 suppression（suppression 文件/全局）、不加 `-Dxxx.skip`；**代码内带 WHY 的 @SuppressWarnings 是唯一例外**（见下准则，2026-08 拍板）
+- 编译告警（checker/EP/javac）经 `-Werror` 已是 error：**0 编译告警**是全量门禁前置条件（20260906-08 起）
 - 唯一例外：规则本身有 bug 或与迁移代码完全冲突 → 记录规则名 + 报错原文到 §3，用合规代码结构规避（加 final、补 javadoc 等），确实无解再提交用户决策
 
-**针对性 @SuppressWarnings 使用准则（用户 2026-08 拍板）**：
+**针对性 @SuppressWarnings 使用准则（用户 2026-08 拍板，20260906-08 扩展）**：
 - 允许用于"元素驱动"类（见 §6 判别方法），如 TreeScanner/DocTreeScanner 分发器
 - 必须是类级、针对具体规则名（`@SuppressWarnings("ClassFanOutComplexity")`）
 - 必须带 WHY 注释（含实证依据，如抽取实验数据）
 - 必须记录到 §3
 - 禁止用全局提阈值/加 suppression 文件绕过
+- （20260906-08 扩展）方法级亦可：声明注解（@SuppressWarnings 等）置于 type-use 注解（@Nullable 等）之前、紧邻被抑制声明；JavaLangClash 等非"元素驱动"类目若确认属有意命名同样适用
 
 ## 6. 判别方法：逻辑混杂 vs 元素繁多
 

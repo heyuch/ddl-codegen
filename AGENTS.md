@@ -23,6 +23,8 @@
 - **命名**：简洁明确一致——避免 `XxxManager`/`XxxHelper`/`XxxData` 后缀与上下文重复词；短作用域用短名（`ctx`/`p`/`i`）；禁 `U`/`Tmp` 无意义名；实证：`Codegen`、`Generator`
 - **注释**：业务逻辑中文、技术文档英文；公共 API 写 javadoc；解释 WHY
 - **可空性**：`@Nullable` 用 `org.checkerframework.checker.nullness.qual.Nullable`；禁用 Optional，可空性用 @Nullable 显式表达
+- **注解书写**：type-use 注解（`@Nullable`/`@MonotonicNonNull` 等）置于修饰符之后、紧邻类型：`private @Nullable String name;` / `public @Nullable Tree getX()`；声明注解（`@Override`/`@SuppressWarnings`/`@Deprecated`）先于 type-use 注解。javac/格式器不重排注解相对位置（`type.anno.before.modifier`/`type.anno.before.decl.anno` 由此触发），须按此约定手写
+- **静态检查告警处理三档**：① 能修则修（真问题/可读性/风格）→ 直接改代码；② 确认不处理处 → 就地加**带 WHY 注释的 `@SuppressWarnings`**（类级或方法级、针对具体规则名）——项目统一抑制方式，不改工具/静态检查配置；③ 维持现状须用户确认。编译告警已由 `-Werror` 升级为 error 强制门禁（见 `docs/static-rules-review.md` §4/§5）
 - **测试可读性**：AAA 三段空行分隔；密切关联大块提取有名字的辅助方法；同逻辑多组输入用 `@ParameterizedTest`；流程性测试保持显式步骤、不参数化
 - **垂直间距**：方法体内不同逻辑段落之间插入空行
 

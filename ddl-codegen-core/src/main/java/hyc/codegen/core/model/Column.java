@@ -145,10 +145,8 @@ public final class Column {
      */
     public static final class Builder {
 
-        @MonotonicNonNull
-        private String name;
-        @MonotonicNonNull
-        private String sqlType;
+        private @MonotonicNonNull String name;
+        private @MonotonicNonNull String sqlType;
         private int length;
         private int precision;
         private int scale;

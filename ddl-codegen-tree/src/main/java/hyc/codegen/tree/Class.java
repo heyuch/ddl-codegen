@@ -19,20 +19,19 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 // 可修改 AST 节点（AGENTS.md「自研可修改 Java AST」）：字段由静态工厂/builder 在构造后设置，
+// 与 java.lang.Class 同名是有意的领域模型名（javac ClassTree 体系下无更贴切命名），类级抑制 JavaLangClash。
+@SuppressWarnings("JavaLangClash")
 public final class Class implements ClassTree {
 
     private @Nullable DocComment javadoc;
 
     private @Nullable Package pkg;
 
-    @MonotonicNonNull
-    private ModifiersTree modifiers;
+    private @MonotonicNonNull ModifiersTree modifiers;
 
-    @MonotonicNonNull
-    private Kind kind;
+    private @MonotonicNonNull Kind kind;
 
-    @MonotonicNonNull
-    private Name name;
+    private @MonotonicNonNull Name name;
 
     private List<TypeParameterTree> typeParameters = new ArrayList<>();
 
@@ -143,10 +142,9 @@ public final class Class implements ClassTree {
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：无继承子句时 getExtendsClause 返回 null
     @SuppressWarnings("override.return")
-    public Tree getExtendsClause() {
+    public @Nullable Tree getExtendsClause() {
         return extend;
     }
 

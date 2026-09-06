@@ -26,6 +26,7 @@
 | [20260906-07-fix-generator-leftover-fixes](20260906-07-fix-generator-leftover-fixes/) | 完成 | **02/04 遗留 fix 一并解决**：反引号标识符 Java 侧剥除（`NamingService`，`` `order` `` → `order_`，保留字检测恢复；XML/SQL 列原文保留）；pk 列名≠`id` 链路（Mapper `deleteById` 参数注解改字段名派生、XML 去硬编码 `findById` select，PRIMARY spec 天然产 `findBy<IdPascal>`）；impl 单值 findBy 空安全桥接（初版 `call == null ? null : toX(call)`，后经 20260906-03 细化为临时变量一次调用守卫）；恢复 Pojo 保留字 golden + NamingServiceTest 反引号用例；core 121 绿 |
 | [20260906-06-feat-generated-code-javadoc](20260906-06-feat-generated-code-javadoc/) | 完成 | **生成代码 javadoc（类/方法/属性三层）**：`CommentDocs` 清洗（剥注解/枚举项 token）；pojo 类=表注释/字段=列注释；enum 类=表注释(退列注释)/常量=desc/字段与方法模板；mapper/repository(QueryMethodFactory)/impl/converter 类=表注释、方法摘要（「按 X 查询」/「把 X 转成 Y」）；fixtures 重出（22 文件 +402 行）审阅；core 121 绿 |
 | [20260906-03-chore-springboot-integration-sample](20260906-03-chore-springboot-integration-sample/) | 完成 | **真实 Spring Boot 消费工程（生成代码可编译/装配/调用验证）**：模块 `ddl-codegen-it-springboot`（Boot 2.7.18 + mybatis-starter 2.3.2 + MySQL[Testcontainers 1.21.x，无 Docker 自动 skip]）；DDL/config 全链路生成提交入库；`@MapperScan`+Bean 显式装配；IT 覆盖 mapper 存 code → repository+converter 还原枚举。**门禁=生成器质量验收器**（用户决策，分级开放）实证发现并修复：lombok @Builder 需 spotbugs-annotations、di=constructor 缺字段声明、单值 findBy 守卫二次调用、EI_EXPOSE_REP2 误报豁免（带理由）；04（@Generated/final）由此驱动 |
+| [20260906-08-chore-annotation-style-warning-gate](20260906-08-chore-annotation-style-warning-gate/) | 完成 | **编译告警强制门禁（`-Werror`）+ 注解书写规范化**：checker `type.anno.*` 30 处源码根治（type-use 注解修饰符后紧邻类型、声明注解在前；AGENTS.md 增补写作约定）；StringSplitter 6 处 `split(x,-1)`；Druid 弃用 API 实为拼写错误、存在未弃用正确拼写替代 → 修复（非抑制）；JavaLangClash×2 有意命名类级 @SuppressWarnings+WHY；死参数/死字段 3 处删除；实证 `-Werror` 会提升 junit stub 主编译噪音（主类路径无 junit 属预期）→ checker `-AstubNoWarnIfNotFound` 抑制；RoundTripSmokeTest 白名单补 javac 注解位置规范化（`public @Nullable X` ≡ `@Nullable public X` 同一 AST，幂等断言不变）；全量门禁绿 + 编译期 0 告警 |
 
 ## 本目录生命周期规则
 
@@ -61,4 +62,4 @@
   2. 是否含流程步号指针或与工具链重复的风格描述（步号与风格只属于 SKILL 或工具配置）？
   3. 是否有同一事实的多份定义（应只存于源头文档）？
   出现即不合格；`new-change.sh check-docs` 为确定性回归（黑名单从每次清理实证追加，问句不复述词表以防自指）。
-- **执行规则**：任何记忆文档（AGENTS.md / SKILL.md / architecture.md / 本索引 / glossary）被改动后，由**新上下文实例只喂记忆文档作答**，答案与 architecture.md / 代码不符即**不合格**，修复后才算收尾。答错 = 要么文档没触发、要么文本已漂移。
+- **执行规则**：任何记忆文档（AGENTS.md / SKILL.md / architecture.md / static-rules-review.md / 本索引 / glossary）被改动后，由**新上下文实例只喂记忆文档作答**，答案与 architecture.md / 代码不符即**不合格**，修复后才算收尾。答错 = 要么文档没触发、要么文本已漂移。

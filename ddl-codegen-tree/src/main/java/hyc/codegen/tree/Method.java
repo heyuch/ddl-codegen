@@ -23,11 +23,9 @@ public final class Method implements MethodTree {
 
     private @Nullable DocCommentTree javadoc;
 
-    @MonotonicNonNull
-    private ModifiersTree modifiers;
+    private @MonotonicNonNull ModifiersTree modifiers;
 
-    @MonotonicNonNull
-    private Name name;
+    private @MonotonicNonNull Name name;
 
     private @Nullable Tree returnType;
 
@@ -80,18 +78,16 @@ public final class Method implements MethodTree {
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：接口/抽象方法无方法体（MethodTree.getBody 对抽象方法返回 null）
     @SuppressWarnings("override.return")
-    public BlockTree getBody() {
+    public @Nullable BlockTree getBody() {
         return body;
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：注解方法无默认值时 getDefaultValue 返回 null
     @SuppressWarnings("override.return")
-    public Tree getDefaultValue() {
+    public @Nullable Tree getDefaultValue() {
         return defaultValue;
     }
 
@@ -154,18 +150,16 @@ public final class Method implements MethodTree {
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：无 receiver 参数时 getReceiverParameter 返回 null
     @SuppressWarnings("override.return")
-    public VariableTree getReceiverParameter() {
+    public @Nullable VariableTree getReceiverParameter() {
         return receiverParameter;
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：构造器/抽象方法可无返回类型/方法体（MethodTree.getReturnType 对构造器返回 null）
     @SuppressWarnings("override.return")
-    public Tree getReturnType() {
+    public @Nullable Tree getReturnType() {
         return returnType;
     }
 

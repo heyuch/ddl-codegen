@@ -83,8 +83,7 @@ public final class Index {
      */
     public static final class Builder {
 
-        @MonotonicNonNull
-        private String name;
+        private @MonotonicNonNull String name;
         private boolean unique;
         private final List<String> columns = new ArrayList<>();
         private @Nullable String comment;

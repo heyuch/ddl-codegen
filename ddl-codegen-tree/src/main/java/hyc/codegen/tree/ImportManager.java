@@ -97,7 +97,7 @@ final class ImportManager {
         }
         String currentPkg = pt.toString();
 
-        String[] parts = qname.split("\\.");
+        String[] parts = qname.split("\\.", -1);
         StringJoiner j = new StringJoiner(".");
         for (int i = 0; i < parts.length - 1; i++) {
             j.add(parts[i]);

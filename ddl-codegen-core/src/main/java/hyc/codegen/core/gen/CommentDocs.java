@@ -73,7 +73,7 @@ public final class CommentDocs {
             return null;
         }
         StringJoiner kept = new StringJoiner(" ");
-        for (String token : comment.split("\\s+")) {
+        for (String token : comment.split("\\s+", -1)) {
             if (token.isEmpty() || token.charAt(0) == '@' || ENUM_ITEM.matcher(token).matches()) {
                 continue;
             }

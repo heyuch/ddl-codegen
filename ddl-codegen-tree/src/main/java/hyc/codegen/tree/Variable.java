@@ -21,16 +21,13 @@ public final class Variable implements VariableTree {
 
     private @Nullable VariableKind kind;
 
-    @MonotonicNonNull
-    private ModifiersTree modifiers;
+    private @MonotonicNonNull ModifiersTree modifiers;
 
-    @MonotonicNonNull
-    private Name name;
+    private @MonotonicNonNull Name name;
 
     private @Nullable ExpressionTree nameExpr;
 
-    @MonotonicNonNull
-    private Tree type;
+    private @MonotonicNonNull Tree type;
 
     private @Nullable ExpressionTree initExpr;
 
@@ -89,10 +86,9 @@ public final class Variable implements VariableTree {
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：无初始化值的变量 getInitializer 返回 null
     @SuppressWarnings("override.return")
-    public ExpressionTree getInitializer() {
+    public @Nullable ExpressionTree getInitializer() {
         return initExpr;
     }
 
@@ -132,10 +128,9 @@ public final class Variable implements VariableTree {
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：非注解参数变量 getNameExpression 返回 null
     @SuppressWarnings("override.return")
-    public ExpressionTree getNameExpression() {
+    public @Nullable ExpressionTree getNameExpression() {
         return nameExpr;
     }
 

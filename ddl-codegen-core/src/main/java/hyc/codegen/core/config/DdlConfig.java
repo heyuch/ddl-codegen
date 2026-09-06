@@ -54,8 +54,7 @@ public final class DdlConfig {
     }
 
     /** 按产物名取配置；未配置时返回 {@code null}。 */
-    @Nullable
-    public ArtifactConfig artifact(String name) {
+    public @Nullable ArtifactConfig artifact(String name) {
         return artifacts.get(name);
     }
 

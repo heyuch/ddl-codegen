@@ -84,18 +84,16 @@ public final class CompileUnit implements CompilationUnitTree {
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：本库不追踪源码位置（生成的 AST 无源文件/行号）
     @SuppressWarnings("override.return")
-    public LineMap getLineMap() {
+    public @Nullable LineMap getLineMap() {
         return null;
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：无 package 声明的编译单元 getPackage 返回 null
     @SuppressWarnings("override.return")
-    public PackageTree getPackage() {
+    public @Nullable PackageTree getPackage() {
         return pkg;
     }
 
@@ -105,19 +103,17 @@ public final class CompileUnit implements CompilationUnitTree {
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：无 package 声明的编译单元 getPackageName 返回 null
     @SuppressWarnings("override.return")
-    public ExpressionTree getPackageName() {
+    public @Nullable ExpressionTree getPackageName() {
         PackageTree p = pkg;
         return p == null ? null : p.getPackageName();
     }
 
     @Override
-    @Nullable
     // javac tree API 语义：本库不追踪源码位置（生成的 AST 无源文件/行号）
     @SuppressWarnings("override.return")
-    public JavaFileObject getSourceFile() {
+    public @Nullable JavaFileObject getSourceFile() {
         return null;
     }
 

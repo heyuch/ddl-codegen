@@ -3,7 +3,9 @@ package hyc.codegen.tree;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * round-trip 保真断言测试。
  * 判定标准：
  * 1. 语义零丢失——原文件与打印结果去掉注释与全部空白后一致（允许 javac toString 的
- * 纯空白/单参 lambda 括号差异）；
+ * 纯空白/单参 lambda 括号/无参注解括号/声明头注解位置差异——注解在修饰符前后 javac 解析为同一 AST）；
  * 2. 幂等——对打印结果再次 parse→print 必须字节一致；
  * 3. Demo.java 必须字节全等（javadoc/枚举等全要素 round-trip）。
  * 已知限制（JDK 11 公共 API 无 Tree.getComment）：声明前/语句前的行注释与块注释不保留，
@@ -29,11 +31,103 @@ public class RoundTripSmokeTest {
     private static final Pattern BLOCK_COMMENT = Pattern.compile("(?s)/\\*.*?\\*/");
     private static final Pattern SINGLE_PARAM_LAMBDA = Pattern.compile("\\(([A-Za-z_$][A-Za-z0-9_$]*)\\)->");
 
+    /** 声明头注解位置的可移动修饰符关键字（顺序无关，仅用于识别「修饰符后紧跟注解」形态）。 */
+    private static final String MODIFIER_KEYWORDS =
+            "public|protected|private|static|final|abstract|synchronized|native|transient|volatile|strictfp";
+
+    /**
+     * javac 规范化：注解写在修饰符之后（checker 风格 `public @Nullable Boolean m()`）与写在修饰符之前，
+     * javac 解析为**同一 AST**——解析器把声明头注解一律收进 modifiers 注解列表（与修饰符的相对位置不保留），
+     * 打印时注解先于修饰符输出。round-trip 语义零丢失但文本不等，此处把「修饰符 注解」规整为
+     * 「注解 修饰符」使两侧可比。字符串/字符字面量先占位保护，避免内容误匹配。
+     */
+    private static String canonicalizeAnnotationPosition(String code) {
+        // 1. 字面量整体占位（单个标记），避免字符串/字符内容误匹配修饰符
+        List<String> literals = new ArrayList<>();
+        StringBuilder masked = new StringBuilder(code.length());
+        for (int i = 0; i < code.length();) {
+            char c = code.charAt(i);
+            if (c == '"' || c == '\'') {
+                char quote = c;
+                int j = i + 1;
+                while (j < code.length()) {
+                    char q = code.charAt(j);
+                    if (q == '\\' && j + 1 < code.length()) {
+                        j += 2;
+                        continue;
+                    }
+                    if (q == quote) {
+                        break;
+                    }
+                    j++;
+                }
+                literals.add(code.substring(i, Math.min(j + 1, code.length())));
+                masked.append('\u0001').append(literals.size() - 1).append('\u0002');
+                i = j + 1;
+            } else {
+                masked.append(c);
+                i++;
+            }
+        }
+        // 2. 反复交换「修饰符 注解」→「注解 修饰符」（在去空白前进行：注解名与后续类型 token 靠空白分界，
+        // 注解参数为「注解名 + 可选括号块」，括号块内允许空白/跨行）
+        Pattern swap = Pattern.compile("(?<![A-Za-z_$0-9])(" + MODIFIER_KEYWORDS + ")\\s+@");
+        String work = masked.toString();
+        Matcher m = swap.matcher(work);
+        while (m.find()) {
+            String flag = m.group(1);
+            // 注解起始 '@' 位置
+            int annoStart = m.end() - 1;
+            int annoEnd = annoStart + 1;
+            while (annoEnd < work.length() && Character.isJavaIdentifierPart(work.charAt(annoEnd))) {
+                annoEnd++;
+            }
+            if (annoEnd < work.length() && isAnnotationArgOpen(work.charAt(annoEnd))) {
+                int depth = 0;
+                do {
+                    char a = work.charAt(annoEnd);
+                    if (isAnnotationArgOpen(a)) {
+                        depth++;
+                    } else if (isAnnotationArgClose(a)) {
+                        depth--;
+                    }
+                    annoEnd++;
+                } while (depth > 0);
+            }
+            // 注解整体在 [annoStart, annoEnd)，把 flag 移到其后（补空格分隔，保持 token 可读）
+            work = work.substring(0, m.start()) + work.substring(annoStart, annoEnd) + " " + flag
+                    + work.substring(annoEnd);
+            m = swap.matcher(work);
+        }
+        // 3. 还原字面量
+        StringBuilder sb = new StringBuilder(work.length());
+        for (int i = 0; i < work.length();) {
+            char c = work.charAt(i);
+            if (c == '\u0001') {
+                int close = work.indexOf('\u0002', i);
+                sb.append(literals.get(Integer.parseInt(work.substring(i + 1, close))));
+                i = close + 1;
+            } else {
+                sb.append(c);
+                i++;
+            }
+        }
+        return sb.toString();
+    }
+
     private static long hexValue(char c) {
         if (c >= '0' && c <= '9') {
             return (long)c - '0';
         }
         return (c >= 'a' && c <= 'f') ? ((long)c - 'a' + 10) : ((long)c - 'A' + 10);
+    }
+
+    private static boolean isAnnotationArgClose(char c) {
+        return c == ')' || c == ']' || c == '}';
+    }
+
+    private static boolean isAnnotationArgOpen(char c) {
+        return c == '(' || c == '[' || c == '{';
     }
 
     private static boolean isHexDigit(char c) {
@@ -178,6 +272,7 @@ public class RoundTripSmokeTest {
     private static String semantic(String code) {
         String s = BLOCK_COMMENT.matcher(LINE_COMMENT.matcher(code).replaceAll("")).replaceAll("");
         s = normalizeStringEscapes(s);
+        s = canonicalizeAnnotationPosition(s);
         s = s.replaceAll("\\s+", "");
         s = SINGLE_PARAM_LAMBDA.matcher(s).replaceAll("$1->");
         // javac 打印 type-use 注解强制带空括号（@Foo() 与 @Foo 是 JLS 等价形式，无参注解括号可省略）

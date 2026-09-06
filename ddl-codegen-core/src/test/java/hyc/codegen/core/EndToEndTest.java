@@ -60,7 +60,7 @@ class EndToEndTest {
 
     private @Nullable CodeGenerator generator;
 
-    private void add(String name, String generator, @Nullable String pkg, @Nullable String suffix, String use) {
+    private void add(String name, String generator, @Nullable String pkg, @Nullable String suffix) {
         ArtifactConfig artifact = new ArtifactConfig(name);
         artifact.setGenerator(generator);
         artifact.setModule("");
@@ -252,24 +252,24 @@ class EndToEndTest {
         config().addTableStripPrefix("t_");
         config().setTableStripShardSuffix(true);
 
-        add("entity", "pojo", "com.demo.entity", "", "");
+        add("entity", "pojo", "com.demo.entity", "");
         artifact("entity").putOption("lombok", "true");
         artifact("entity").putOption("jsr303", "true");
         artifact("entity").putOption("enums", "true");
-        add("enum", "enum", "com.demo.enums", "", "");
-        add("po", "pojo", "com.demo.pojo", "Po", "");
-        add("mapper", "mybatisMapper", "com.demo.mapper", "Mapper", "");
+        add("enum", "enum", "com.demo.enums", "");
+        add("po", "pojo", "com.demo.pojo", "Po");
+        add("mapper", "mybatisMapper", "com.demo.mapper", "Mapper");
         artifact("mapper").setTarget("po");
-        add("xml", "mybatisXml", null, null, "");
+        add("xml", "mybatisXml", null, null);
         artifact("xml").setPath("src/main/resources/mapper");
         artifact("xml").setTarget("po");
-        add("repository", "repository", "com.demo.repository", "Repository", "");
+        add("repository", "repository", "com.demo.repository", "Repository");
         artifact("repository").setTarget("entity");
-        add("repositoryImpl", "mybatisRepositoryImpl", "com.demo.repository.impl", "RepositoryImpl", "");
+        add("repositoryImpl", "mybatisRepositoryImpl", "com.demo.repository.impl", "RepositoryImpl");
         artifact("repositoryImpl").setTarget("entity");
         artifact("repositoryImpl").putOption("mapper", "mapper");
         artifact("repositoryImpl").putOption("converter", "entityConverter");
-        add("entityConverter", "converter", "com.demo.converter", "Converter", "");
+        add("entityConverter", "converter", "com.demo.converter", "Converter");
         artifact("entityConverter").setSource("po");
         artifact("entityConverter").setTarget("entity");
 

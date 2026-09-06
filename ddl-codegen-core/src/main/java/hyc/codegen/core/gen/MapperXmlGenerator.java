@@ -29,7 +29,7 @@ public final class MapperXmlGenerator implements Generator {
         return dot < 0 ? fqn : fqn.substring(dot + 1);
     }
 
-    private void baseColumnList(TableContext ctx, List<Column> columns, StringBuilder sb) {
+    private void baseColumnList(List<Column> columns, StringBuilder sb) {
         sb.append("    <sql id=\"BaseColumnList\">\n");
         for (int i = 0; i < columns.size(); i++) {
             sb.append("        t.").append(columns.get(i).getName());
@@ -52,7 +52,7 @@ public final class MapperXmlGenerator implements Generator {
         List<Column> columns = visibleColumns(ctx);
 
         resultMap(ctx, columns, id, poType, sb);
-        baseColumnList(ctx, columns, sb);
+        baseColumnList(columns, sb);
 
         sb.append(insertXml(ctx, tableName, columns, id, poType));
         sb.append("\n");

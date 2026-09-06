@@ -163,7 +163,7 @@ public final class DruidDdlParser implements DdlParser {
         Column.Builder builder = Column.builder()
                 .name(definition.getColumnName())
                 .sqlType(typeName)
-                .nullable(!definition.containsNotNullConstaint())
+                .nullable(!definition.containsNotNullConstraint())
                 .unsigned(DruidAst.unsigned(definition))
                 .autoIncrement(definition.isAutoIncrement())
                 .comment(DruidAst.commentOf(definition.getComment()));

@@ -150,7 +150,7 @@ public final class NamingService {
     /** snake_case → camelCase（user_id → userId；首段小写，其余段首字母大写）。列名先剥反引号（`` `order` `` → order）。 */
     private String toCamelCase(String name) {
         String clean = name.replace("`", "");
-        String[] words = clean.split("_");
+        String[] words = clean.split("_", -1);
         StringBuilder sb = new StringBuilder(words[0].toLowerCase(Locale.ROOT));
         for (int i = 1; i < words.length; i++) {
             if (!words[i].isEmpty()) {
@@ -164,7 +164,7 @@ public final class NamingService {
     private String toPascalCase(String name) {
         String clean = name.replace("`", "");
         StringBuilder sb = new StringBuilder();
-        for (String word : clean.split("_")) {
+        for (String word : clean.split("_", -1)) {
             if (!word.isEmpty()) {
                 sb.append(capitalize(word));
             }

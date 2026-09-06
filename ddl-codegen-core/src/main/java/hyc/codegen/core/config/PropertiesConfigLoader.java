@@ -189,7 +189,7 @@ public final class PropertiesConfigLoader implements ConfigLoader {
     /** 逗号分隔 → 去空白去空项的列表。 */
     private static java.util.List<String> splitList(String value) {
         java.util.List<String> result = new java.util.ArrayList<>();
-        for (String item : value.split(",")) {
+        for (String item : value.split(",", -1)) {
             String trimmed = item.trim();
             if (!trimmed.isEmpty()) {
                 result.add(trimmed);

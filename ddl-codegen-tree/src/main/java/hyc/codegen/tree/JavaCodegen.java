@@ -486,10 +486,9 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
     }
 
     @Override
-    @Nullable
     // TreeScanner 契约：返回 null 表示「无替换结果」（javac 语义，调用方忽略返回值）
     @SuppressWarnings("override.return")
-    public Boolean scan(Tree tree, CodePrinter p) {
+    public @Nullable Boolean scan(Tree tree, CodePrinter p) {
         if (tree == null) {
             return Boolean.FALSE;
         }

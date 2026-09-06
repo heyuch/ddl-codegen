@@ -9,7 +9,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 class JavadocTreeConverter extends DocTreeScanner<DocTree, Void> {
 
-    @Nullable
     // TreeScanner 契约：scan(null) 返回 null（javac 语义：无 javadoc 时未建模）
     @SuppressWarnings("argument")
     DocComment convert(@Nullable DocCommentTree tree) {

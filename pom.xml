@@ -131,8 +131,14 @@
                             <arg>org.checkerframework.checker.nullness.NullnessChecker,lombok.launch.AnnotationProcessorHider$AnnotationProcessor</arg>
                             <!-- Demo.java 是 round-trip 字节全等夹具（见 RoundTripSmokeTest），加注解会破坏字节；跳过其定义检查 -->
                             <arg>-AskipDefs=hyc\.codegen\.tree\.Demo</arg>
-                            <!-- JUnit 断言契约 stub：assertNotNull 断言后参数非 null（checkerframework 不识别 JUnit 断言副作用） -->
+                            <!-- JUnit 断言契约 stub：assertNotNull 断言后参数非 null（checkerframework 不识别 JUnit 断言副作用）；
+                                 主/测试编译均生效（maven-compiler-plugin 无 test-only 编译器参数，testCompilerArguments 已废弃）；
+                                 主类路径无 junit 属预期，-AstubNoWarnIfNotFound 抑制其 stub 解析噪音（非源码告警，-Werror 下会误伤） -->
                             <arg>-Astubs=${maven.multiModuleProjectDirectory}/checker/junit-assertions.astub</arg>
+                            <arg>-AstubNoWarnIfNotFound</arg>
+                            <!-- 编译告警即失败：checker/error-prone/javac 告警统一升级为 error（20260906-08 门禁决策；
+                                 确认不处理处用带 WHY 的 @SuppressWarnings 在代码内忽略，见 AGENTS.md 写作约定） -->
+                            <arg>-Werror</arg>
                         </compilerArgs>
                     </configuration>
                 </plugin>
