@@ -134,8 +134,9 @@
             <property name="allowPublicFinalFields" value="true"/>
             <property name="allowPublicImmutableFields" value="true"/>
         </module>
-        <!-- 可声明为 final 的类应显式标记 final -->
-        <module name="FinalClass"/>
+        <!-- 20260906-13 移除 FinalClass：强制 leaf 类 final 与生成代码演进冲突（repositoryImpl 去 final 以支持
+             Spring AOP/CGLIB 代理、enum/converter 形态演进）；方法级可覆写性已由 DesignForExtension 管辖 -->
+        <!-- <module name="FinalClass"/> -->
         <!-- 工具类（只有静态方法的类）应隐藏公有构造器 -->
         <!-- <module name="HideUtilityClassConstructor"/> -->
         <!-- 异常类应为不可变：字段都应是 final 的 -->

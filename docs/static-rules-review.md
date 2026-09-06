@@ -14,14 +14,15 @@
 
 - checkstyle 共 150 个 module，全局 `severity=error`（硬门槛，报错即构建失败）
 - 作者已主动禁用的规则（注释掉）：`RegexpHeader`（无文件头要求）、`JavadocPackage`（与 spotless 冲突）、
-  `HideUtilityClassConstructor`、`IllegalCatch`
+  `HideUtilityClassConstructor`、`IllegalCatch`、`FinalClass`（20260906-13：强制 leaf 类 final 与生成代码演进冲突——
+  repositoryImpl 去 final 以支持 Spring AOP 代理；方法可覆写性已由 DesignForExtension 管辖）
 - spotless：eclipse 格式器 + import order + sortPom（apply 绑 validate，自动格式化，无冲突面）
 - 编译期处理器：error-prone（-Xplugin，经 pom 注入）、checkerframework NullnessChecker（**error 级**，强制修复或带理由抑制；`-AsuppressWarnings=keyfor` 已移除，KeyFor 局部抑制到 10 个报错类）、lombok
 - spotbugs：字节码级分析（effort=Max、threshold=Low、check 绑 process-classes，`spotbugs-exclude.xml` 收录经实证的误报/接受项）
 - checkerframework stub：`checker/junit-assertions.astub`（JUnit 断言契约，`@EnsuresNonNull`）
 - maven-dependency-plugin analyze（`failOnWarning=true`：未使用/未声明依赖即失败）
 - 结构类别：文件级（FileLength 2000 / LineLength 120 / FileTabCharacter）、
-  类设计（DesignForExtension / FinalClass / VisibilityModifier / HiddenField / ThrowsCount / MutableException）、
+  类设计（DesignForExtension / VisibilityModifier / HiddenField / ThrowsCount / MutableException）、
   编码风格（约 40 条）、import（AvoidStarImport / CustomImportOrder / RedundantImport / UnusedImports）、
   javadoc（JavadocMethod 宽松配置 / 若干格式约束）、命名（全套驼峰/UPPER_SNAKE）、
   度量（MethodLength / MethodCount / ParameterNumber / ExecutableStatementCount / LambdaBodyLength / AnonInnerLength）
