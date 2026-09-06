@@ -42,7 +42,7 @@
 
 - 改动：`path/to/file.java`（改什么）
 - 影响：依赖此逻辑的模块/生成器/契约（如 @Generated 所有权、config 键、SPI 签名，写具体符号可 grep 验证）；引用相关变更用变更号 slug（如 `20260905-01-chore-project-memory`）
-- 文档影响：是否改记忆文档（AGENTS.md / SKILL.md / architecture.md / changes/README.md / glossary）——是则收尾需跑「记忆文档自检用例集」
+- 文档影响：是否改记忆文档（AGENTS.md / SKILL.md / architecture.md / static-rules-review.md / changes/README.md / TEMPLATE.md / glossary）——是则收尾需跑「记忆文档自检用例集」
 
 ## 验收标准（完成 = 下列行为全部成立；中/大必填）
 

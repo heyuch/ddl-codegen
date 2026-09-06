@@ -64,6 +64,6 @@
 - **卫生类（3 问）**：
   1. 记忆文档是否含文档自证/历史叙事或维护者治理注记（具体词表见 `new-change.sh` 的 `doc-hygiene.patterns`）？
   2. 是否含流程步号指针或与工具链重复的风格描述（步号与风格只属于 SKILL 或工具配置）？
-  3. 是否有同一事实的多份定义（应只存于源头文档）？
+  3. 是否有同一事实的多份定义（应只存于源头文档）？同一份源头文档内部是否也自我重复或含**自我指涉元注释**（如既给判据又补「为何不单列/为何这样写」式解释）？
   出现即不合格；`new-change.sh check-docs` 为确定性回归（黑名单从每次清理实证追加，问句不复述词表以防自指）。
-- **执行规则**：任何记忆文档（AGENTS.md / SKILL.md / architecture.md / static-rules-review.md / 本索引 / glossary）被改动后，由**新上下文实例只喂记忆文档作答**，答案与 architecture.md / 代码不符即**不合格**，修复后才算收尾。答错 = 要么文档没触发、要么文本已漂移。
+- **执行规则**：任何记忆文档（AGENTS.md / SKILL.md / architecture.md / static-rules-review.md / 本索引 / TEMPLATE.md / glossary）被改动后，由**新上下文实例只喂记忆文档作答**，答案与 architecture.md / 代码不符即**不合格**，修复后才算收尾。答错 = 要么文档没触发、要么文本已漂移。
