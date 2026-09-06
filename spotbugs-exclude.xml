@@ -9,7 +9,7 @@
          可变对象（javadoc 注释树、输出 Writer、构建器持有的待构建节点）。防御性修复需深拷贝
          整棵注释树，对内部 AST 属过度工程；集合 getter（getImports 等）已按库约定浅拷贝防御。 -->
     <Match>
-        <Package name="~hyc\.codegen\.tree(\..*)?"/>
+        <Package name="~io\.github\.heyuch\.codegen\.tree(\..*)?"/>
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
         <Justification>可修改 AST 设计：节点/构建器共享内部可变对象是语义要求，深拷贝为过度工程</Justification>
     </Match>

@@ -1,0 +1,31 @@
+package io.github.heyuch.codegen.tree;
+
+import javax.lang.model.element.Name;
+
+import com.sun.source.doctree.DocTreeVisitor;
+import com.sun.source.doctree.IdentifierTree;
+
+public final class DocIdent implements IdentifierTree {
+
+    private String name;
+
+    public DocIdent(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+        return visitor.visitIdentifier(this, data);
+    }
+
+    @Override
+    public Kind getKind() {
+        return Kind.IDENTIFIER;
+    }
+
+    @Override
+    public Name getName() {
+        return new StringName(name);
+    }
+
+}

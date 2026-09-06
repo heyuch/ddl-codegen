@@ -187,10 +187,10 @@
                     <version>1.15.2</version>
                     <configuration>
                         <targetClasses>
-                            <param>hyc.codegen.core.*</param>
+                            <param>io.github.heyuch.codegen.core.*</param>
                         </targetClasses>
                         <targetTests>
-                            <param>hyc.codegen.core.*Test</param>
+                            <param>io.github.heyuch.codegen.core.*Test</param>
                         </targetTests>
                         <outputFormats>
                             <param>HTML</param>

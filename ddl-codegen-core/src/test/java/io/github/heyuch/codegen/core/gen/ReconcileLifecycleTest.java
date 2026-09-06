@@ -1,0 +1,254 @@
+package io.github.heyuch.codegen.core.gen;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import javax.lang.model.element.Modifier;
+
+import io.github.heyuch.codegen.core.config.ArtifactConfig;
+import io.github.heyuch.codegen.core.config.DdlConfig;
+import io.github.heyuch.codegen.core.ddl.ApplyResult;
+import io.github.heyuch.codegen.core.ddl.DdlParser;
+import io.github.heyuch.codegen.core.ddl.DruidDdlParser;
+import io.github.heyuch.codegen.core.ddl.StatementApplier;
+import io.github.heyuch.codegen.core.io.ChangeReport;
+import io.github.heyuch.codegen.core.model.Column;
+import io.github.heyuch.codegen.core.model.Schema;
+import io.github.heyuch.codegen.tree.Annotation;
+import io.github.heyuch.codegen.tree.Class;
+import io.github.heyuch.codegen.tree.Method;
+import io.github.heyuch.codegen.tree.TypeReference;
+import io.github.heyuch.codegen.tree.Variable;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * 成员级 reconcile 生命周期测试：create → alter（增/删/改类型）→ 用户代码保留 → drop。
+ * <p>
+ * 覆盖字段与方法两级 reconcile（PIT 变异测试曾抓出方法级 reconcile 未被测试）。
+ */
+// 门面式集成测试：引用类型数 ≈ 被测管线涉及类数（§6 元素驱动）
+@SuppressWarnings({"ClassDataAbstractionCoupling", "MethodLength", "ExecutableStatementCount"})
+class ReconcileLifecycleTest {
+
+    // JUnit @TempDir 注入，语法层不保证非 null：标 @Nullable，使用点经 tempDir() 显式校验。
+    @TempDir
+    @Nullable
+    Path temp;
+
+    private ArtifactConfig artifact(DdlConfig config) {
+        ArtifactConfig artifactConfig = config.artifact("test");
+        if (artifactConfig == null) {
+            throw new AssertionError("test 产物未配置");
+        }
+        return artifactConfig;
+    }
+
+    /** 测试生成器：每列一个 private 字段 + 一个由表名驱动的 describe() 方法（覆盖方法级 reconcile）。 */
+
+    private DdlConfig config() {
+        DdlConfig config = new DdlConfig();
+        config.setRoot(tempDir());
+        ArtifactConfig artifact = new ArtifactConfig("test");
+        artifact.setGenerator("test");
+        artifact.setModule("");
+        artifact.setPkg("com.test");
+        config.addArtifact(artifact);
+        return config;
+    }
+
+    private String content() throws Exception {
+        return new String(Files.readAllBytes(tempDir().resolve("com/test/User.java")), StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void createThenAlterThenDrop() throws Exception {
+        DdlConfig config = config();
+
+        // create
+        Schema schema = new Schema();
+        String create = "create table user (id bigint primary key, name varchar(50) not null comment '用户名')";
+        generate(config, schema, create);
+        assertTrue(fileExists());
+        String created = content();
+        assertTrue(created.contains("package com.test;"), created);
+        assertTrue(created.contains("private Long id"));
+        assertTrue(created.contains("private String name"));
+        assertTrue(created.contains("@Generated"));
+        assertTrue(created.contains("public String describe()"), created);
+        assertTrue(created.contains("class User"));
+
+        // alter add column：字段/方法级 reconcile + 包保留（PIT 抓到的缺口）
+        String alter = "alter table user add column email varchar(100) comment '邮箱'";
+        generate(config, schema, alter);
+        String afterAdd = content();
+        assertTrue(afterAdd.contains("package com.test;"), afterAdd);
+        assertTrue(afterAdd.contains("private String email"));
+        assertTrue(afterAdd.contains("private String name"));
+        assertTrue(afterAdd.contains("public String describe()"), afterAdd);
+
+        // 幂等：同样输入重跑 → 无变化
+        generate(config, schema, alter);
+        assertEquals(afterAdd, content(), "同输入重跑应无变化");
+
+        // alter drop column
+        String dropColumn = "alter table user drop column name";
+        generate(config, schema, dropColumn);
+        String afterDrop = content();
+        assertFalse(afterDrop.contains("private String name"));
+        assertTrue(afterDrop.contains("private String email"));
+        assertTrue(afterDrop.contains("public String describe()"), afterDrop);
+
+        // 类型变化：email varchar → bigint
+        String changeType = "alter table user modify column email bigint";
+        generate(config, schema, changeType);
+        String afterType = content();
+        assertTrue(afterType.contains("private Long email"));
+        assertFalse(afterType.contains("private String email"));
+
+        // drop table
+        String dropTable = "drop table user";
+        generate(config, schema, dropTable);
+        assertFalse(fileExists());
+    }
+
+    private boolean fileExists() {
+        return Files.isRegularFile(tempDir().resolve("com/test/User.java"));
+    }
+
+    private ChangeReport generate(DdlConfig config, Schema schema, String ddl) {
+        DdlParser parser = new DruidDdlParser();
+        ApplyResult result = new StatementApplier().apply(schema, parser.parse(ddl));
+        CodeGenerator generator = new CodeGenerator(Collections.singletonList(new TestGenerator()));
+        return generator.generate(config, schema, result, Collections.emptyList());
+    }
+
+    @Test
+    void methodAnnotationChangeTriggersReplaceOnToggle() throws Exception {
+        // 验收 6：reconcile 签名比对纳入注解——开关只增删方法注解、方法体不变也应触发替换（20260906-13）
+        DdlConfig config = config();
+        Schema schema = new Schema();
+        generate(config, schema, "create table user (id bigint primary key)");
+        assertFalse(content().contains("@Deprecated"), content());
+
+        // 开（注解增）
+        artifact(config).putOption("deprecated", "true");
+        generate(config, schema, "alter table user modify column id bigint");
+        assertTrue(content().contains("@Deprecated"), content());
+        String on = content();
+
+        // 幂等
+        generate(config, schema, "alter table user modify column id bigint");
+        assertEquals(on, content(), "同输入重跑应无变化");
+
+        // 关（注解删）
+        artifact(config).putOption("deprecated", "false");
+        generate(config, schema, "alter table user modify column id bigint");
+        assertFalse(content().contains("@Deprecated"), content());
+    }
+
+    @Test
+    void renameKeepsOldFilesAndGeneratesNew() throws Exception {
+        DdlConfig config = config();
+        Schema schema = new Schema();
+        generate(config, schema, "create table user (id bigint primary key)");
+        assertTrue(fileExists());
+
+        generate(config, schema, "alter table user rename to account");
+        // 旧表名文件保留（含用户手写代码，工具永不触碰）；新表名生成新文件
+        assertTrue(fileExists(), "rename 不应删除旧表名文件");
+        assertTrue(Files.isRegularFile(tempDir().resolve("com/test/Account.java")));
+    }
+
+    @Test
+    void renamePreservesUserWrittenCodeInOldFile() throws Exception {
+        DdlConfig config = config();
+        Schema schema = new Schema();
+        generate(config, schema, "create table user (id bigint primary key)");
+
+        // 用户手写方法（模拟用户编辑）
+        Path file = tempDir().resolve("com/test/User.java");
+        String userMethod = "\n    /** 用户手写方法 */\n    public String hello() {\n        return \"hi\";\n    }\n";
+        String existing = content();
+        int lastBrace = existing.lastIndexOf('}');
+        String edited = existing.substring(0, lastBrace) + userMethod + existing.substring(lastBrace);
+        Files.write(file, edited.getBytes(StandardCharsets.UTF_8));
+
+        generate(config, schema, "alter table user rename to account");
+
+        // 旧文件保留且手写代码不丢；新文件正常生成
+        String oldContent = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+        assertTrue(oldContent.contains("public String hello()"), "旧文件应保留用户手写代码");
+        assertTrue(oldContent.contains("return \"hi\";"));
+        assertTrue(Files.isRegularFile(tempDir().resolve("com/test/Account.java")));
+    }
+
+    /**
+     * 注入目录（@TempDir 注入，标注 @Nullable，使用点经此显式校验）。
+     */
+    private Path tempDir() {
+        Path dir = temp;
+        if (dir == null) {
+            throw new AssertionError("JUnit 未注入 @TempDir");
+        }
+        return dir;
+    }
+
+    @Test
+    void userWrittenMembersArePreserved() throws Exception {
+        DdlConfig config = config();
+        Schema schema = new Schema();
+        generate(config, schema, "create table user (id bigint primary key)");
+
+        // 用户手写一个方法（模拟用户编辑：插入到类结尾前）
+        Path file = tempDir().resolve("com/test/User.java");
+        String userMethod = "\n    /** 用户手写方法 */\n    public String hello() {\n        return \"hi\";\n    }\n";
+        String existing = content();
+        int lastBrace = existing.lastIndexOf('}');
+        String edited = existing.substring(0, lastBrace) + userMethod + existing.substring(lastBrace);
+        Files.write(file, edited.getBytes(StandardCharsets.UTF_8));
+
+        // alter 增加列 → 用户方法必须保留
+        generate(config, schema, "alter table user add column name varchar(50)");
+        String after = content();
+        assertTrue(after.contains("public String hello()"));
+        assertTrue(after.contains("return \"hi\";"));
+        assertTrue(after.contains("private String name"));
+    }
+
+    static final class TestGenerator extends AbstractJavaGenerator {
+
+        @Override
+        protected void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx) {
+            for (Column column : ctx.columns()) {
+                builder.field(Variable.builder()
+                        .modifiers(Modifier.PRIVATE)
+                        .type(new TypeReference(ctx.typeOf(column)))
+                        .name(ctx.fieldName(column))
+                        .build());
+            }
+            Method.Builder describe = Method.builder()
+                    .modifiers(Modifier.PUBLIC)
+                    .returnType(new TypeReference("java.lang.String"))
+                    .name("describe")
+                    .body("return \"" + ctx.getTable().getName() + "\";");
+            if (Boolean.parseBoolean(ctx.getArtifactConfig().getOption("deprecated"))) {
+                describe.annotation(Annotation.of("java.lang.Deprecated"));
+            }
+            builder.method(describe.build());
+        }
+
+        @Override
+        public String kind() {
+            return "test";
+        }
+
+    }
+
+}

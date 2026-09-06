@@ -183,8 +183,8 @@ type    varchar(20)     NOT NULL comment '类型 NORMAL=普通 VIP=高级 TRIAL=
 
 | SPI | 位置 | 用途 |
 |---|---|---|
-| `Generator` | `hyc.codegen.core.gen` | 唯一生成器扩展点（继承 `AbstractJavaGenerator` 只写成员构建） |
-| `DdlAnnotationHandler` | `hyc.codegen.core.annotation` | DDL 注解解析 + 类型钩子（`annotations.custom` 注册） |
+| `Generator` | `io.github.heyuch.codegen.core.gen` | 唯一生成器扩展点（继承 `AbstractJavaGenerator` 只写成员构建） |
+| `DdlAnnotationHandler` | `io.github.heyuch.codegen.core.annotation` | DDL 注解解析 + 类型钩子（`annotations.custom` 注册） |
 | 可替换 SPI | — | `DdlParser` / `ConfigLoader` / `TableNameStrategy`（默认实现可替换） |
 
 ## 模块

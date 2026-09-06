@@ -299,18 +299,18 @@ public enum Status {
 
 ## 类职责与交互（中/大改动必填）
 
-- `hyc.codegen.core.annotation.EnumHandler`（新）— 内置注解 `@enum`（仅 COLUMN）：值写入列 `meta["enum"]`，无值写 `Boolean.TRUE` 占位。实现时 javadoc 一句话职责。依赖 model.Meta；被 AnnotationRegistry.builtin 注册。
-- `hyc.codegen.core.model.Column`（改）— 加 `isEnumColumn()`（=`isEnum() || meta 含 "enum"`）与 javadoc 说明 meta `"enum"` 键语义；`isEnum()` 保留。被 gen 各消费点依赖。
-- `hyc.codegen.core.model.EnumItem`（新）— 枚举项值对象：rawCode/desc/name(@Nullable)，纯字段不可变。仅被 parser 与 EnumGenerator 消费。
-- `hyc.codegen.core.model.EnumCommentParser`（新）— comment → `List<EnumItem>`（grammar 见方案）；结构不符含 `=` token 记 warning 跳过。仅被 EnumGenerator 消费（未来 mapper/XML 视图可复用）。
-- `hyc.codegen.core.gen.EnumGenerator`（改）— 列 kind 分派项源/类型/常量名，code/desc 模板生成（按产物 `lombok` 选项两形态 + 反查方法对，`@Nullable` 读 `ctx.getNullableAnnotation()`）；类名/命名/删除语义不变；同表类名撞名 fail-fast。核心改动。
-- `hyc.codegen.core.gen.PojoGenerator`（改）— `fieldType` 的 enums 判定开关换 `isEnumColumn()`（一行）。
-- `hyc.codegen.core.gen.ConverterGenerator`（改）— 枚举列判定、enum 视图精确比对、桥接 `fromCode`（nullSafe）/`getCode`（nullSafe）。
-- `hyc.codegen.core.gen.TableContext`（改）— `enumClassName` 增 `@enum` 值优先级（String 才取；`@as` 仍最高）。
-- `hyc.codegen.core.gen.AbstractJavaGenerator`（改）— `signature(Variable)` 对 enum 常量纳入 init 规范化文本；`reconcileFields` 常量替换走原位 `replaceField`；期望成员名与既有非 @Generated 成员重复时跳过新增 + warning。
-- `hyc.codegen.tree.JavaTreeConverter`（改）— enum 类常量成员标 `VariableKind.ENUM_CONSTANT`。
-- `hyc.codegen.tree.JavaCodegen`（改）— `printEnumConstants` 空常量且类体有成员补 `;`；抽 `enumConstantInitText` 公共 helper（打印与签名同源）；参数级注解打印若有缺失一并补。
-- `hyc.codegen.tree.Class`（改）— 新增 `replaceField(old, new)` 原位替换。
+- `io.github.heyuch.codegen.core.annotation.EnumHandler`（新）— 内置注解 `@enum`（仅 COLUMN）：值写入列 `meta["enum"]`，无值写 `Boolean.TRUE` 占位。实现时 javadoc 一句话职责。依赖 model.Meta；被 AnnotationRegistry.builtin 注册。
+- `io.github.heyuch.codegen.core.model.Column`（改）— 加 `isEnumColumn()`（=`isEnum() || meta 含 "enum"`）与 javadoc 说明 meta `"enum"` 键语义；`isEnum()` 保留。被 gen 各消费点依赖。
+- `io.github.heyuch.codegen.core.model.EnumItem`（新）— 枚举项值对象：rawCode/desc/name(@Nullable)，纯字段不可变。仅被 parser 与 EnumGenerator 消费。
+- `io.github.heyuch.codegen.core.model.EnumCommentParser`（新）— comment → `List<EnumItem>`（grammar 见方案）；结构不符含 `=` token 记 warning 跳过。仅被 EnumGenerator 消费（未来 mapper/XML 视图可复用）。
+- `io.github.heyuch.codegen.core.gen.EnumGenerator`（改）— 列 kind 分派项源/类型/常量名，code/desc 模板生成（按产物 `lombok` 选项两形态 + 反查方法对，`@Nullable` 读 `ctx.getNullableAnnotation()`）；类名/命名/删除语义不变；同表类名撞名 fail-fast。核心改动。
+- `io.github.heyuch.codegen.core.gen.PojoGenerator`（改）— `fieldType` 的 enums 判定开关换 `isEnumColumn()`（一行）。
+- `io.github.heyuch.codegen.core.gen.ConverterGenerator`（改）— 枚举列判定、enum 视图精确比对、桥接 `fromCode`（nullSafe）/`getCode`（nullSafe）。
+- `io.github.heyuch.codegen.core.gen.TableContext`（改）— `enumClassName` 增 `@enum` 值优先级（String 才取；`@as` 仍最高）。
+- `io.github.heyuch.codegen.core.gen.AbstractJavaGenerator`（改）— `signature(Variable)` 对 enum 常量纳入 init 规范化文本；`reconcileFields` 常量替换走原位 `replaceField`；期望成员名与既有非 @Generated 成员重复时跳过新增 + warning。
+- `io.github.heyuch.codegen.tree.JavaTreeConverter`（改）— enum 类常量成员标 `VariableKind.ENUM_CONSTANT`。
+- `io.github.heyuch.codegen.tree.JavaCodegen`（改）— `printEnumConstants` 空常量且类体有成员补 `;`；抽 `enumConstantInitText` 公共 helper（打印与签名同源）；参数级注解打印若有缺失一并补。
+- `io.github.heyuch.codegen.tree.Class`（改）— 新增 `replaceField(old, new)` 原位替换。
 
 交互链：DDL comment → `AnnotationProcessor`（EnumHandler 写 meta "enum"）→ `Column.isEnumColumn()` 供 EnumGenerator（出文件）/PojoGenerator（fieldType 视图）/ConverterGenerator（import + 桥接）三处消费；枚举项只在 EnumGenerator 内经 `EnumCommentParser` 展开为常量；枚举类名由 `TableContext.enumClassName`（@as / @enum 值 / naming 策略）单点产出；`@Nullable` FQN 由 `TableContext.getNullableAnnotation()` 单点产出（全局 `annotations.nullable`）；枚举类再生成走 `AbstractJavaGenerator` reconcile——常量签名含 init（原位替换），方法按签名含 body 替换，类级注解/形态不动。
 

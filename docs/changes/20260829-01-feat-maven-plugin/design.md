@@ -45,7 +45,7 @@ config 文件、内联 DDL 字符串、DDL 文件（含文件内行范围，如 
 - **切片截断语句**（边界落在语句中间导致语法错误）：错误信息携带原始文件与范围上下文（如 `create-user.sql:66-120 第 3 行语法错误`），提示用户检查范围边界；不做自动补全（确定性优先，用户可控）
 - **明确不做**：语句级范围（按语句序号而非行号）——需求未提，将来要时再加参数
 
-### core 新增门面 `hyc.codegen.core.Codegen`
+### core 新增门面 `io.github.heyuch.codegen.core.Codegen`
 
 ```java
 public final class Codegen {

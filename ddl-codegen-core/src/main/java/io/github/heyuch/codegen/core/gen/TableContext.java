@@ -1,0 +1,210 @@
+package io.github.heyuch.codegen.core.gen;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.github.heyuch.codegen.core.config.ArtifactConfig;
+import io.github.heyuch.codegen.core.io.PathResolver;
+import io.github.heyuch.codegen.core.model.Column;
+import io.github.heyuch.codegen.core.model.Index;
+import io.github.heyuch.codegen.core.model.Table;
+import io.github.heyuch.codegen.core.naming.NamingService;
+import io.github.heyuch.codegen.core.types.TypeMapper;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
+/**
+ * 单表 × 单 artifact 的生成上下文：表、artifact 配置、命名与类型映射的便捷入口。
+ * <p>
+ * 由 {@link GenerationContext#tableContext} 创建，生成器不直接持有底层服务。
+ */
+@SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"},
+        justification = "表上下文持有 Table 与配置，生成器高频读取")
+public final class TableContext {
+
+    private final Table table;
+
+    private final GenerationContext gctx;
+
+    private final String artifactName;
+
+    private final ArtifactConfig artifactConfig;
+
+    private final NamingService naming;
+
+    private final TypeMapper types;
+
+    private final @Nullable String enumPackage;
+
+    private final String nullableAnnotation;
+
+    TableContext(Table table, ArtifactConfig artifactConfig, GenerationContext gctx) {
+        this.table = table;
+        this.gctx = gctx;
+        this.artifactName = artifactConfig.getName();
+        this.artifactConfig = artifactConfig;
+        this.naming = gctx.getNaming();
+        this.types = gctx.getTypeMapper();
+        this.enumPackage = gctx.enumPackageFor(artifactConfig.getName());
+        this.nullableAnnotation = gctx.getConfig().getNullableAnnotation();
+    }
+
+    /**
+     * 类名（基类名 + 该 artifact 配置的后缀；表注释 {@code @as} 可整体覆盖基类名）。
+     */
+    public String className() {
+        Object as = table.getMeta().get("as");
+        if (as != null) {
+            return as + artifactConfig.getSuffix();
+        }
+        return naming.artifactClassName(table.getName(), artifactName);
+    }
+
+    /**
+     * 该表的字段列表（列序）。
+     */
+    public List<Column> columns() {
+        return new ArrayList<>(table.getColumns());
+    }
+
+    /**
+     * 枚举列 → 枚举类名（优先级：列注释 {@code @as} > {@code @enum} 值 > 命名策略）。
+     * <p>
+     * {@code @enum} 仅在有值时作为类名（键值为字符串）；裸 {@code @enum}（键值为 {@code Boolean.TRUE}）
+     * 与 SQL-enum 列同走命名策略（{@code naming.enum.style}）。
+     */
+    public String enumClassName(Column column) {
+        Object as = column.getMeta().get("as");
+        if (as != null) {
+            return as.toString();
+        }
+        Object annotated = column.getMeta().get("enum");
+        if (annotated instanceof String) {
+            return annotated.toString();
+        }
+        return naming.enumClassName(table.getName(), column.getName());
+    }
+
+    /**
+     * 列名 → 字段名（命名策略）。
+     */
+    public String fieldName(Column column) {
+        return naming.columnFieldName(column.getName());
+    }
+
+    /**
+     * 按字段名反查列（字段名 = 命名策略转换后的列名）；未匹配返回 null。
+     */
+    public @Nullable Column findColumn(String fieldName) {
+        for (Column column : table.getColumns()) {
+            if (fieldName(column).equals(fieldName)) {
+                return column;
+            }
+        }
+        return null;
+    }
+
+    public ArtifactConfig getArtifactConfig() {
+        return artifactConfig;
+    }
+
+    /**
+     * 产物名。
+     */
+    public String getArtifactName() {
+        return artifactName;
+    }
+
+    /**
+     * enum 产物包（enums 特性开启时已校验存在）。
+     */
+    public @Nullable String getEnumPackage() {
+        return enumPackage;
+    }
+
+    public NamingService getNaming() {
+        return naming;
+    }
+
+    /**
+     * {@code @Nullable} 注解全限定名（config {@code annotations.nullable}）。
+     */
+    public String getNullableAnnotation() {
+        return nullableAnnotation;
+    }
+
+    public Table getTable() {
+        return table;
+    }
+
+    public TypeMapper getTypeMapper() {
+        return types;
+    }
+
+    /**
+     * 该表的索引列表。
+     */
+    public List<Index> indexes() {
+        return new ArrayList<>(table.getIndexes());
+    }
+
+    /**
+     * Java 类文件路径：根 + module + package 路径 + 类名。
+     */
+    public Path javaFile(Path projectRoot) {
+        return PathResolver.javaFile(projectRoot, artifactConfig.getModule(), packageName(), className());
+    }
+
+    /**
+     * 列 → MyBatis jdbcType。
+     */
+    public String jdbcType(Column column) {
+        return TypeMapper.sqlToJdbcType(column.getSqlType());
+    }
+
+    /**
+     * 索引 → 查询方法名（前缀 + By + 列 And 连接）。
+     */
+    public String methodName(Index index) {
+        return naming.indexMethodName(index);
+    }
+
+    /**
+     * 包名（artifact 配置；Java 类产物必须配置，缺失即配置错误）。
+     */
+    public String packageName() {
+        String pkg = artifactConfig.getPkg();
+        if (pkg == null) {
+            throw new IllegalStateException(
+                    "产物 '" + artifactConfig.getName() + "' 缺少 package 配置（Java 类产物必须配置 package）");
+        }
+        return pkg;
+    }
+
+    public @Nullable String tableComment() {
+        return table.getComment();
+    }
+
+    /**
+     * 列 → 成员类型（查询契约：路由到本产物生成器的 fieldType，type/enums 特性生效）。
+     */
+    public String typeOf(Column column) {
+        return gctx.generatorFor(artifactName).fieldType(column, this);
+    }
+
+    /**
+     * enums 特性开关（enum 列 → 枚举类视图）。
+     */
+    public boolean usesEnums() {
+        return Boolean.parseBoolean(artifactConfig.getOption("enums"));
+    }
+
+    /**
+     * 资源文件路径：根 + module + 相对资源路径 + 文件名。
+     */
+    public Path xmlFile(Path projectRoot, String resourcePath, String fileName) {
+        return PathResolver.xmlFile(projectRoot, artifactConfig.getModule(), resourcePath, fileName);
+    }
+
+}

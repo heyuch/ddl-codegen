@@ -15,7 +15,7 @@ ddl-codegen-maven-plugin（Maven Mojo）──► ddl-codegen-core（框架）�
 |---|---|---|---|
 | `ddl-codegen-tree` | 自研可修改 Java AST：解析（JDK `javax.tools`/`com.sun.source`）/ 构建 / 打印 | 零第三方运行时依赖（lombok/spotbugs/checker-qual 均 provided） | — |
 | `ddl-codegen-core` | 框架本体：配置/解析/命名/类型/生成器/写盘 | `tree`；运行时外部依赖仅 druid（DDL 解析） | `Codegen`（门面） |
-| `ddl-codegen-cli` | 命令行：`--config/--ddl/--dry-run`，shade fat jar | `core`（不直接依赖 tree） | `hyc.codegen.cli.Main` |
+| `ddl-codegen-cli` | 命令行：`--config/--ddl/--dry-run`，shade fat jar | `core`（不直接依赖 tree） | `io.github.heyuch.codegen.cli.Main` |
 | `ddl-codegen-maven-plugin` | `mvn ddl-codegen:generate`（不绑生命周期，显式调用），支持 ddl 内联 / ddlFile（含行范围）/ dryRun / skip | `core` + maven-plugin-api | `GenerateMojo` |
 | `ddl-codegen-it-springboot` | 真实消费工程（20260906-03）：Boot 2.7 + MyBatis + MySQL[Testcontainers]；DDL/config 生成全链路代码提交入库，验证可编译/装配/调用（IT 无 Docker 自动 skip） | spring-boot/mybatis-starter/mysql/lombok/checker-qual/spotbugs-annotations（lombok @Builder 生成引用）+ testcontainers | `SampleApplication` |
 
@@ -50,7 +50,7 @@ DDL 文本（多条语句，分号分隔）
 
 ## 生成器体系
 
-**Generator SPI**（`hyc.codegen.core.gen.Generator`，唯一扩展点，Java 类继承 `AbstractJavaGenerator`）：
+**Generator SPI**（`io.github.heyuch.codegen.core.gen.Generator`，唯一扩展点，Java 类继承 `AbstractJavaGenerator`）：
 
 | 方法 | 契约 |
 |---|---|
@@ -198,12 +198,12 @@ DDL 文本（多条语句，分号分隔）
 
 ## 关键代码锚点表
 
-路径均相对仓库根；核心包 `ddl-codegen-core/src/main/java/hyc/codegen/core/`，下表省略该前缀（`…/core/` 后为类路径）。
+路径均相对仓库根；核心包 `ddl-codegen-core/src/main/java/io/github/heyuch/codegen/core/`，下表省略该前缀（`…/core/` 后为类路径）。
 
 | 概念 | 类 | 路径 |
 |---|---|---|
 | 门面（CLI/插件共用入口） | `Codegen` | `…/core/Codegen.java` |
-| CLI 入口 / Maven 入口 | `Main` / `GenerateMojo` | `ddl-codegen-cli/src/main/java/hyc/codegen/cli/Main.java`；`ddl-codegen-maven-plugin/src/main/java/hyc/codegen/mavenplugin/GenerateMojo.java` |
+| CLI 入口 / Maven 入口 | `Main` / `GenerateMojo` | `ddl-codegen-cli/src/main/java/io/github/heyuch/codegen/cli/Main.java`；`ddl-codegen-maven-plugin/src/main/java/io/github/heyuch/codegen/maven/GenerateMojo.java` |
 | 配置模型 / 加载 | `DdlConfig` / `ArtifactConfig` / `ConfigLoader` / `PropertiesConfigLoader` | `…/core/config/` |
 | 类型映射 / 命名 | `TypeMapper` / `NamingService` / `TableNameStrategy` | `…/core/types/TypeMapper.java`；`…/core/naming/` |
 | 模型 | `Schema` / `Table` / `Column` / `Index` / `Meta` / `EnumItem` / `EnumCommentParser` | `…/core/model/` |
@@ -212,6 +212,6 @@ DDL 文本（多条语句，分号分隔）
 | 生成编排 | `CodeGenerator` / `GenerationContext` / `TableContext` / `GeneratorRegistry` | `…/core/gen/` |
 | Generator SPI / 内置生成器 | `Generator` / `AbstractJavaGenerator` / `GeneratedSupport` / `JavaTypes` / `QueryMethods` / `QueryMethodFactory` / `PojoGenerator` / `EnumGenerator` / `MapperGenerator` / `MapperXmlGenerator` / `RepositoryGenerator` / `MybatisRepositoryImplGenerator` / `ConverterGenerator` | `…/core/gen/` |
 | 写盘 / 报告 / 路径 | `FileWriter` / `ChangeReport` / `ChangeStatus` / `PathResolver` | `…/core/io/` |
-| Java AST（tree 模块） | `JavaParser` / `JavaCodegen` / `Class` / `CompileUnit` / `Method` / `Variable` 等 | `ddl-codegen-tree/src/main/java/hyc/codegen/tree/` |
+| Java AST（tree 模块） | `JavaParser` / `JavaCodegen` / `Class` / `CompileUnit` / `Method` / `Variable` 等 | `ddl-codegen-tree/src/main/java/io/github/heyuch/codegen/tree/` |
 | 依赖方向强制 | `ArchitectureTest` | 各模块 `src/test/java/…/ArchitectureTest.java` |
 

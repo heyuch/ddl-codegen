@@ -14,7 +14,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>hyc.codegen.cli.Main</mainClass>
+              <mainClass>io.github.heyuch.codegen.cli.Main</mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -32,7 +32,7 @@
               <shadedArtifactAttached>false</shadedArtifactAttached>
               <transformers>
                 <transformer>
-                  <mainClass>hyc.codegen.cli.Main</mainClass>
+                  <mainClass>io.github.heyuch.codegen.cli.Main</mainClass>
                 </transformer>
               </transformers>
               <filters>
