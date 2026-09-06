@@ -173,6 +173,32 @@ class DruidDdlParserTest {
     }
 
     @Test
+    void quotedIdentifiersStoredClean() {
+        // 反引号在 parse 层剥除（20260906-11）：模型只存真名，MySQL 引号语义不流入 codegen
+        String ddl = "CREATE TABLE `order` (\n"
+                + "  id bigint NOT NULL,\n"
+                + "  `group` varchar(10) COMMENT '分组',\n"
+                + "  `order` int COMMENT '排序',\n"
+                + "  PRIMARY KEY (id),\n"
+                + "  KEY idx_o (`order`)\n"
+                + ") COMMENT '订单表'";
+
+        List<DdlOperation> ops = parser.parse(ddl);
+
+        assertEquals(1, ops.size());
+        Table table = ((CreateTableOp)ops.get(0)).getTable();
+        assertEquals("order", table.getName(), "表名剥反引号");
+        assertEquals(Arrays.asList("id", "group", "order"), names(table.getColumns()));
+        Column group = table.getColumn("group");
+        assertNotNull(group);
+        assertEquals("group", group.getName(), "列名剥反引号");
+        assertNotNull(table.getColumn("order"));
+        Index idx = table.getIndex("idx_o");
+        assertNotNull(idx);
+        assertEquals(Arrays.asList("order"), idx.getColumns(), "索引列名剥反引号");
+    }
+
+    @Test
     void renameTableStatement() {
         String ddl = "ALTER TABLE t_user RENAME TO t_account";
 

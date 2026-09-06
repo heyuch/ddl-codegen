@@ -161,7 +161,7 @@ public final class DruidDdlParser implements DdlParser {
         String typeName = dataType == null ? "unknown" : dataType.getName().toLowerCase(Locale.ROOT);
 
         Column.Builder builder = Column.builder()
-                .name(definition.getColumnName())
+                .name(DruidAst.columnName(definition))
                 .sqlType(typeName)
                 .nullable(!definition.containsNotNullConstraint())
                 .unsigned(DruidAst.unsigned(definition))

@@ -24,22 +24,17 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "服务持有 DdlConfig（命名规则只读）")
 public final class NamingService {
 
-    /** 保留字全集：Java 关键字 + 常见 SQL 保留字（列名如 {@code order} 命中时按配置追加后缀）。 */
-    private static final Set<String> RESERVED_WORDS = new HashSet<>(Arrays.asList(
-            // Java 关键字
+    /**
+     * Java 关键字全集（含字面量 true/false/null）：字段名若等于关键字则加后缀——
+     * Java 命名只对 Java 语言正确性负责；MySQL 保留字由 MapperXmlGenerator 自行处理（20260906-11）。
+     */
+    private static final Set<String> JAVA_KEYWORDS = new HashSet<>(Arrays.asList(
             "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const",
             "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float",
             "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native",
             "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp",
             "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void",
-            "volatile", "while",
-            // SQL 保留字（MySQL）
-            "order", "group", "desc", "asc", "key", "index", "table", "select", "from", "where",
-            "join", "left", "right", "inner", "outer", "and", "or", "not", "null", "in", "on", "as",
-            "by", "having", "limit", "union", "all", "between", "case", "when", "then", "else", "end",
-            "exists", "distinct", "into", "grant", "primary", "unique", "foreign", "default", "check",
-            "constraint", "user", "values", "interval", "natural", "partition", "over", "rank", "range",
-            "regexp", "rlike"));
+            "volatile", "while", "true", "false", "null"));
 
     private final DdlConfig config;
 
@@ -77,11 +72,10 @@ public final class NamingService {
         return tableClassName(tableName) + suffix;
     }
 
-    /** 列名 → 字段名（camelCase + 保留字后缀；先剥反引号）。 */
+    /** 列名 → 字段名（camelCase；仅当结果为 Java 关键字时加后缀，MySQL 保留字不在 Java 命名职责内）。 */
     public String columnFieldName(String columnName) {
-        String clean = columnName.replace("`", "");
-        String name = config.isColumnCamelCase() ? toCamelCase(clean) : clean;
-        if (RESERVED_WORDS.contains(name)) {
+        String name = config.isColumnCamelCase() ? toCamelCase(columnName) : columnName;
+        if (JAVA_KEYWORDS.contains(name)) {
             return name + config.getColumnKeywordSuffix();
         }
         return name;
@@ -147,10 +141,9 @@ public final class NamingService {
         return toPascalCase(name);
     }
 
-    /** snake_case → camelCase（user_id → userId；首段小写，其余段首字母大写）。列名先剥反引号（`` `order` `` → order）。 */
+    /** snake_case → camelCase（user_id → userId；首段小写，其余段首字母大写）。 */
     private String toCamelCase(String name) {
-        String clean = name.replace("`", "");
-        String[] words = clean.split("_", -1);
+        String[] words = name.split("_", -1);
         StringBuilder sb = new StringBuilder(words[0].toLowerCase(Locale.ROOT));
         for (int i = 1; i < words.length; i++) {
             if (!words[i].isEmpty()) {
@@ -160,11 +153,10 @@ public final class NamingService {
         return sb.toString();
     }
 
-    /** snake_case → PascalCase（user_profile → UserProfile；USER → User）。先剥反引号。 */
+    /** snake_case → PascalCase（user_profile → UserProfile；USER → User）。 */
     private String toPascalCase(String name) {
-        String clean = name.replace("`", "");
         StringBuilder sb = new StringBuilder();
-        for (String word : clean.split("_", -1)) {
+        for (String word : name.split("_", -1)) {
             if (!word.isEmpty()) {
                 sb.append(capitalize(word));
             }

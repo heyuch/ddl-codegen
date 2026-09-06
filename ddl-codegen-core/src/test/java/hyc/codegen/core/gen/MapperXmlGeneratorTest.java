@@ -71,6 +71,24 @@ class MapperXmlGeneratorTest {
         assertTrue(xml.contains("#{id,jdbcType=BIGINT}"), xml);
     }
 
+    @Test
+    void reservedWordsBacktickedInSqlStatements() throws Exception {
+        GeneratorTestSupport support = support();
+        // 表名 `order` 与列 `group`/`order` 均为 MySQL 保留字：SQL 语句文本自动加引（20260906-11）
+        support.generateAndAssertSubset(xmlConfig(support), "xml/reserved",
+                "src/main/resources/mapper/OrderMapper.xml");
+
+        String xml = support.readGenerated("src/main/resources/mapper/OrderMapper.xml");
+        assertTrue(xml.contains("DELETE FROM\n        `order`"), xml);
+        assertTrue(xml.contains("INSERT INTO `order`"), xml);
+        assertTrue(xml.contains("UPDATE\n        `order`"), xml);
+        assertTrue(xml.contains("t.`order`"), xml);
+        assertTrue(xml.contains("t.`group`"), xml);
+        assertTrue(xml.contains("`order` = #{"), "UPDATE SET / WHERE 中保留字列加引");
+        assertFalse(xml.contains("`id`"), "非保留字列不加引");
+        assertFalse(xml.contains("`name`"), "非保留字列不加引");
+    }
+
     private GeneratorTestSupport support() {
         // po(pojo) + mapper(mybatisMapper) + xml(mybatisXml)：XML 引用两者，CodeGenerator 要求被引用 kind 已注册
         return new GeneratorTestSupport(temp,

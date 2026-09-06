@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.demo.mapper.OrderMapper">
+
+    <resultMap id="BaseResultMap" type="com.demo.pojo.OrderPo">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="group" column="group" jdbcType="VARCHAR"/>
+        <result property="order" column="order" jdbcType="INTEGER"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="BaseColumnList">
+        t.id,
+        t.`group`,
+        t.`order`,
+        t.name
+    </sql>
+
+    <insert id="insert"
+            keyColumn="id"
+            keyProperty="id"
+            parameterType="com.demo.pojo.OrderPo"
+            useGeneratedKeys="true">
+
+        INSERT INTO `order`
+        (
+        `group`,
+        `order`,
+        name
+        )
+        VALUES
+        (
+        #{group,jdbcType=VARCHAR},
+        #{order,jdbcType=INTEGER},
+        #{name,jdbcType=VARCHAR}
+        )
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM
+        `order`
+        WHERE
+        id = #{id,jdbcType=BIGINT}
+    </delete>
+
+    <update id="update" parameterType="com.demo.pojo.OrderPo">
+        UPDATE
+        `order`
+        SET
+        `group` = #{group,jdbcType=VARCHAR},
+        `order` = #{order,jdbcType=INTEGER},
+        name = #{name,jdbcType=VARCHAR}
+        WHERE
+        id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="BaseColumnList"/>
+        FROM
+        `order` t
+        WHERE
+        t.id = #{id,jdbcType=BIGINT}
+    </select>
+
+    <select id="findByGroup" resultMap="BaseResultMap">
+        SELECT
+        <include refid="BaseColumnList"/>
+        FROM
+        `order` t
+        WHERE
+        t.`group` = #{group,jdbcType=VARCHAR}
+    </select>
+
+    <select id="findByGroupAndOrder" resultMap="BaseResultMap">
+        SELECT
+        <include refid="BaseColumnList"/>
+        FROM
+        `order` t
+        WHERE
+        t.`group` = #{group,jdbcType=VARCHAR}
+        AND
+        t.`order` = #{order,jdbcType=INTEGER}
+    </select>
+
+</mapper>

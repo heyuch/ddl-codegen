@@ -14,7 +14,13 @@ public class User {
      * 排序
      */
     @Generated("ddl-codegen")
-    private Integer order_;
+    private Integer order;
+
+    /**
+     * 类别
+     */
+    @Generated("ddl-codegen")
+    private String class_;
 
     /**
      * 名称

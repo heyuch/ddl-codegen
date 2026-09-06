@@ -139,7 +139,7 @@ DDL 文本（多条语句，分号分隔）
 | `naming.table.stripShardSuffix` | `false` | 是否剥分表后缀（`user_0` → `user`） |
 | `naming.table.shardPattern` | `_\d+$` | 分表后缀正则（首个匹配处截断） |
 | `naming.column.camelCase` | `true` | 列名 → camelCase 字段名 |
-| `naming.column.keywordSuffix` | `_` | 命中保留字时的字段名后缀 |
+| `naming.column.keywordSuffix` | `_` | 命中 **Java 关键字**时的字段名后缀（MySQL 保留字不进 Java 命名，见「命名速查」） |
 | `naming.method.prefix` | `find` | 查询方法名前缀 |
 | `naming.enum.style` | `column` | 枚举类命名风格：`column`（列名 Pascal）\| `tableColumn`（基类名 + 列名 Pascal） |
 
@@ -179,7 +179,7 @@ DDL 文本（多条语句，分号分隔）
 **命名**（`NamingService`；`TableNameStrategy` 为逃生口，可整体替换表名 → 基类名逻辑）：
 - 表名 → 基类名：剥前缀 →（可选）剥分表后缀 → snake→Pascal（`t_user_0` → `User`）。
 - artifact 类名 = 基类名 + suffix；表级 `@as` 覆盖基类名。
-- 列名 → 字段名：camelCase（`user_id` → `userId`；可关）；命中保留字（Java 关键字 + 常用 SQL 保留字全集见 `NamingService.RESERVED_WORDS`，如 `order`）→ 追加 keywordSuffix。
+- 列名 → 字段名：camelCase（`user_id` → `userId`；可关）；仅当结果为 **Java 关键字**（见 `NamingService.JAVA_KEYWORDS`，如 `class`）→ 追加 keywordSuffix。MySQL 保留字不进 Java 命名（原名直出），由 MapperXmlGenerator 在 SQL 文本中反引号加引（20260906-11：模型名在 DDL parse 层剥反引号、存真名）。
 - 索引 → 查询方法名：`前缀 + By + 列 camelCase 以 And 连接`（`name, gender` → `findByNameAndGender`）。
 - 枚举类名：列级 `@as` > `@enum` 显式值 > `naming.enum.style`（SQL-enum 列与裸 `@enum` 列同走该函数：column 风格 = 列 Pascal，tableColumn = 基类名 + 列 Pascal）。
 

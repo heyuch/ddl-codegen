@@ -24,13 +24,19 @@ final class DruidAst {
 
     private DruidAst() {}
 
+    /** 提取建列名（剥反引号；列定义语法必有名称，getColumnName() 与原始行为一致非 null 才可用）。 */
+    static String columnName(SQLColumnDefinition definition) {
+        return stripBackticks(definition.getColumnName());
+    }
+
     /** 提取排序列的列名列表（{@code (a, b)} 形式）。 */
     static List<String> columnNames(List<SQLSelectOrderByItem> items) {
         List<String> names = new ArrayList<>();
         for (SQLSelectOrderByItem item : items) {
             SQLExpr expr = item.getExpr();
             if (expr instanceof SQLIdentifierExpr) {
-                names.add(((SQLIdentifierExpr)expr).getSimpleName());
+                // getSimpleName() 保留反引号（实证），须剥除使索引列名与模型列名一致
+                names.add(stripBackticks(((SQLIdentifierExpr)expr).getSimpleName()));
             } else if (expr != null) {
                 names.add(stripBackticks(expr.toString()));
             }
@@ -60,13 +66,17 @@ final class DruidAst {
         }
     }
 
-    /** 提取名称（去掉反引号与库名前缀，如 {@code db.t_user} → {@code t_user}）。 */
+    /**
+     * 提取名称（去掉反引号与库名前缀，如 {@code db.t_user} → {@code t_user}）。
+     * 反引号在 parse 层统一剥除：模型只存真名，MySQL 引号语义不流入 codegen（20260906-11）。
+     */
     static @Nullable String nameOf(@Nullable SQLName name) {
         if (name == null) {
             return null;
         }
         if (name instanceof SQLIdentifierExpr) {
-            return ((SQLIdentifierExpr)name).getSimpleName();
+            // getSimpleName() 保留反引号（实证），须剥除
+            return stripBackticks(((SQLIdentifierExpr)name).getSimpleName());
         }
         String text = name.toString();
         int dot = text.lastIndexOf('.');

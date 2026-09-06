@@ -73,13 +73,15 @@ class PojoGeneratorTest {
     }
 
     @Test
-    void reservedWordColumnGetsSuffix() throws Exception {
+    void quotedAndJavaKeywordColumnsYieldValidIdentifiers() throws Exception {
+        // parse 层剥引号（模型存真名，见 20260906-11）：MySQL 保留字原名直出（order），Java 关键字加后缀（class_）
         GeneratorTestSupport support = support();
         support.generateAndAssert(plainConfig(support), "pojo/reserved-word");
 
         String entityText = support.readGenerated("com/demo/entity/User.java");
-        assertTrue(entityText.contains("private Integer order_"), entityText);
-        assertFalse(entityText.contains("`order`"), entityText);
+        assertTrue(entityText.contains("private Integer order"), entityText);
+        assertTrue(entityText.contains("private String class_"), entityText);
+        assertFalse(entityText.contains("`"), "生成代码不应出现反引号");
     }
 
     private GeneratorTestSupport support() {

@@ -27,13 +27,14 @@ class NamingServiceTest {
     }
 
     @Test
-    void backtickedIdentifiersStrippedForJavaSide() {
+    void cleanIdentifiersFlowThroughJavaNaming() {
         NamingService naming = new NamingService(config());
-        // `` `order` `` → order（保留字 → order_）；XML/SQL 侧列原文仍带反引号，Java 侧剥除
-        assertEquals("order_", naming.columnFieldName("`order`"));
-        assertEquals("userId", naming.columnFieldName("`user_id`"));
-        assertEquals("Order", naming.enumClassName("t_user", "`order`"));
-        assertEquals("findByOrder", naming.indexMethodName(index("idx_order", "`order`")));
+        // 输入契约 = parse 后干净名（反引号在 DDL parse 层剥除，20260906-11）：MySQL 保留字原名直出，
+        // 仅 Java 关键字加后缀——Java 命名不关心 MySQL 保留字
+        assertEquals("order", naming.columnFieldName("order"));
+        assertEquals("userId", naming.columnFieldName("user_id"));
+        assertEquals("Order", naming.enumClassName("t_user", "order"));
+        assertEquals("findByOrder", naming.indexMethodName(index("idx_order", "order")));
     }
 
     @Test
@@ -41,8 +42,9 @@ class NamingServiceTest {
         NamingService naming = new NamingService(config());
         assertEquals("userId", naming.columnFieldName("user_id"));
         assertEquals("name", naming.columnFieldName("name"));
-        assertEquals("order_", naming.columnFieldName("order"));
+        assertEquals("order", naming.columnFieldName("order"));
         assertEquals("class_", naming.columnFieldName("class"));
+        assertEquals("int_", naming.columnFieldName("int"));
     }
 
     private DdlConfig config() {
