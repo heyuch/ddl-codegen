@@ -15,13 +15,33 @@ description: 强制"先分析设计、沉淀文档、再实现"的开发工作�
 1. **分析**：问题是什么、为什么做、可选方案与取舍（每项一句话）；读 `docs/architecture.md`（现状）+ `docs/changes/README.md`（曾做/曾否决）
 2. **脚手架**：运行 `.agents/skills/design-first/scripts/new-change.sh <type> <标题>`——自动分配变更号 `{YYYYMMDD}-{NN}` 并注入 design.md 头部元信息；**禁止手工创建变更目录**（历史归档用 `--date YYYYMMDD`）
 3. **设计**：填 `design.md`（模板 `docs/changes/TEMPLATE.md`）；影响面写具体符号（类/文件/生成器，可 grep 验证）；中/大改动必含「类职责与交互」（类职责一句话入 javadoc + 依赖方向）
-4. **SOLID 自评（可回环）**：SRP/OCP/LSP/ISP/DIP 逐类 check；不满足回第 3 步
-5. **独立评审（中/大，硬性）**：新上下文实例（新会话/subagent）只带 `design.md` + `docs/architecture.md` + `docs/changes/README.md`，输出「与现状/历史冲突清单」（含查索引：曾做/曾否决；影响面可验证性）；冲突回写 design.md，不通过回第 3 步
+4. **设计自评（可回环）**：按「设计自评检查单」四组核对——SOLID / GRASP 职责分配 / 语义归层 / 设计模式取舍；不满足回第 3 步
+5. **独立评审（中/大，硬性）**：新上下文实例（新会话/subagent）只带 `design.md` + `docs/architecture.md` + `docs/changes/README.md`，输出「与现状/历史冲突清单」（含查索引：曾做/曾否决；影响面可验证性），并按「设计自评检查单」四组复核设计；冲突回写 design.md，不通过回第 3 步
 6. **用户评审（硬关卡）**：把 design.md 呈现给用户；**未获认可不得进入实现**；结论落痕到变更目录 `progress.md`（通过 ✅ / 否决 ❌+理由）
 7. **实现**：按设计写代码
 8. **验证**：`JAVA_HOME=/opt/homebrew/opt/openjdk@11 mvn clean test` 全绿 + 静态检查全绿
 9. **一致性核对**：对照 design.md「改动文件与影响面」「类职责与交互」核查实现偏差 → 记 `progress.md`「实现偏差」；实质偏差回第 7 步或第 6 步
 10. **蒸馏收尾**：10a 决策/偏差 → 本变更 `progress.md`；10b 现状 → `docs/architecture.md`（更新条目）；10c 索引行 → `docs/changes/README.md`；10d 目录处置（作废默认删除，先完成 10a-10c）；10e 改记忆文档 → 跑自检用例集；10f `new-change.sh check` + `check-docs`（改记忆文档时后者必跑）
+
+## 设计自评检查单（步骤 4 执行细则；步骤 5 独立评审同此视角）
+
+逐类/逐职责核对；任一不满足回第 3 步。
+
+**① SOLID**：SRP（这个类为什么同时承担 X/Y？）/ OCP（扩展点是否闭合）/ LSP / ISP / DIP（依赖是否朝向抽象）。
+
+**② GRASP 职责分配**（每个新职责自问「归谁、为什么归它」；领域判据源：Larman《Applying UML and Patterns》，术语表 glossary 有指针条目）：
+- 信息专家 Information Expert：数据与行为是否同居——谁持有数据，谁提供操作
+- 创建者 Creator：谁持有创建所需上下文/聚合数据，谁创建
+- 低耦合 Low Coupling / 高内聚 High Cohesion：依赖面最小、职责内聚（「逻辑混杂 vs 元素繁多」判别见 static-rules-review §6）
+- 控制器 Controller：系统事件入口是否收敛，避免入口/分发层直接操作领域
+- 多态 Polymorphism：按类型分叉用多态而非 instanceof 链（实证：StatementApplier.applyOne 20260830-03）
+- 纯虚构 Pure Fabrication：无合适领域归属时引入服务/工厂类，不为「真实」硬塞职责
+- 间接 Indirection：中介/分发是否真的降耦且值得
+- 预防变化 Protected Variations：易变点是否包在稳定接口/抽象后
+
+**③ 语义归层**（方言/文本语义）：引号、保留字、命名规则、格式等「方言/文本语义」**只存在于其直接生产者/消费者一层**；模型与共享服务只存真值。反例实证：20260906-07-fix-generator-leftover-fixes 把 MySQL 反引号语义泄漏进 NamingService 与模型 → 20260906-11-fix-identifier-hygiene 改 parse 层剥引号 + MapperXmlGenerator 单点加引（职责归层修正）。
+
+**④ 设计模式取舍**（任何模式/纯虚构类的使用前必答；不用模式也是结论）：① 能否用设计模式？② 用哪种（说出名字）？③ 它简化了什么？④ 它复杂了什么（间接层/样板/可读性代价）？⑤ 值得吗？——实证教训：不为简单开关建抽象（annotation-interceptors 作废，见 changes/README 索引行）。用了模式就把 ③④⑤ 结论写进 design.md。
 
 ## 变更类型
 

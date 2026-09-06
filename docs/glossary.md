@@ -35,6 +35,8 @@
 | quick build | 快速构建 | `-Pquick` profile：跳过编译期分析器/spotbugs/jacoco/checkstyle，保留格式化与测试（37s → 11s）；提交/验收前必须跑全量 | AGENTS.md「Build, Lint, and Test Commands」 |
 | 全量构建 | 全量构建 | 无 profile 的 `mvn clean test`：全部门禁 + 测试 | AGENTS.md「Build, Lint, and Test Commands」 |
 | design-first | 设计优先 | 项目强制开发工作流（10 步 + 检查单 + 变更号规则）——流程细节只存源头 skill，此处不复述 | AGENTS.md「开发工作流（硬性规则）」、`.agents/skills/design-first/SKILL.md` |
+| GRASP | 通用职责分配软件模式 | 面向对象职责分配启发式九项：信息专家 / 创建者 / 低耦合 / 高内聚 / 控制器 / 多态 / 纯虚构 / 间接 / 预防变化——逐项判据见「设计自评检查单」 | `.agents/skills/design-first/SKILL.md`「设计自评检查单」 |
+| 设计模式 | design pattern | 命名好的常见设计解法（策略/模板方法/工厂…）；使用前须经「设计模式取舍」评估——不用模式也是结论，判据与实证教训见「设计自评检查单」 | `.agents/skills/design-first/SKILL.md`「设计自评检查单」 |
 | 蒸馏收尾 | 蒸馏收尾 | 变更收尾时的蒸馏动作：决策与偏差 → 所在变更目录 progress.md、现状 → architecture.md、索引行 → changes/README.md、目录处置、记忆文档自检、`new-change.sh check` | AGENTS.md「开发工作流（硬性规则）」 |
 | 初始归档 | 初始建设期归档 | 项目初始期（M0-M4 + 2026-08 设计定稿）原始文档归档：`docs/changes/20260801-01-feat-project-foundation/`（design/progress/tasks 原文） | docs/changes/20260801-01-feat-project-foundation/ |
 | PIT | 变异测试 | 变异覆盖率（击杀突变体比例）验证测试质量；显式运行（core 模块） | docs/changes/20260801-01-feat-project-foundation/progress.md「PIT 变异测试」 |
