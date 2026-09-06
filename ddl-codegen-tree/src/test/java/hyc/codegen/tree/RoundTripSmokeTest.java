@@ -31,9 +31,9 @@ public class RoundTripSmokeTest {
 
     private static long hexValue(char c) {
         if (c >= '0' && c <= '9') {
-            return c - '0';
+            return (long)c - '0';
         }
-        return (c >= 'a' && c <= 'f') ? (c - 'a' + 10) : (c - 'A' + 10);
+        return (c >= 'a' && c <= 'f') ? ((long)c - 'a' + 10) : ((long)c - 'A' + 10);
     }
 
     private static boolean isHexDigit(char c) {

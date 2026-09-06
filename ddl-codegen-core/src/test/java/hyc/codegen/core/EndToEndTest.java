@@ -285,11 +285,8 @@ class EndToEndTest {
     }
 
     /**
-     * JUnit @TempDir 注入目录。
-     * 
-     * @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。
+     * 返回 JUnit 注入的临时目录（字段标 @Nullable，使用点经此显式校验）。
      */
-
     private Path tempDir() {
         Path dir = temp;
         if (dir == null) {

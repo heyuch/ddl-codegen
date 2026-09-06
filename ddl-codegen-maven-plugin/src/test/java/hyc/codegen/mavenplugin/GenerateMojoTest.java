@@ -115,7 +115,7 @@ class GenerateMojoTest {
         assertDoesNotThrow(mojo::execute);
     }
 
-    /** @TempDir 注入目录：JUnit 保证注入，但语法层不保证非 null（标注 @Nullable），使用点经此显式校验。 */
+    /** TempDir 注入目录（字段标注 @Nullable，使用点经此显式校验）。 */
     private Path tempDir() {
         Path dir = temp;
         if (dir == null) {

@@ -58,7 +58,7 @@ public final class EnumCommentParser {
             }
             items.add(new EnumItem(code, desc, matcher.group(3)));
         }
-        return items;
+        return Collections.unmodifiableList(items);
     }
 
 }

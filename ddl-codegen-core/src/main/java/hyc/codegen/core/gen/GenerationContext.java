@@ -169,7 +169,7 @@ public final class GenerationContext {
      * 产物引用 → FQN（查询契约：路由到引用产物的生成器 className）。
      */
     public String refFqn(String tableName, ArtifactConfig referenced) {
-        TableContext refCtx = tableContext(syntheticTable(tableName, referenced), referenced.getName());
+        TableContext refCtx = tableContext(syntheticTable(tableName), referenced.getName());
         return referenced.getPkg() + "." + generatorFor(referenced.getName()).className(refCtx);
     }
 
@@ -218,7 +218,7 @@ public final class GenerationContext {
                 + defaultGenerator + "' 的实例数 = " + matches.size() + "（多实例/无实例时必须显式配置 " + refKey + "）");
     }
 
-    private Table syntheticTable(String tableName, ArtifactConfig referenced) {
+    private Table syntheticTable(String tableName) {
         return new Table(tableName, null);
     }
 

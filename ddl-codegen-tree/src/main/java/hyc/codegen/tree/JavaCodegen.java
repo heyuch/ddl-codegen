@@ -231,8 +231,11 @@ public final class JavaCodegen extends TreeScanner<Boolean, CodePrinter> {
 
     private static boolean isHex(String s, int from) {
         for (int i = from; i < from + 4; i++) {
-            char c = s.charAt(i);
-            if (!(c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F')) {
+            char value = s.charAt(i);
+            boolean digit = value >= '0' && value <= '9';
+            boolean lowerHex = value >= 'a' && value <= 'f';
+            boolean upperHex = value >= 'A' && value <= 'F';
+            if (!(digit || lowerHex || upperHex)) {
                 return false;
             }
         }

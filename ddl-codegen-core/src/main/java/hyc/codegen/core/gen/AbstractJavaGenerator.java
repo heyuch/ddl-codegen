@@ -44,7 +44,7 @@ public abstract class AbstractJavaGenerator implements Generator {
     protected abstract void buildClass(Class.Builder builder, TableContext ctx, GenerationContext gctx);
 
     /** 构建期望模型并标记全部成员。 */
-    private Class buildFresh(TableContext ctx, GenerationContext gctx, String className,
+    private Class buildFresh(TableContext ctx, String className,
             java.util.function.Consumer<Class.Builder> builderFn) {
         Class.Builder builder = Class.builder()
                 .name(className)
@@ -120,6 +120,7 @@ public abstract class AbstractJavaGenerator implements Generator {
     }
 
     /** 生成/更新该表该 artifact 的 Java 文件。 */
+    @Override
     public void generate(TableContext ctx, GenerationContext gctx) {
         if (!shouldGenerate(ctx)) {
             deleteIfExists(ctx, gctx);
@@ -138,7 +139,7 @@ public abstract class AbstractJavaGenerator implements Generator {
      */
     protected void generateClass(TableContext ctx, GenerationContext gctx, String className,
             java.util.function.Consumer<Class.Builder> builderFn) {
-        Class fresh = buildFresh(ctx, gctx, className, builderFn);
+        Class fresh = buildFresh(ctx, className, builderFn);
         File file = PathResolver.javaFile(gctx.getProjectRoot(),
                 ctx.getArtifactConfig().getModule(), ctx.packageName(), className).toFile();
 
